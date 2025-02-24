@@ -5,6 +5,7 @@
     tabindex="-1"
     @keydown.space="spaceDown"
     @keyup.space="spaceUp"
+    @scroll="handleScrollbar"
   >
     <article
       class="infinite-canvas"
@@ -12,24 +13,24 @@
         width: canvasSize.width + 'px',
         height: canvasSize.height + 'px',
       }"
-    ></article>
+    >
+      <slot
+        :isDragging="isDragging"
+        :canvasSize="canvasSize"
+        name="default"
+      ></slot>
+    </article>
   </div>
 </template>
 
 <script setup lang="ts">
-import {
-  ref,
-  reactive,
-  onMounted,
-  onUnmounted,
-  defineOptions,
-  computed,
-} from "vue";
+import { ref, reactive, onMounted, onUnmounted, defineOptions } from "vue";
 
 defineOptions({
-  name: "ZDragEditorContent",
+  name: "ZDragEditorCanvas",
   directives: {},
 });
+defineProps({});
 // 画布容器引用
 const canvasWrapper = ref<HTMLElement | null>(null);
 // 画布状态
@@ -39,6 +40,7 @@ const startPos = reactive({ x: 0, y: 0, scrollLeft: 0, scrollTop: 0 });
 // // 拖拽处理
 const handleMouseDown = (el: MouseEvent) => {
   if (!canvasWrapper.value) return;
+  isDragging.value = true;
   startPos.x = el.clientX;
   startPos.y = el.clientY;
   startPos.scrollLeft = canvasWrapper.value.scrollLeft;
@@ -48,14 +50,12 @@ const handleMouseDown = (el: MouseEvent) => {
   document.addEventListener("mouseup", handleMouseUp);
 };
 const handleMouseMove = (el: MouseEvent) => {
-  // if (el.currentTarget)
-  //   (el.currentTarget as HTMLElement)!.style.pointerEvents = "none";
   document.body.style.cursor = "grabbing";
   let offsetX = el.clientX - startPos.x;
   let offsetY = el.clientY - startPos.y;
   let resultX = startPos.scrollLeft - offsetX;
   let resultY = startPos.scrollTop - offsetY;
-  // checkBoundary(resultX, resultY);
+  checkBoundary();
   canvasWrapper.value?.scrollTo(resultX, resultY);
 };
 const handleMouseUp = () => {
@@ -73,6 +73,7 @@ const spaceDown = (e: KeyboardEvent) => {
 };
 const spaceUp = (e: KeyboardEvent) => {
   e.preventDefault();
+  isDragging.value = false;
   document.body.style.cursor = "default";
   document.removeEventListener("mousedown", handleMouseDown);
   document.removeEventListener("mousemove", handleMouseMove);
@@ -80,20 +81,34 @@ const spaceUp = (e: KeyboardEvent) => {
 };
 
 // 动态扩展边界检测
-// const checkBoundary = (x: number, y: number) => {
-//   if (!canvasWrapper.value) return;
-//   if (x < 0 || x > canvasWrapper.value.offsetWidth) {
-//     canvasSize.width += Math.abs(x);
-//   }
-//   if (y < 0 || y > canvasWrapper.value.offsetHeight) {
-//     canvasSize.height += Math.abs(y);
-//   }
-// };
-// 内容定位（示例）
-// const contentPosition = computed(() => ({
-//   left: canvasSize.width / 2 + "px",
-//   top: canvasSize.height / 2 + "px",
-// }));
+const checkBoundary = () => {
+  if (!canvasWrapper.value) return;
+  // if (typeof x !== "undefined" && typeof y !== "undefined") {
+  //   // console.log(x, y);
+  //   if (x < 0) {
+  //     canvasSize.width += 100;
+  //   }
+  //   if (y < 0) {
+  //     canvasSize.height += 100;
+  //   }
+  // }
+  // if (
+  //   canvasWrapper.value.clientWidth + canvasWrapper.value.scrollLeft ===
+  //   canvasSize.width
+  // ) {
+  //   canvasSize.width += 100;
+  // }
+  // if (
+  //   canvasWrapper.value.clientHeight + canvasWrapper.value.scrollTop ===
+  //   canvasSize.height
+  // ) {
+  //   canvasSize.height += 100;
+  // }
+};
+const handleScrollbar = () => {
+  if (!canvasWrapper.value) return;
+  checkBoundary();
+};
 // 生命周期
 onMounted(() => {
   if (!canvasWrapper.value) return;
@@ -109,7 +124,7 @@ onUnmounted(() => {
 });
 </script>
 
-<style scoped>
+<style scoped lang="scss">
 .canvas-wrapper {
   width: 100vw;
   height: 100vh;
@@ -117,23 +132,18 @@ onUnmounted(() => {
   max-height: 100vh;
   overflow: scroll;
   box-sizing: border-box;
-  /* cursor: grabbing; */
-}
-.infinite-canvas {
-  position: relative;
-  min-width: 100%;
-  min-height: 100%;
-  background-color: rgb(211, 217, 223);
-  transition: transform 0.1s ease-out;
-  background-image: linear-gradient(rgba(0, 0, 0, 0.1) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(0, 0, 0, 0.1) 1px, transparent 1px);
-  background-size: 20px 20px;
-}
-
-.content {
-  position: absolute;
-  background-color: aqua;
-  top: 0;
-  left: 0;
+  --canvas-bg-color: 244, 245, 247;
+  --canvas-grid-color: 0, 0, 0;
+  --canvas-grid-size: 20px;
+  .infinite-canvas {
+    position: relative;
+    min-width: 100%;
+    min-height: 100%;
+    transition: transform 0.1s ease-out;
+    background-color: rgb(var(--canvas-bg-color));
+    // background-image: linear-gradient(rgba(0, 0, 0, 0.1) 1px, transparent 1px),
+    //   linear-gradient(90deg, rgba(0, 0, 0, 0.1) 1px, transparent 1px);
+    // background-size: var(--canvas-grid-size) var(--canvas-grid-size);
+  }
 }
 </style>
