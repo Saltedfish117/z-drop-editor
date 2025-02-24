@@ -12,9 +12,7 @@
         width: canvasSize.width + 'px',
         height: canvasSize.height + 'px',
       }"
-    >
-      
-    </article>
+    ></article>
   </div>
 </template>
 
@@ -35,8 +33,7 @@ defineOptions({
 // 画布容器引用
 const canvasWrapper = ref<HTMLElement | null>(null);
 // 画布状态
-const canvasSize = reactive({ width: 3000, height: 3000 }); // 初始尺寸
-const offset = reactive({ x: 0, y: 0 });
+const canvasSize = reactive({ width: 5000, height: 5000 }); // 初始尺寸
 const isDragging = ref(false);
 const startPos = reactive({ x: 0, y: 0, scrollLeft: 0, scrollTop: 0 });
 // // 拖拽处理
