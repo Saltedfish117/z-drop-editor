@@ -90,12 +90,13 @@ const spaceUp = (e: KeyboardEvent) => {
 //   }
 // };
 // 内容定位（示例）
-const contentPosition = computed(() => ({
-  left: canvasSize.width / 2 + "px",
-  top: canvasSize.height / 2 + "px",
-}));
+// const contentPosition = computed(() => ({
+//   left: canvasSize.width / 2 + "px",
+//   top: canvasSize.height / 2 + "px",
+// }));
 // 生命周期
 onMounted(() => {
+  if (!canvasWrapper.value) return;
   // 初始居中
   canvasWrapper.value.scrollLeft = canvasSize.width / 2 - window.innerWidth / 2;
   canvasWrapper.value.scrollTop =
