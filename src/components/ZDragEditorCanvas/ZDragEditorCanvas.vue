@@ -1,13 +1,9 @@
 <template>
-  <div
-    ref="canvasWrapper"
-    class="canvas-wrapper"
-    tabindex="-1"
-    @keydown.space="spaceDown"
-    @keyup.space="spaceUp"
-    @scroll="handleScrollbar"
-  >
+  <div ref="canvasWrapper" @scroll="handleScrollbar" class="canvas-wrapper">
     <article
+      tabindex="-1"
+      @keydown.space="spaceDown"
+      @keyup.space="spaceUp"
       class="infinite-canvas"
       :style="{
         width: canvasSize.width + 'px',
@@ -38,43 +34,48 @@ const canvasSize = reactive({ width: 5000, height: 5000 }); // 初始尺寸
 const isDragging = ref(false);
 const startPos = reactive({ x: 0, y: 0, scrollLeft: 0, scrollTop: 0 });
 // // 拖拽处理
-const handleMouseDown = (el: MouseEvent) => {
+const handleMouseDown = (e: MouseEvent) => {
   if (!canvasWrapper.value) return;
   isDragging.value = true;
-  startPos.x = el.clientX;
-  startPos.y = el.clientY;
+  startPos.x = e.clientX;
+  startPos.y = e.clientY;
   startPos.scrollLeft = canvasWrapper.value.scrollLeft;
   startPos.scrollTop = canvasWrapper.value.scrollTop;
-  document.body.style.cursor = "grabbing";
+  document.documentElement.style.cursor = "grabbing";
   document.addEventListener("mousemove", handleMouseMove);
   document.addEventListener("mouseup", handleMouseUp);
 };
-const handleMouseMove = (el: MouseEvent) => {
-  document.body.style.cursor = "grabbing";
-  let offsetX = el.clientX - startPos.x;
-  let offsetY = el.clientY - startPos.y;
+const handleMouseMove = (e: MouseEvent) => {
+  e.preventDefault();
+  e.stopPropagation();
+  document.documentElement.style.cursor = "grabbing";
+  let offsetX = e.clientX - startPos.x;
+  let offsetY = e.clientY - startPos.y;
   let resultX = startPos.scrollLeft - offsetX;
   let resultY = startPos.scrollTop - offsetY;
-  checkBoundary();
   canvasWrapper.value?.scrollTo(resultX, resultY);
+  checkBoundary();
 };
-const handleMouseUp = () => {
+const handleMouseUp = (e: MouseEvent) => {
+  e.preventDefault();
+  e.stopPropagation();
   isDragging.value = false;
-  document.body.style.cursor = "grab";
+  document.documentElement.style.cursor = "grab";
   document.removeEventListener("mousemove", handleMouseMove);
   document.removeEventListener("mouseup", handleMouseUp);
-  document.body.style.userSelect = "none";
+  document.documentElement.style.userSelect = "none";
 };
 const spaceDown = (e: KeyboardEvent) => {
   e.preventDefault();
-  document.body.style.cursor = "grab";
+  e.stopPropagation();
   document.addEventListener("mousedown", handleMouseDown);
   document.body.style.userSelect = "none"; // 禁用文本选中
 };
 const spaceUp = (e: KeyboardEvent) => {
   e.preventDefault();
   isDragging.value = false;
-  document.body.style.cursor = "default";
+  e.stopPropagation();
+  document.documentElement.style.cursor = "default";
   document.removeEventListener("mousedown", handleMouseDown);
   document.removeEventListener("mousemove", handleMouseMove);
   document.removeEventListener("mouseup", handleMouseUp);
@@ -83,27 +84,15 @@ const spaceUp = (e: KeyboardEvent) => {
 // 动态扩展边界检测
 const checkBoundary = () => {
   if (!canvasWrapper.value) return;
-  // if (typeof x !== "undefined" && typeof y !== "undefined") {
-  //   // console.log(x, y);
-  //   if (x < 0) {
-  //     canvasSize.width += 100;
-  //   }
-  //   if (y < 0) {
-  //     canvasSize.height += 100;
-  //   }
-  // }
   // if (
-  //   canvasWrapper.value.clientWidth + canvasWrapper.value.scrollLeft ===
+  //   canvasWrapper.value.scrollLeft + canvasWrapper.value.clientWidth >
   //   canvasSize.width
   // ) {
-  //   canvasSize.width += 100;
+  //   canvasSize.width += 10;
+  // } else if (canvasWrapper.value.scrollLeft <= 300) {
+  //   canvasSize.width += 10;
   // }
-  // if (
-  //   canvasWrapper.value.clientHeight + canvasWrapper.value.scrollTop ===
-  //   canvasSize.height
-  // ) {
-  //   canvasSize.height += 100;
-  // }
+  // console.log("checkBoundary", canvasWrapper.value.scrollLeft);
 };
 const handleScrollbar = () => {
   if (!canvasWrapper.value) return;

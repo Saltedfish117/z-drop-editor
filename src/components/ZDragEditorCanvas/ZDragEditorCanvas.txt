@@ -1,0 +1,300 @@
+<template>
+  <div ref="canvasWrapper" class="canvas-wrapper">
+    <article
+      tabindex="-1"
+      @keydown.space="spaceDown"
+      @keyup.space="spaceUp"
+      class="infinite-canvas"
+      :style="{
+        width: canvasSize.width + 'px',
+        height: canvasSize.height + 'px',
+        transform: `translate(${canvasSize.x}px, ${canvasSize.y}px)`,
+      }"
+    >
+      <slot
+        :isDragging="isDragging"
+        :canvasSize="canvasSize"
+        name="default"
+      ></slot>
+    </article>
+    <div
+      @mousedown="handleScroll($event, 'x')"
+      ref="scrollbarXRef"
+      :style="{
+        transform: `translateX(${scrollbar.x}px)`,
+      }"
+      class="scrollbarX"
+    ></div>
+    <div
+      @mousedown="handleScroll($event, 'y')"
+      ref="scrollbarYRef"
+      :style="{
+        transform: `translateY(${scrollbar.y}px)`,
+      }"
+      class="scrollbarY"
+    ></div>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { ref, reactive, onMounted, onUnmounted, defineOptions } from "vue";
+
+defineOptions({
+  name: "ZDragEditorCanvas",
+  directives: {},
+});
+defineProps({});
+// 画布容器引用
+const canvasWrapper = ref<HTMLElement | null>(null);
+const scrollbarXRef = ref<HTMLElement | null>(null);
+const scrollbarYRef = ref<HTMLElement | null>(null);
+// 画布状态
+const canvasSize = reactive({
+  width: window.innerWidth * 2,
+  height: window.innerHeight * 2,
+  x: 0,
+  y: 0,
+}); // 初始尺寸
+const isDragging = ref(false);
+const startPos = reactive({ x: 0, y: 0, scrollLeft: 0, scrollTop: 0 });
+const scrollbar = ref({
+  x: 0,
+  y: 0,
+});
+// // 拖拽处理
+const handleMouseDown = (el: MouseEvent) => {
+  if (!canvasWrapper.value) return;
+  isDragging.value = true;
+  startPos.x = el.clientX;
+  startPos.y = el.clientY;
+  startPos.scrollLeft = canvasWrapper.value.scrollLeft;
+  startPos.scrollTop = canvasWrapper.value.scrollTop;
+  document.body.style.cursor = "grabbing";
+  document.addEventListener("mousemove", handleMouseMove);
+  document.addEventListener("mouseup", handleMouseUp);
+};
+const handleMouseMove = (el: MouseEvent) => {
+  let offsetX = el.clientX - startPos.x;
+  let offsetY = el.clientY - startPos.y;
+  let resultX = startPos.scrollLeft - offsetX;
+  let resultY = startPos.scrollTop - offsetY;
+  document.body.style.cursor = "grabbing";
+  checkBoundary();
+  canvasWrapper.value?.scrollTo(resultX, resultY);
+};
+const handleMouseUp = () => {
+  isDragging.value = false;
+  document.removeEventListener("mousemove", handleMouseMove);
+  document.removeEventListener("mouseup", handleMouseUp);
+};
+const spaceDown = (e: KeyboardEvent) => {
+  e.preventDefault();
+  document.body.style.cursor = "grab";
+  document.addEventListener("mousedown", handleMouseDown);
+  document.body.style.userSelect = "none"; // 禁用文本选中
+};
+const spaceUp = (e: KeyboardEvent) => {
+  e.preventDefault();
+  isDragging.value = false;
+  document.body.style.cursor = "default";
+  document.body.style.userSelect = "auto";
+  document.removeEventListener("mousedown", handleMouseDown);
+  document.removeEventListener("mousemove", handleMouseMove);
+  document.removeEventListener("mouseup", handleMouseUp);
+};
+
+// 动态扩展边界检测
+const checkBoundary = () => {
+  if (!canvasWrapper.value) return;
+};
+const moveView = (
+  axle: { x: number; y: number },
+  size: {
+    width: number;
+    height: number;
+  }
+) => {
+  canvasSize.x = axle.x;
+  canvasSize.y = axle.y;
+  canvasSize.width += size.width;
+  canvasSize.height += size.height;
+};
+const handleScroll = (event: MouseEvent, axle: "x" | "y") => {
+  if (!canvasWrapper.value) return;
+  const start = {
+    x: event.clientX,
+    y: event.clientY,
+    scrollX: scrollbar.value.x,
+    scrollY: scrollbar.value.y,
+    viewX: canvasSize.x,
+    viewY: canvasSize.y,
+  };
+  let fist = true;
+  const scrollMove = (event: MouseEvent) => {
+    if (fist) {
+      return (fist = false);
+    }
+    const moveX = event.clientX - start.x;
+    const moveY = event.clientY - start.y;
+    let resultX = start.scrollX + moveX;
+    let resultY = start.scrollY + moveY;
+    if (axle === "x") {
+      scrollbar.value.x = resultX;
+      moveView(
+        {
+          x: start.viewX - moveX,
+          y: start.viewY,
+        },
+        {
+          width: 0,
+          height: 0,
+        }
+      );
+    } else if (axle === "y") {
+      scrollbar.value.y = resultY;
+      moveView(
+        {
+          x: start.viewX,
+          y: start.viewY - moveY,
+        },
+        {
+          width: 0,
+          height: 0,
+        }
+      );
+    } else {
+      scrollbar.value.x = resultX;
+      scrollbar.value.y = resultY;
+    }
+    if (canvasWrapper.value && scrollbarXRef.value && scrollbarYRef.value) {
+      const wrapperWidth = parseInt(
+        window.getComputedStyle(canvasWrapper.value).getPropertyValue("width")
+      );
+      const wrapperHeight = parseInt(
+        window.getComputedStyle(canvasWrapper.value).getPropertyValue("height")
+      );
+      const scrollbarXWidth = parseInt(
+        window.getComputedStyle(scrollbarXRef.value).getPropertyValue("width")
+      );
+      const scrollbarYHeight = parseInt(
+        window.getComputedStyle(scrollbarYRef.value).getPropertyValue("height")
+      );
+      if (scrollbar.value.x < 0) {
+        scrollbar.value.x = 0;
+        moveView(
+          {
+            x: start.viewX + 100,
+            y: start.viewY,
+          },
+          {
+            width: 100,
+            height: 0,
+          }
+        );
+      } else if (scrollbar.value.x + scrollbarXWidth > wrapperWidth) {
+        scrollbar.value.x = wrapperWidth - scrollbarXWidth;
+        moveView(
+          {
+            x: start.viewX + 100,
+            y: start.viewY,
+          },
+          {
+            width: 0,
+            height: 0,
+          }
+        );
+      }
+      if (scrollbar.value.y < 0) {
+        scrollbar.value.y = 0;
+      } else if (scrollbar.value.y + scrollbarYHeight > wrapperHeight) {
+        scrollbar.value.y = wrapperHeight - scrollbarYHeight;
+      }
+    }
+  };
+  const up = () => {
+    document.removeEventListener("mousemove", scrollMove);
+    document.removeEventListener("mouseup", up);
+  };
+  document.addEventListener("mousemove", scrollMove);
+  document.addEventListener("mouseup", up);
+};
+// 生命周期
+onMounted(() => {
+  if (canvasWrapper.value && scrollbarXRef.value && scrollbarYRef.value) {
+    const width = parseInt(
+      window.getComputedStyle(canvasWrapper.value).getPropertyValue("width")
+    );
+    const height = parseInt(
+      window.getComputedStyle(canvasWrapper.value).getPropertyValue("height")
+    );
+    const scrollbarXWidth = parseInt(
+      window.getComputedStyle(scrollbarXRef.value).getPropertyValue("width")
+    );
+    const scrollbarYHeight = parseInt(
+      window.getComputedStyle(scrollbarYRef.value).getPropertyValue("height")
+    );
+    canvasSize.width = width + scrollbarXWidth * 6.666;
+    canvasSize.height = height + scrollbarYHeight * 6.666;
+    canvasSize.x = -(canvasSize.width / 2);
+    canvasSize.y = -(canvasSize.height / 2);
+    scrollbar.value.x = width / 2 - scrollbarXWidth / 2;
+    scrollbar.value.y = height / 2 - scrollbarYHeight / 2;
+  }
+
+  // 初始居中
+  // canvasWrapper.value.scrollLeft = canvasSize.width / 2 - window.innerWidth / 2;
+  // canvasWrapper.value.scrollTop =
+  //   canvasSize.height / 2 - window.innerHeight / 2;
+});
+
+onUnmounted(() => {
+  document.removeEventListener("mousemove", handleMouseMove);
+  document.removeEventListener("mouseup", handleMouseUp);
+});
+</script>
+
+<style scoped lang="scss">
+.canvas-wrapper {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  max-width: 100%;
+  max-height: 100%;
+  overflow: hidden;
+  box-sizing: border-box;
+  --canvas-bg-color: 244, 245, 247;
+  --canvas-grid-color: 0, 0, 0;
+  --canvas-grid-size: 20px;
+  transform: scale(1);
+}
+.infinite-canvas {
+  position: absolute;
+  // transform-origin: center;
+  left: 50%;
+  top: 50%;
+
+  min-width: 100%;
+  min-height: 100%;
+  // transition: transform 0.1s ease-out;
+  background-color: rgb(244, 245, 247);
+  background-image: linear-gradient(rgba(0, 0, 0, 0.1) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 0, 0, 0.1) 1px, transparent 1px);
+  background-size: var(--canvas-grid-size) var(--canvas-grid-size);
+}
+.scrollbarX {
+  position: fixed;
+  bottom: 0;
+  width: 33.333%;
+  height: 10px;
+  border-radius: 20px;
+  background-color: rgb(69, 71, 75);
+}
+.scrollbarY {
+  position: fixed;
+  height: 33.333%;
+  width: 10px;
+  right: 0;
+  border-radius: 20px;
+  background-color: rgb(69, 71, 75);
+}
+</style>
