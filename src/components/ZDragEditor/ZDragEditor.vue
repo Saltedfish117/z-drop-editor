@@ -1,59 +1,156 @@
 <script setup lang="ts">
-import { defineOptions, ref } from "vue";
+import {
+  defineOptions,
+  defineModel,
+  computed,
+  ref,
+  watch,
+  nextTick,
+} from "vue";
 import ZDragEditorCanvas from "../ZDragEditorCanvas/ZDragEditorCanvas.vue";
 import ZToolbar from "../ZToolbar/ZToolbar.vue";
 import ZDrag from "../ZDrag/ZDrag.vue";
+import ZNode from "../ZNode/ZNode.vue";
+import type { ZNode as Node } from "../ZNode/types";
+import type { ZDragEditorModel } from "./types";
+import type { Layout } from "../ZDrag/types";
 defineOptions({
   name: "ZDragEditor",
 });
-const test = ref({
-  x: 0,
-  y: 0,
-  width: 100,
-  height: 100,
-  rotate: 0,
-  zIndex: 1,
-  lock: false,
+const store = defineModel<ZDragEditorModel>({
+  required: true,
 });
-const active = ref(true);
+const nodeMap = new WeakMap();
+const canvasSize = ref({
+  width: 0,
+  height: 0,
+});
+watch(
+  () => store.value.nodes,
+  (val) => {
+    const recursive = (node: Node) => {
+      nodeMap.set(node, node);
+      if (node.children?.length) {
+        node.children.forEach((child) => recursive(child));
+      }
+    };
+    let nodesWidth =
+      val.reduce((prev, curr) => (prev += curr.layout.width), 0) +
+      50 * val.length;
+    let maxHeight = Math.max(...val.map((i) => i.layout.height));
+    canvasSize.value.width = nodesWidth * 20;
+    canvasSize.value.height = maxHeight * 20;
+    let startX = canvasSize.value.width / 2 - nodesWidth / 2;
+    let y = canvasSize.value.height / 2 - maxHeight / 2;
+    val.forEach((node) => {
+      node.layout.x = startX + 50;
+      startX += node.layout.width + 50;
+      node.layout.y = y;
+      recursive(node);
+    });
+  },
+  {
+    immediate: true,
+    once: true,
+  }
+);
+const active = computed(() => !!store.value.active);
+const activeLayout = computed({
+  get: () => {
+    if (store.value.active && store.value.active.layout) {
+      return store.value.active.layout;
+    } else {
+      return {
+        x: 0,
+        y: 0,
+        width: 0,
+        height: 0,
+        rotate: 0,
+        zIndex: 1,
+        lock: false,
+      };
+    }
+  },
+  set: (val: Layout) => {
+    if (store.value.active && store.value.active.layout) {
+      store.value.active.layout = val;
+    } else {
+      return;
+    }
+  },
+});
+const zDragRef = ref<InstanceType<typeof ZDrag> | null>(null);
+const proxyMouseDown = (e: MouseEvent, node?: Node) => {
+  if (!node) return (store.value.active = null);
+  if (nodeMap.has(node)) {
+    store.value.active = nodeMap.get(node);
+    nextTick(() => {
+      if (zDragRef.value) {
+        zDragRef.value.mousedown(e, "move");
+      }
+    });
+    // if (zDragRef.value) {
+    //   zDragRef.value.mousedown(e, "move");
+    // }
+  } else store.value.active = null;
+};
+const scale = ref(1);
+const zoomOut = () => {
+  if (scale.value - 0.1 < 0.1) return;
+  scale.value -= 0.1;
+};
+const zoomIn = () => {
+  scale.value += 0.1;
+};
+const mousewheel = (e: WheelEvent) => {
+  // 判断是不是按下ctrl键
+  if (e.ctrlKey) {
+    // 取消浏览器默认的放大缩小网页行为
+    e.preventDefault();
+    // 判断是向上滚动还是向下滚动
+    if (e.deltaY > 0) {
+      // 缩小重写，业务代码
+      zoomOut();
+    } else {
+      // 放大重写，业务代码
+      zoomIn();
+    }
+  }
+};
 </script>
 <template>
-  <article class="ZDragEditor">
+  <article tabindex="0" class="ZDragEditor">
     <ZToolbar></ZToolbar>
-    <ZDragEditorCanvas>
+    <ZDragEditorCanvas
+      @mousewheel="mousewheel"
+      :scale="scale"
+      v-model:size="canvasSize"
+    >
       <template #default="{ canvasSize }">
-        <article
-          class="page"
-          :style="{
-            transform: `translate(${canvasSize.width / 2 - 768 / 2}px,${
-              canvasSize.height / 2 - 1243 / 2
-            }px)`,
-          }"
-        >
-          <ZDrag
-            :position="'absolute'"
-            v-model:active="active"
-            v-model="test"
-          ></ZDrag>
-        </article>
+        <ZNode
+          @mousedown.stop="proxyMouseDown($event, node)"
+          v-for="node in store.nodes"
+          :key="node.id"
+          :active="active"
+          :node="node"
+          :canvasSize="canvasSize"
+        ></ZNode>
+        <ZDrag
+          :scale="scale"
+          ref="zDragRef"
+          :position="'absolute'"
+          v-model:active="active"
+          v-model="activeLayout"
+        ></ZDrag>
       </template>
     </ZDragEditorCanvas>
   </article>
 </template>
 <style scoped lang="scss">
 .ZDragEditor {
-  // transform: scale(1);
   width: 100vw;
   height: 100vh;
   overflow: auto;
   box-sizing: border-box;
-}
-.page {
-  position: absolute;
-  top: 0;
-  left: 0;
-  height: 1123px;
-  width: 794px;
-  background-color: white;
 }
 </style>

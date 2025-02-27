@@ -1,6 +1,8 @@
 import { createApp } from "vue";
 import "./style.css";
 import App from "./App.vue";
-// import Vue3Dragscroll from "vue3-dragscroll";
-// .use(Vue3Dragscroll)
-createApp(App).mount("#app");
+import A4 from "./components/A4/A4.vue";
+
+const app = createApp(App);
+app.component("a4", A4);
+app.mount("#app");

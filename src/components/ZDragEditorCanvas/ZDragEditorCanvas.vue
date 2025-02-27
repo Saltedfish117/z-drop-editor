@@ -6,34 +6,64 @@
       @keyup.space="spaceUp"
       class="infinite-canvas"
       :style="{
-        width: canvasSize.width + 'px',
-        height: canvasSize.height + 'px',
+        width: size.width + 'px',
+        height: size.height + 'px',
+        transform: `scale(${scale})`,
       }"
     >
-      <slot
-        :isDragging="isDragging"
-        :canvasSize="canvasSize"
-        name="default"
-      ></slot>
+      <slot :isDragging="isDragging" :canvasSize="size" name="default"></slot>
     </article>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted, onUnmounted, defineOptions } from "vue";
+import {
+  ref,
+  reactive,
+  onMounted,
+  onUnmounted,
+  defineOptions,
+  defineModel,
+} from "vue";
 
 defineOptions({
   name: "ZDragEditorCanvas",
   directives: {},
 });
-defineProps({});
+const props = defineProps({
+  size: {
+    type: Object,
+    required: true,
+    default: () => {
+      return {
+        width: 5000,
+        height: 5000,
+      };
+    },
+  },
+  scale: {
+    type: Number,
+    required: true,
+    default: 1,
+  },
+});
 // 画布容器引用
 const canvasWrapper = ref<HTMLElement | null>(null);
-// 画布状态
-const canvasSize = reactive({ width: 5000, height: 5000 }); // 初始尺寸
-const isDragging = ref(false);
+// 初始尺寸
+const size = defineModel("size", {
+  type: Object,
+  required: true,
+  default: () => {
+    return {
+      width: 5000,
+      height: 5000,
+    };
+  },
+});
+
+const isDragging = ref(false); // 画布状态
 const startPos = reactive({ x: 0, y: 0, scrollLeft: 0, scrollTop: 0 });
-// // 拖拽处理
+// 拖拽处理
 const handleMouseDown = (e: MouseEvent) => {
   if (!canvasWrapper.value) return;
   isDragging.value = true;
@@ -49,8 +79,10 @@ const handleMouseMove = (e: MouseEvent) => {
   e.preventDefault();
   e.stopPropagation();
   document.documentElement.style.cursor = "grabbing";
-  let offsetX = e.clientX - startPos.x;
-  let offsetY = e.clientY - startPos.y;
+  const scaleFactor = 1 / props.scale; // 计算缩放修正因子
+  // 根据缩放倍率修正偏移量
+  let offsetX = (e.clientX - startPos.x) * scaleFactor;
+  let offsetY = (e.clientY - startPos.y) * scaleFactor;
   let resultX = startPos.scrollLeft - offsetX;
   let resultY = startPos.scrollTop - offsetY;
   canvasWrapper.value?.scrollTo(resultX, resultY);
@@ -84,15 +116,6 @@ const spaceUp = (e: KeyboardEvent) => {
 // 动态扩展边界检测
 const checkBoundary = () => {
   if (!canvasWrapper.value) return;
-  // if (
-  //   canvasWrapper.value.scrollLeft + canvasWrapper.value.clientWidth >
-  //   canvasSize.width
-  // ) {
-  //   canvasSize.width += 10;
-  // } else if (canvasWrapper.value.scrollLeft <= 300) {
-  //   canvasSize.width += 10;
-  // }
-  // console.log("checkBoundary", canvasWrapper.value.scrollLeft);
 };
 const handleScrollbar = () => {
   if (!canvasWrapper.value) return;
@@ -102,9 +125,9 @@ const handleScrollbar = () => {
 onMounted(() => {
   if (!canvasWrapper.value) return;
   // 初始居中
-  canvasWrapper.value.scrollLeft = canvasSize.width / 2 - window.innerWidth / 2;
+  canvasWrapper.value.scrollLeft = size.value.width / 2 - window.innerWidth / 2;
   canvasWrapper.value.scrollTop =
-    canvasSize.height / 2 - window.innerHeight / 2;
+    size.value.height / 2 - window.innerHeight / 2;
 });
 
 onUnmounted(() => {
