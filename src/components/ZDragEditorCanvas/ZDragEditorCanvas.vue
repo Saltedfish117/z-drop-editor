@@ -66,6 +66,7 @@ const startPos = reactive({ x: 0, y: 0, scrollLeft: 0, scrollTop: 0 });
 // 拖拽处理
 const handleMouseDown = (e: MouseEvent) => {
   if (!canvasWrapper.value) return;
+  // 判断是否按下空格键
   isDragging.value = true;
   startPos.x = e.clientX;
   startPos.y = e.clientY;
@@ -101,13 +102,14 @@ const spaceDown = (e: KeyboardEvent) => {
   e.preventDefault();
   e.stopPropagation();
   document.addEventListener("mousedown", handleMouseDown);
-  document.body.style.userSelect = "none"; // 禁用文本选中
+  document.documentElement.style.userSelect = "none"; // 禁用文本选中
 };
 const spaceUp = (e: KeyboardEvent) => {
   e.preventDefault();
   isDragging.value = false;
   e.stopPropagation();
   document.documentElement.style.cursor = "default";
+  document.documentElement.style.userSelect = "auto";
   document.removeEventListener("mousedown", handleMouseDown);
   document.removeEventListener("mousemove", handleMouseMove);
   document.removeEventListener("mouseup", handleMouseUp);

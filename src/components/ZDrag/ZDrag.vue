@@ -115,7 +115,6 @@ const resizeMove = {
     return layout;
   },
   "w-resize": (offset: Offset, layout: Layout, start: MoveStart) => {
-    // const delta = e.clientX - start.x;
     if (start.width - offset.x < 0) {
       layout.width = 0;
       layout.x = start.layoutX + start.width;
@@ -129,7 +128,6 @@ const resizeMove = {
     return layout;
   },
   "s-resize": (offset: Offset, layout: Layout, start: MoveStart) => {
-    // const delta = e.clientY - start.y;
     if (start.height + offset.y < 0) {
       layout.height = 0;
     } else {
@@ -139,8 +137,6 @@ const resizeMove = {
     return layout;
   },
   "ne-resize": (offset: Offset, layout: Layout, start: MoveStart) => {
-    // const deltaX = Number(e.clientX) - start.x;
-    // const deltaY = Number(e.clientY) - start.y;
     if (start.layoutY + offset.y < 0) {
       layout.y = 0;
       layout.height = start.height + start.layoutY;
@@ -159,8 +155,6 @@ const resizeMove = {
     return layout;
   },
   "se-resize": (offset: Offset, layout: Layout, start: MoveStart) => {
-    // const deltaX = Number(e.clientX) - start.x;
-    // const deltaY = Number(e.clientY) - start.y;
     layout.width = start.width + offset.x;
     layout.height = start.height + offset.y;
     if (layout.width <= 0) {
@@ -172,12 +166,15 @@ const resizeMove = {
     return layout;
   },
 
-  "sw-resize": (offset: Offset, layout: Layout, start: MoveStart) => {
-    // const deltaX = start.x - Number(e.clientX);
-    // const deltaY = start.y - Number(e.clientY);
-    layout.width = start.width + offset.x;
-    layout.height = start.height - offset.y;
-    layout.x = start.layoutX - offset.x;
+  "sw-resize": (_: Offset, layout: Layout, start: MoveStart, e: MouseEvent) => {
+    const scaleFactor = 1 / props.scale; // 计算缩放修正因子
+    const correct = {
+      x: (start.x - Number(e.clientX)) * scaleFactor,
+      y: (start.y - Number(e.clientY)) * scaleFactor,
+    };
+    layout.width = start.width + correct.x;
+    layout.height = start.height - correct.y;
+    layout.x = start.layoutX - correct.x;
     if (layout.width < 0) {
       layout.width = 0;
       layout.x = start.layoutX + start.width;
@@ -188,13 +185,16 @@ const resizeMove = {
     return layout;
   },
 
-  "nw-resize": (offset: Offset, layout: Layout, start: MoveStart) => {
-    // const deltaX = start.x - Number(e.clientX);
-    // const deltaY = start.y - Number(e.clientY);
-    layout.width = start.width + offset.x;
-    layout.height = start.height + offset.y;
-    layout.x = start.layoutX - offset.x;
-    layout.y = start.layoutY - offset.y;
+  "nw-resize": (_: Offset, layout: Layout, start: MoveStart, e: MouseEvent) => {
+    const scaleFactor = 1 / props.scale; // 计算缩放修正因子
+    const correct = {
+      x: (start.x - Number(e.clientX)) * scaleFactor,
+      y: (start.y - Number(e.clientY)) * scaleFactor,
+    };
+    layout.width = start.width + correct.x;
+    layout.height = start.height + correct.y;
+    layout.x = start.layoutX - correct.x;
+    layout.y = start.layoutY - correct.y;
     if (layout.height < 0) {
       layout.height = 0;
       layout.y = start.layoutY + start.height;
@@ -206,8 +206,6 @@ const resizeMove = {
     return layout;
   },
   move: (offset: Offset, layout: Layout, start: MoveStart) => {
-    // const moveX = Number(e.clientX) - start.x;
-    // const moveY = Number(e.clientY) - start.y;
     const resultX = start.layoutX + offset.x;
     const resultY = start.layoutY + offset.y;
     layout.x = resultX;
@@ -243,11 +241,14 @@ const mousedown = (e: MouseEvent, direction: keyof typeof resizeMove) => {
   };
   let fist = true;
   document.documentElement.style.userSelect = "none";
+  console.log("direction", direction);
   const move = (e: MouseEvent) => {
     if (fist) {
       fist = false;
       return;
     }
+    e.preventDefault();
+    e.stopPropagation();
     const scaleFactor = 1 / props.scale; // 计算缩放修正因子
     // 根据缩放倍率修正偏移量
     let offsetX = (e.clientX - start.x) * scaleFactor;
@@ -255,9 +256,11 @@ const mousedown = (e: MouseEvent, direction: keyof typeof resizeMove) => {
     const offset = { x: offsetX, y: offsetY };
     document.documentElement.style.userSelect = "none";
     emits("moving", e, direction);
-    model.value = resizeMove[direction](offset, { ...model.value }, start);
+    model.value = resizeMove[direction](offset, { ...model.value }, start, e);
   };
-  const up = () => {
+  const up = (e: MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
     emits("after-move", e, direction);
     document.documentElement.style.userSelect = "auto";
     document.removeEventListener("mousemove", move);
@@ -288,7 +291,7 @@ const style = computed((): CSSProperties => {
   return {
     position: props.position,
     transform: `translate(${model.value.x}px, ${model.value.y}px) rotate(${model.value.rotate}deg)`,
-    zIndex: model.value.zIndex,
+    zIndex: model.value.zIndex + 1,
     width: model.value.width + "px",
     height: model.value.height + "px",
   };
@@ -344,17 +347,17 @@ defineExpose({
       position: absolute;
       width: 8px;
       height: 8px;
-      background: skyblue;
-      border: 1px solid skyblue;
+      background: rgba(var(--z-primary), 0.5);
+      border: 1px solid rgba(var(--z-primary), 0.5);
       border-radius: 50%;
       z-index: 1;
     }
     .node.#{$res}:hover {
-      border: 1px dashed skyblue;
+      border: 1px dashed rgba(var(--z-primary), 0.5);
     }
   }
 }
 .active {
-  border: 1px solid skyblue;
+  border: 1px solid rgba(var(--z-primary), 0.5);
 }
 </style>

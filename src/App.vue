@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import ZDragEditor from "./components/ZDragEditor/ZDragEditor.vue";
 import { reactive } from "vue";
-let arr = Array.from({ length: 10 }, (_, k) => {
+let arr = Array.from({ length: 5 }, (_, k) => {
   return {
-    id: k + 1,
+    id: (k + 1).toString(),
     component: "a4",
     layout: {
       x: 0,
@@ -11,7 +11,7 @@ let arr = Array.from({ length: 10 }, (_, k) => {
       width: 794,
       height: 1123,
       rotate: 0,
-      zIndex: 0,
+      zIndex: 1,
       lock: false,
     },
   };
@@ -28,7 +28,7 @@ const store = reactive({
         width: 794,
         height: 1123,
         rotate: 0,
-        zIndex: 0,
+        zIndex: 1,
         lock: false,
       },
     },

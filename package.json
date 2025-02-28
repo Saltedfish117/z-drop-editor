@@ -9,10 +9,12 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "d3-quadtree": "^3.0.1",
     "vue": "^3.5.13",
     "vue3-dragscroll": "^1.0.2"
   },
   "devDependencies": {
+    "@types/d3-quadtree": "^3.0.6",
     "@vitejs/plugin-vue": "^5.2.1",
     "@vue/tsconfig": "^0.7.0",
     "sass": "^1.85.0",
