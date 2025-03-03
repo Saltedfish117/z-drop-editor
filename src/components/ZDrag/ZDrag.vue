@@ -27,7 +27,7 @@ const resizes = [
       left: "50%",
       top: 0,
       transform: "translate(-50%, -50%)",
-      cursor: "n-resize",
+      // cursor: "n-resize",
     },
   },
   {
@@ -36,7 +36,7 @@ const resizes = [
       left: "50%",
       bottom: 0,
       transform: "translate(-50%, 50%)",
-      cursor: "s-resize",
+      // cursor: "s-resize",
     },
   },
   {
@@ -45,7 +45,7 @@ const resizes = [
       right: 0,
       top: "50%",
       transform: "translate(50%, -50%)",
-      cursor: "e-resize",
+      // cursor: "e-resize",
     },
   },
   {
@@ -54,7 +54,7 @@ const resizes = [
       left: 0,
       top: "50%",
       transform: "translate(-50%, -50%)",
-      cursor: "w-resize",
+      // cursor: "w-resize",
     },
   },
   {
@@ -63,7 +63,7 @@ const resizes = [
       right: 0,
       top: 0,
       transform: "translate(50%, -50%)",
-      cursor: "ne-resize",
+      // cursor: "ne-resize",
     },
   },
   {
@@ -72,7 +72,7 @@ const resizes = [
       left: 0,
       top: 0,
       transform: "translate(-50%, -50%)",
-      cursor: "nw-resize",
+      // cursor: "nw-resize",
     },
   },
   {
@@ -81,7 +81,7 @@ const resizes = [
       right: 0,
       bottom: 0,
       transform: "translate(50%, 50%)",
-      cursor: "se-resize",
+      // cursor: "se-resize",
     },
   },
   {
@@ -90,12 +90,13 @@ const resizes = [
       left: 0,
       bottom: 0,
       transform: "translate(-50%, 50%)",
-      cursor: "sw-resize",
+      // cursor: "sw-resize",
     },
   },
 ];
 const resizeMove = {
-  "n-resize": (offset: Offset, layout: Layout, start: MoveStart) => {
+  "n-resize": (offset: Offset, _layout: Layout, start: MoveStart): Layout => {
+    const layout = { ..._layout };
     if (start.height - offset.y < 0) {
       layout.y = start.layoutY + start.height;
       layout.height = 0;
@@ -106,7 +107,8 @@ const resizeMove = {
     return layout;
   },
 
-  "e-resize": (offset: Offset, layout: Layout, start: MoveStart) => {
+  "e-resize": (offset: Offset, _layout: Layout, start: MoveStart): Layout => {
+    const layout = { ..._layout };
     if (start.width + offset.x < 0) {
       layout.width = 0;
     } else {
@@ -114,7 +116,8 @@ const resizeMove = {
     }
     return layout;
   },
-  "w-resize": (offset: Offset, layout: Layout, start: MoveStart) => {
+  "w-resize": (offset: Offset, _layout: Layout, start: MoveStart): Layout => {
+    const layout = { ..._layout };
     if (start.width - offset.x < 0) {
       layout.width = 0;
       layout.x = start.layoutX + start.width;
@@ -127,7 +130,8 @@ const resizeMove = {
     }
     return layout;
   },
-  "s-resize": (offset: Offset, layout: Layout, start: MoveStart) => {
+  "s-resize": (offset: Offset, _layout: Layout, start: MoveStart): Layout => {
+    const layout = { ..._layout };
     if (start.height + offset.y < 0) {
       layout.height = 0;
     } else {
@@ -136,7 +140,8 @@ const resizeMove = {
 
     return layout;
   },
-  "ne-resize": (offset: Offset, layout: Layout, start: MoveStart) => {
+  "ne-resize": (offset: Offset, _layout: Layout, start: MoveStart): Layout => {
+    const layout = { ..._layout };
     if (start.layoutY + offset.y < 0) {
       layout.y = 0;
       layout.height = start.height + start.layoutY;
@@ -154,7 +159,8 @@ const resizeMove = {
     }
     return layout;
   },
-  "se-resize": (offset: Offset, layout: Layout, start: MoveStart) => {
+  "se-resize": (offset: Offset, _layout: Layout, start: MoveStart): Layout => {
+    const layout = { ..._layout };
     layout.width = start.width + offset.x;
     layout.height = start.height + offset.y;
     if (layout.width <= 0) {
@@ -166,7 +172,13 @@ const resizeMove = {
     return layout;
   },
 
-  "sw-resize": (_: Offset, layout: Layout, start: MoveStart, e: MouseEvent) => {
+  "sw-resize": (
+    _: Offset,
+    _layout: Layout,
+    start: MoveStart,
+    e: MouseEvent
+  ): Layout => {
+    const layout = { ..._layout };
     const scaleFactor = 1 / props.scale; // 计算缩放修正因子
     const correct = {
       x: (start.x - Number(e.clientX)) * scaleFactor,
@@ -185,7 +197,13 @@ const resizeMove = {
     return layout;
   },
 
-  "nw-resize": (_: Offset, layout: Layout, start: MoveStart, e: MouseEvent) => {
+  "nw-resize": (
+    _: Offset,
+    _layout: Layout,
+    start: MoveStart,
+    e: MouseEvent
+  ): Layout => {
+    const layout = { ..._layout };
     const scaleFactor = 1 / props.scale; // 计算缩放修正因子
     const correct = {
       x: (start.x - Number(e.clientX)) * scaleFactor,
@@ -205,14 +223,16 @@ const resizeMove = {
     }
     return layout;
   },
-  move: (offset: Offset, layout: Layout, start: MoveStart) => {
+  move: (offset: Offset, _layout: Layout, start: MoveStart): Layout => {
+    const layout = { ..._layout };
     const resultX = start.layoutX + offset.x;
     const resultY = start.layoutY + offset.y;
     layout.x = resultX;
     layout.y = resultY;
     return layout;
   },
-  rotate: (offset: Offset, layout: Layout, _: MoveStart) => {
+  rotate: (offset: Offset, _layout: Layout, _: MoveStart): Layout => {
+    const layout = { ..._layout };
     // const moveX = Number(e.clientX) - start.radiusX;
     // const moveY = Number(e.clientY) - start.radiusY;
     const angle = Math.atan2(offset.y, offset.x) * (180 / Math.PI);
@@ -241,7 +261,6 @@ const mousedown = (e: MouseEvent, direction: keyof typeof resizeMove) => {
   };
   let fist = true;
   document.documentElement.style.userSelect = "none";
-  console.log("direction", direction);
   const move = (e: MouseEvent) => {
     if (fist) {
       fist = false;
@@ -255,8 +274,13 @@ const mousedown = (e: MouseEvent, direction: keyof typeof resizeMove) => {
     let offsetY = (e.clientY - start.y) * scaleFactor;
     const offset = { x: offsetX, y: offsetY };
     document.documentElement.style.userSelect = "none";
-    emits("moving", e, direction);
+    // emits("moving", e, direction);
     model.value = resizeMove[direction](offset, { ...model.value }, start, e);
+    Object.keys(model.value).forEach((_key) => {
+      const key = _key as keyof Layout;
+      (model.value[key] as number) = Math.round(model.value[key] as number);
+    });
+    // console.log(model.value);
   };
   const up = (e: MouseEvent) => {
     e.preventDefault();
@@ -314,7 +338,7 @@ defineExpose({
         <div
           v-for="res in resizes"
           :key="res.direction"
-          :style="res.style"
+          :style="{ ...res.style, '--cursor-rotate': model.rotate }"
           :class="res.direction"
           @mousedown="
             mousedown($event, res.direction as keyof typeof resizeMove)
@@ -324,7 +348,32 @@ defineExpose({
       <template v-else>
         <slot name="resizes" :active="active" :layout="model"></slot>
       </template>
+      <template v-if="!$slots.rotate">
+        <img
+          src="../../assets/rotate.svg"
+          class="rotate text-primary"
+          @mousedown="mousedown($event, 'rotate')"
+        />
+      </template>
+      <template v-else>
+        <slot name="rotate" :active="active" :layout="model"></slot>
+      </template>
     </template>
+    <template v-if="!$slots.lock">
+      <img
+        @mousedown.stop="model.lock = !model.lock"
+        v-show="model.lock"
+        src="../../assets/lock-off.svg"
+        class="lock"
+      />
+      <img
+        @mousedown.stop="model.lock = !model.lock"
+        v-show="!model.lock"
+        src="../../assets/lock-on.svg"
+        class="lock"
+      />
+    </template>
+    <slot v-else name="lock" :active="active" :layout="model"></slot>
     <slot name="default" :active="active" :layout="model"></slot>
   </div>
 </template>
@@ -351,10 +400,31 @@ defineExpose({
       border: 1px solid rgba(var(--z-primary), 0.5);
       border-radius: 50%;
       z-index: 1;
+      cursor: $res;
     }
-    .node.#{$res}:hover {
-      border: 1px dashed rgba(var(--z-primary), 0.5);
+  }
+  .rotate {
+    position: absolute;
+    width: 24px;
+    height: 24px;
+    font-size: 24px;
+    top: -28px;
+    left: 50%;
+    transform: translateX(-50%);
+    cursor: grab;
+    &:active {
+      cursor: grabbing;
     }
+  }
+  .lock {
+    position: absolute;
+    width: 24px;
+    height: 24px;
+    font-size: 24px;
+    top: -28px;
+    right: 0;
+    cursor: pointer;
+    display: block;
   }
 }
 .active {

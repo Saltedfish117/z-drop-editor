@@ -7,6 +7,7 @@ import {
   watch,
   nextTick,
   reactive,
+  onUnmounted,
 } from "vue";
 import ZDragEditorCanvas from "../ZDragEditorCanvas/ZDragEditorCanvas.vue";
 import ZToolbar from "../ZToolbar/ZToolbar.vue";
@@ -41,11 +42,10 @@ watch(
       val.reduce((prev, curr) => (prev += curr.layout.width), 0) +
       50 * val.length;
     let maxHeight = Math.max(...val.map((i) => i.layout.height));
-    canvasSize.value.width = nodesWidth * 20;
-    canvasSize.value.height = maxHeight * 20;
-
-    let startX = canvasSize.value.width / 2 - nodesWidth / 2;
-    let y = canvasSize.value.height / 2 - maxHeight / 2;
+    canvasSize.value.width = Math.round(nodesWidth * 20);
+    canvasSize.value.height = Math.round(maxHeight * 20);
+    let startX = Math.round(canvasSize.value.width / 2 - nodesWidth / 2);
+    let y = Math.round(canvasSize.value.height / 2 - maxHeight / 2);
     val.forEach((node) => {
       node.layout.x = startX + 50;
       startX += node.layout.width + 50;
@@ -103,6 +103,7 @@ const zoomOut = () => {
   );
 };
 const zoomIn = () => {
+  if (canvasSize.value.scale + 0.1 > 5) return;
   canvasSize.value.scale = Number.parseFloat(
     (canvasSize.value.scale + 0.1).toFixed(1)
   );
@@ -122,6 +123,9 @@ const mousewheel = (e: WheelEvent) => {
     }
   }
 };
+onUnmounted(() => {
+  nodeMap.clear();
+});
 </script>
 <template>
   <article tabindex="0" class="ZDragEditor">

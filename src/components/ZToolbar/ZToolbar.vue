@@ -6,11 +6,11 @@ defineOptions({
 });
 const scale = defineModel("scale", { type: Number, default: 1 });
 const changeScale = (e: Event) => {
-  const value = parseFloat((e.target as HTMLInputElement).value);
+  const value = parseFloat((e.target as HTMLInputElement).value) / 100;
   if (!Number.isNaN(value) && value >= 0.1 && value <= 5) {
     scale.value = Number(value.toFixed(2));
   } else {
-    (e.target as HTMLInputElement).value = scale.value.toString();
+    (e.target as HTMLInputElement).value = (scale.value * 100).toString();
   }
 };
 const adjustScale = (delta: number) => {
@@ -28,7 +28,7 @@ const adjustScale = (delta: number) => {
       <input
         class="ZToolbar-scale-value"
         @change="changeScale"
-        :value="scale"
+        :value="scale * 100"
       />
       <ZBtn color="text-primary" @click="adjustScale(-0.1)">-</ZBtn>
     </div>

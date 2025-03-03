@@ -1,8 +1,11 @@
 <script setup lang="ts">
-import { defineOptions, defineProps, defineModel, watch, ref } from "vue";
+import { defineOptions, defineProps, defineModel, computed } from "vue";
 import type { ZNodes } from "../ZDragEditor/types";
 import type { ZNode } from "../ZNode/types";
-import * as d3 from "d3-quadtree";
+import type { Layout } from "../ZDrag/types";
+import type { ZAdsorptions } from "./type";
+import { rotateLayout } from "../../common/utils";
+// import * as d3 from "d3-quadtree";
 defineOptions({
   name: "ZLines",
 });
@@ -17,117 +20,20 @@ const props = defineProps<{
   nodes: ZNodes;
   canvasSize: { width: number; height: number };
 }>();
-const interval = 5;
+const interval = 10;
 const diff = 3;
-const adsorption = ref(
-  [
-    {
-      y: 0,
-      x: 0,
-      height: "1px",
-      width: 0,
-      label: {
-        text: 0,
-        style: {
-          position: "absolute",
-          right: 0,
-        },
-      },
-      key: "top-left",
-    },
-    {
-      y: 0,
-      x: 0,
-      height: 0,
-      width: "1px",
-      label: {
-        text: 0,
-        style: {
-          position: "absolute",
-          bottom: 0,
-        },
-      },
-      key: "top-center",
-    },
-    {
-      y: 0,
-      x: 0,
-      height: "1px",
-      width: 0,
-      label: {
-        text: 0,
-        style: {
-          position: "absolute",
-          left: 0,
-        },
-      },
-      key: "top-right",
-    },
-    {
-      y: 0,
-      x: 0,
-      height: "1px",
-      width: 0,
-      label: {
-        text: 0,
-        style: {
-          position: "absolute",
-          right: 0,
-        },
-      },
-      key: "bottom-left",
-    },
-    {
-      y: 0,
-      x: 0,
-      height: "1px",
-      width: 0,
-      label: {
-        text: 0,
-        style: {
-          position: "absolute",
-          right: 0,
-        },
-      },
-      key: "bottom-center",
-    },
-    {
-      y: 0,
-      x: 0,
-      height: "1px",
-      width: 0,
-      label: {
-        text: 0,
-        style: {
-          position: "absolute",
-          left: 0,
-        },
-      },
-      key: "bottom-right",
-    },
-  ].map((i) => {
-    return {
-      ...i,
-      ...{
-        // ...其他配置
-        visible: false,
-        type: "horizontal", // 新增类型标识
-      },
-    };
-  })
-);
+const adsorption = computed(() => {
+  if (!moving.value) return [] as ZAdsorptions;
+  return checkAdsorption();
+});
 
 const checkAdsorption = () => {
   // 重置所有标线状态
-  adsorption.value.forEach((line) => {
-    line.width = 0;
-    line.height = 0;
-  });
   let nodes: ZNode[] = [];
   let parent = null;
   if (!node.value) return;
   const current = node.value;
-  const currentRect = current.layout;
+  const currentRect = rotateLayout(current.layout);
   // const quadtree = d3
   //   .quadtree<ZNode>()
   //   .x((d) => d.layout.x)
@@ -143,33 +49,328 @@ const checkAdsorption = () => {
     // ]);
     nodes = parent.children.filter((n) => n.id !== current.id);
   } else {
-    // quadtree.extent([
-    //   [0, 0],
-    //   [props.canvasSize.width, props.canvasSize.height],
-    // ]);
-  const candidates = nodes.filter(n => Math.abs(n.layout.x - currentRect.x) < interval * 2 ||
-    Math.abs(n.layout.y - currentRect.y) < interval * 2 ||
-     Math.abs(n.layout.x - currentRect.x - currentRect.width) < interval * 2 ||
-      Math.abs(n.layout.y - currentRect.y - currentRect.height) < interval * 2
-  );
-  console.log(candidates)
-  // quadtree.addAll(nodes);
-
-  // 更优的遍历方式（适合中小规模节点）
-  // const candidates: {
-  //   [key: string]: string;
-  // } = {};
-};
-watch(
-  () => moving.value,
-  () => {
-    if (!moving.value) return;
-    checkAdsorption();
+    nodes = props.nodes.filter((n) => n.id !== current.id);
   }
-);
+  const lins = new Map();
+  let start = 0;
+  let end = nodes.length - 1;
+  // console.log(nodes);
+  while (start <= end) {
+    const brothers = [nodes[start++], nodes[end--]];
+    const diffFn = (brother: ZNode, _?: number, __?: ZNodes) => {
+      const brotherRect = rotateLayout(brother.layout);
+
+      const push = (key: string) => {
+        if (lins.has(key)) {
+          lins.get(key).push(brother);
+        } else {
+          lins.set(key, [brother]);
+        }
+      };
+      const topIf = () => {
+        if (brotherRect.x + brotherRect.width < currentRect.x) {
+          push("top-left");
+        } else if (brotherRect.x > currentRect.x + currentRect.width) {
+          push("top-right");
+        }
+      };
+      const bottomIf = () => {
+        if (brotherRect.x + brotherRect.width < currentRect.x) {
+          push("bottom-left");
+        } else if (brotherRect.x > currentRect.x + currentRect.width) {
+          push("bottom-right");
+        }
+      };
+      const leftIf = () => {
+        if (brotherRect.y + brotherRect.height < currentRect.y) {
+          push("left-top");
+        } else if (brotherRect.y > currentRect.y + currentRect.height) {
+          push("left-bottom");
+        }
+      };
+      const rightIf = () => {
+        if (brotherRect.y + brotherRect.height < currentRect.y) {
+          push("right-top");
+        } else if (brotherRect.y > currentRect.y + currentRect.height) {
+          push("right-bottom");
+        }
+      };
+      // top
+      if (
+        Math.abs(brotherRect.y - currentRect.y) < interval ||
+        Math.abs(brotherRect.y + brotherRect.height - currentRect.y) < interval
+      ) {
+        // console.log("top");
+        topIf();
+      }
+      // bottom
+      if (
+        Math.abs(
+          brotherRect.y +
+            brotherRect.height -
+            (currentRect.y + currentRect.height)
+        ) < interval ||
+        Math.abs(brotherRect.y - (currentRect.y + currentRect.height)) <
+          interval
+      ) {
+        // console.log("bottom");
+        bottomIf();
+      }
+      // left
+      if (
+        Math.abs(brotherRect.x - currentRect.x) < interval ||
+        Math.abs(brotherRect.x + brotherRect.width - currentRect.x) < interval
+      )
+        leftIf();
+      // right
+      if (
+        Math.abs(
+          brotherRect.x + brotherRect.width - currentRect.x - currentRect.width
+        ) < interval ||
+        Math.abs(brotherRect.x - (currentRect.x + currentRect.width)) < interval
+      ) {
+        rightIf();
+      }
+    };
+    if (brothers[0] === brothers[1]) {
+      diffFn(brothers[0]);
+      break;
+    }
+    brothers.forEach(diffFn);
+  }
+  // const filterFn = (
+  //   target: {
+  //     pre: ZNode;
+  //     cur: ZNode;
+  //     key: "x" | "y";
+  //   },
+  //   diff: ">" | "<"
+  // ) => {
+  //   switch (diff) {
+  //     case ">":
+  //       return target.pre.layout[target.key] > target.cur.layout[target.key]
+  //         ? target.cur
+  //         : target.pre;
+  //     case "<":
+  //       return target.pre.layout[target.key] < target.cur.layout[target.key]
+  //         ? target.cur
+  //         : target.pre;
+  //   }
+  // };
+  const filter = {
+    "top-left": (pre: ZNode, cur: ZNode) => {
+      if (pre.layout.x < cur.layout.x) {
+        return cur;
+      } else {
+        return pre;
+      }
+    },
+    "top-right": (pre: ZNode, cur: ZNode) => {
+      if (pre.layout.x > cur.layout.x) {
+        return cur;
+      } else {
+        return pre;
+      }
+    },
+    "bottom-left": (pre: ZNode, cur: ZNode) => {
+      if (pre.layout.x < cur.layout.x) {
+        return cur;
+      } else {
+        return pre;
+      }
+    },
+    "bottom-right": (pre: ZNode, cur: ZNode) => {
+      if (pre.layout.x > cur.layout.x) {
+        return cur;
+      } else {
+        return pre;
+      }
+    },
+    "left-top": (pre: ZNode, cur: ZNode) => {
+      if (pre.layout.y < cur.layout.y) {
+        return cur;
+      } else {
+        return pre;
+      }
+    },
+    "left-bottom": (pre: ZNode, cur: ZNode) => {
+      if (pre.layout.y > cur.layout.y) {
+        return cur;
+      } else {
+        return pre;
+      }
+    },
+    "right-top": (pre: ZNode, cur: ZNode) => {
+      if (pre.layout.y < cur.layout.y) {
+        return cur;
+      } else {
+        return pre;
+      }
+    },
+    "right-bottom": (pre: ZNode, cur: ZNode) => {
+      if (pre.layout.y > cur.layout.y) {
+        return cur;
+      } else {
+        return pre;
+      }
+    },
+  };
+  const lineMap = {
+    "top-left": (rect: Layout) => {
+      
+      return {
+        y: currentRect.y + "px",
+        x: rect.x + rect.width + "px",
+        width: Math.round(currentRect.x - (rect.x + rect.width)) + "px",
+        height: "1px",
+        label: {
+          text: Math.round(currentRect.x - (rect.x + rect.width)) + "px",
+          style: {
+            right: "0",
+          },
+        },
+        key: "top-left",
+      };
+    },
+    "top-right": (rect: Layout) => {
+      return {
+        y: currentRect.y + "px",
+        x: currentRect.x + currentRect.width + "px",
+        width: Math.round(rect.x - (currentRect.x + currentRect.width)) + "px",
+        height: "1px",
+        label: {
+          text: Math.round(rect.x - (currentRect.x + currentRect.width)) + "px",
+          style: {
+            left: "0",
+          },
+        },
+        key: "top-right",
+      };
+    },
+    "bottom-left": (rect: Layout) => {
+      return {
+        y: currentRect.y + currentRect.height + "px",
+        x: rect.x + rect.width + "px",
+        width: Math.round(currentRect.x - (rect.x + rect.width)) + "px",
+        height: "1px",
+        label: {
+          text: Math.round(currentRect.x - (rect.x + rect.width)) + "px",
+          style: {
+            right: "0",
+          },
+        },
+        key: "bottom-left",
+      };
+    },
+    "bottom-right": (rect: Layout) => {
+      return {
+        y: currentRect.y + currentRect.height + "px",
+        x: currentRect.x + currentRect.width + "px",
+        width: Math.round(rect.x - (currentRect.x + currentRect.width)) + "px",
+        height: "1px",
+        label: {
+          text: Math.round(rect.x - (currentRect.x + currentRect.width)) + "px",
+          style: {
+            left: "0",
+          },
+        },
+        key: "bottom-right",
+      };
+    },
+    "left-top": (rect: Layout) => {
+      return {
+        key: "left-top",
+        x: currentRect.x + "px",
+        y: rect.y + rect.height + "px",
+        width: "1px",
+        height: Math.round(currentRect.y - (rect.y + rect.height)) + "px",
+        label: {
+          text: Math.round(currentRect.y - (rect.y + rect.height)) + "px",
+          style: {
+            bottom: "0",
+          },
+        },
+      };
+    },
+    "left-bottom": (rect: Layout) => {
+      return {
+        key: "left-bottom",
+        x: currentRect.x + "px",
+        y: currentRect.y + currentRect.height + "px",
+        width: "1px",
+        height:
+          Math.round(rect.y - (currentRect.y + currentRect.height)) + "px",
+        label: {
+          text:
+            Math.round(rect.y - (currentRect.y + currentRect.height)) + "px",
+          style: {
+            top: "0",
+          },
+        },
+      };
+    },
+    "right-top": (rect: Layout) => {
+      return {
+        x: currentRect.x + currentRect.width + "px",
+        y: rect.y + rect.height + "px",
+        width: "1px",
+        height: Math.round(currentRect.y - (rect.y + rect.height)) + "px",
+        label: {
+          text: Math.round(currentRect.y - (rect.y + rect.height)) + "px",
+          style: {
+            bottom: "0",
+          },
+        },
+        key: "right-top",
+      };
+    },
+    "right-bottom": (rect: Layout) => {
+      return {
+        x: currentRect.x + currentRect.width + "px",
+        y: currentRect.y + currentRect.height + "px",
+        width: "1px",
+        height:
+          Math.round(rect.y - (currentRect.y + currentRect.height)) + "px",
+        label: {
+          text:
+            Math.round(rect.y - (currentRect.y + currentRect.height)) + "px",
+          style: {
+            bottom: "0",
+          },
+        },
+        key: "right-bottom",
+      };
+    },
+  };
+  const filterLines = Array.from(lins.keys()).map((key) => {
+    const value = lins.get(key);
+    const keyNode = value.reduce(
+      (pre: ZNode, cur: ZNode): ZNode =>
+        pre ? filter[key as keyof typeof filter](pre, cur) : cur
+    );
+    return lineMap[key as keyof typeof lineMap](rotateLayout(keyNode.layout));
+  });
+  lins.clear();
+  return filterLines;
+};
 </script>
 <template>
-  <div class="ZLines"></div>
+  <div class="ZLines">
+    <div
+      class="line"
+      v-for="line in adsorption"
+      :style="{
+        transform: `translate(${line.x}, ${line.y})`,
+        width: line.width,
+        height: line.height,
+      }"
+      :key="line.key"
+    >
+      <div class="line-label" :style="line.label.style">
+        {{ line.label.text }}
+      </div>
+    </div>
+  </div>
 </template>
 <style scoped lang="scss">
 .ZLines {
@@ -186,6 +387,7 @@ watch(
       padding: 4px 8px;
       font-size: 12px;
       color: rgba(var(--z-primary), 1);
+      position: absolute;
     }
   }
 }

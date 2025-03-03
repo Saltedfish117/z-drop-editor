@@ -13,7 +13,7 @@ defineProps<ZNodeProps>();
     :style="{
       width: `${node.layout.width}px`,
       height: `${node.layout.height}px`,
-      transform: `translate(${node.layout.x}px,${node.layout.y}px)`,
+      transform: `translate(${node.layout.x}px,${node.layout.y}px) rotate(${node.layout.rotate}deg)`,
     }"
     class="ZNode"
   >
