@@ -149,6 +149,10 @@ onUnmounted(() => {
   --canvas-bg-color: 244, 245, 247;
   --canvas-grid-color: 0, 0, 0;
   --canvas-grid-size: 20px;
+  background-color: rgb(var(--canvas-bg-color));
+  // background-image: linear-gradient(rgba(0, 0, 0, 0.1) 1px, transparent 1px),
+  //   linear-gradient(90deg, rgba(0, 0, 0, 0.1) 1px, transparent 1px);
+  // background-size: var(--canvas-grid-size) var(--canvas-grid-size);
   .infinite-canvas {
     position: relative;
     min-width: 100%;

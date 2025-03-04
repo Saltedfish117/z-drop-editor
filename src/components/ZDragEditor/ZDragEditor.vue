@@ -156,9 +156,10 @@ onUnmounted(() => {
           v-model="activeLayout"
         ></ZDrag>
         <ZLines
+          :diff="3"
+          :interval="10"
           :nodes="store.nodes"
           :scale="canvasSize.scale"
-          :canvasSize="canvasSize"
           :nodeMap="nodeMap"
           v-model:moving="moving"
           v-model="store.active"

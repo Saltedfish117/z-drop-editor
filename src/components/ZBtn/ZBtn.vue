@@ -95,9 +95,17 @@ const props = withDefaults(defineProps<ZBtnProps>(), {
     border: none;
     background-color: transparent;
     color: rgba(var(--z-#{$color}), 0.8);
+    // &:not(.is-disabled):hover {
+    //   background-color: rgba(var(--z-#{$color}), 0.3);
+    // }
+    // 交互效果
     &:not(.is-disabled):hover {
+      opacity: 0.9;
       background-color: rgba(var(--z-#{$color}), 0.3);
-      // color: var(--z-light-text);
+      transform: translateY(-1px);
+    }
+    &:not(.is-disabled):active {
+      transform: translateY(0);
     }
   }
 }

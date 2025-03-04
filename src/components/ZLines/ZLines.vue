@@ -1,5 +1,11 @@
 <script setup lang="ts">
-import { defineOptions, defineProps, defineModel, computed } from "vue";
+import {
+  defineOptions,
+  defineProps,
+  defineModel,
+  computed,
+  withDefaults,
+} from "vue";
 import type { ZNodes } from "../ZDragEditor/types";
 import type { ZNode } from "../ZNode/types";
 import type { Layout } from "../ZDrag/types";
@@ -14,14 +20,21 @@ const moving = defineModel("moving", {
   type: Boolean,
 });
 const node = defineModel<ZNode | null>();
-const props = defineProps<{
-  nodeMap: Map<string, ZNode>;
-  scale: number;
-  nodes: ZNodes;
-  canvasSize: { width: number; height: number };
-}>();
-const interval = 10;
-const diff = 3;
+const props = withDefaults(
+  defineProps<{
+    nodeMap: Map<string, ZNode>;
+    scale: number;
+    nodes: ZNodes;
+    interval: number;
+    diff: number;
+  }>(),
+  {
+    interval: 10,
+    diff: 3,
+  }
+);
+// const interval = 10;
+// const diff = 5;
 const adsorption = computed(() => {
   if (!moving.value) return [] as ZAdsorptions;
   return checkAdsorption();
@@ -59,7 +72,6 @@ const checkAdsorption = () => {
     const brothers = [nodes[start++], nodes[end--]];
     const diffFn = (brother: ZNode, _?: number, __?: ZNodes) => {
       const brotherRect = rotateLayout(brother.layout);
-
       const push = (key: string) => {
         if (lins.has(key)) {
           lins.get(key).push(brother);
@@ -73,12 +85,39 @@ const checkAdsorption = () => {
         } else if (brotherRect.x > currentRect.x + currentRect.width) {
           push("top-right");
         }
+
+        if (Math.abs(brotherRect.y - currentRect.y) < props.diff) {
+          node.value!.layout.y = brotherRect.y;
+        } else if (Math.abs(brotherRect.y - currentRect.y) < props.diff) {
+          node.value!.layout.y = brotherRect.y;
+        } else if (
+          Math.abs(brotherRect.y + brotherRect.height - currentRect.y) < props.diff
+        ) {
+          node.value!.layout.y = Math.round(brotherRect.y + brotherRect.height);
+        }
       };
       const bottomIf = () => {
         if (brotherRect.x + brotherRect.width < currentRect.x) {
           push("bottom-left");
         } else if (brotherRect.x > currentRect.x + currentRect.width) {
           push("bottom-right");
+        }
+
+        if (
+          Math.abs(
+            brotherRect.y +
+              brotherRect.height -
+              currentRect.y -
+              currentRect.height
+          ) < props.diff
+        ) {
+          node.value!.layout.y = Math.round(
+            brotherRect.y + brotherRect.height - currentRect.height
+          );
+        } else if (
+          Math.abs(brotherRect.y - (currentRect.y + currentRect.height)) < props.diff
+        ) {
+          node.value!.layout.y = Math.round(brotherRect.y - currentRect.height);
         }
       };
       const leftIf = () => {
@@ -87,6 +126,14 @@ const checkAdsorption = () => {
         } else if (brotherRect.y > currentRect.y + currentRect.height) {
           push("left-bottom");
         }
+
+        if (Math.abs(brotherRect.x - currentRect.x) < props.diff) {
+          node.value!.layout.x = Math.round(brotherRect.x);
+        } else if (
+          Math.abs(brotherRect.x + brotherRect.width - currentRect.x) < props.diff
+        ) {
+          node.value!.layout.x = Math.round(brotherRect.x + brotherRect.width);
+        }
       };
       const rightIf = () => {
         if (brotherRect.y + brotherRect.height < currentRect.y) {
@@ -94,13 +141,29 @@ const checkAdsorption = () => {
         } else if (brotherRect.y > currentRect.y + currentRect.height) {
           push("right-bottom");
         }
+
+        if (
+          Math.abs(
+            brotherRect.x +
+              brotherRect.width -
+              currentRect.x -
+              currentRect.width
+          ) < props.diff
+        ) {
+          node.value!.layout.x =
+            brotherRect.x + brotherRect.width - currentRect.width;
+        }
+        if (
+          Math.abs(currentRect.x + currentRect.width - brotherRect.x) < props.diff
+        ) {
+          node.value!.layout.x = brotherRect.x - currentRect.width;
+        }
       };
       // top
       if (
-        Math.abs(brotherRect.y - currentRect.y) < interval ||
-        Math.abs(brotherRect.y + brotherRect.height - currentRect.y) < interval
+        Math.abs(brotherRect.y - currentRect.y) < props.interval ||
+        Math.abs(brotherRect.y + brotherRect.height - currentRect.y) < props.interval
       ) {
-        // console.log("top");
         topIf();
       }
       // bottom
@@ -109,25 +172,25 @@ const checkAdsorption = () => {
           brotherRect.y +
             brotherRect.height -
             (currentRect.y + currentRect.height)
-        ) < interval ||
+        ) < props.interval ||
         Math.abs(brotherRect.y - (currentRect.y + currentRect.height)) <
-          interval
+          props.interval
       ) {
         // console.log("bottom");
         bottomIf();
       }
       // left
       if (
-        Math.abs(brotherRect.x - currentRect.x) < interval ||
-        Math.abs(brotherRect.x + brotherRect.width - currentRect.x) < interval
+        Math.abs(brotherRect.x - currentRect.x) < props.interval ||
+        Math.abs(brotherRect.x + brotherRect.width - currentRect.x) < props.interval
       )
         leftIf();
       // right
       if (
         Math.abs(
           brotherRect.x + brotherRect.width - currentRect.x - currentRect.width
-        ) < interval ||
-        Math.abs(brotherRect.x - (currentRect.x + currentRect.width)) < interval
+        ) < props.interval ||
+        Math.abs(brotherRect.x - (currentRect.x + currentRect.width)) < props.interval
       ) {
         rightIf();
       }
@@ -144,9 +207,9 @@ const checkAdsorption = () => {
   //     cur: ZNode;
   //     key: "x" | "y";
   //   },
-  //   diff: ">" | "<"
+  //   props.diff: ">" | "<"
   // ) => {
-  //   switch (diff) {
+  //   switch (props.diff) {
   //     case ">":
   //       return target.pre.layout[target.key] > target.cur.layout[target.key]
   //         ? target.cur
@@ -217,7 +280,9 @@ const checkAdsorption = () => {
   };
   const lineMap = {
     "top-left": (rect: Layout) => {
-      
+      // if (rect.y - currentRect.y < props.diff) {
+      //   node.value!.layout.y = rect.y;
+      // }
       return {
         y: currentRect.y + "px",
         x: rect.x + rect.width + "px",
