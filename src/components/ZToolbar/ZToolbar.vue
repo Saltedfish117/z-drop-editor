@@ -32,11 +32,14 @@ const adjustScale = (delta: number) => {
   <header class="ZToolbar">
     <h1 class="ZToolbar-logo">ZDragEditor</h1>
     <div class="ZToolbar-end">
-      <img
+      <ZBtn
         @click="setupOpenChange"
+        :padding="false"
+        color="text-primary"
         class="ZToolbar-setup-icon"
-        src="../../assets/setup.svg"
-      />
+      >
+        <img src="../../assets/setup.svg" />
+      </ZBtn>
       <div class="ZToolbar-scale">
         <ZBtn color="text-primary" @click="adjustScale(0.1)">+</ZBtn>
         <input
@@ -106,27 +109,37 @@ const adjustScale = (delta: number) => {
     }
   }
   .ZToolbar-setup-icon {
-    width: 20px;
-    height: 20px;
-    cursor: pointer;
+    img {
+      width: 20px;
+      height: 20px;
+      display: block;
+      cursor: pointer;
+    }
+    position: relative;
   }
   .ZToolbar-setup {
     position: absolute;
     top: calc(100% + 1px);
-    height: calc(100vh - 50px);
     max-height: calc(100vh - 50px);
-    right: 0px;
-    min-width: 280px;
+    right: 1px;
+    width: 280px;
     background-color: #ffffff;
     transition: all 0.3s ease;
-    transform: scaleX(0);
-    transform-origin: right center;
+    transform: scaleY(0);
+    border-radius: 0 0 16px 16px;
+    transform-origin: top center;
     .ZToolbar-setup-content {
       height: 300px;
+      opacity: 0;
+      transition: opacity 0.1s ease;
     }
   }
   .ZToolbar-setup.open {
-    transform: scaleX(1);
+    transform: scaleY(1);
+    .ZToolbar-setup-content {
+      height: 300px;
+      opacity: 1;
+    }
   }
 }
 </style>

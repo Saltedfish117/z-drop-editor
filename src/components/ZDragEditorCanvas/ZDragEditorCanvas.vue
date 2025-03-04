@@ -150,6 +150,15 @@ onUnmounted(() => {
   --canvas-grid-color: 0, 0, 0;
   --canvas-grid-size: 20px;
   background-color: rgb(var(--canvas-bg-color));
+  // 隐藏滚动条
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE/Edge */
+  &::-webkit-scrollbar {
+    display: none;
+    width: 0;
+    height: 0;
+    background: transparent;
+  }
   // background-image: linear-gradient(rgba(0, 0, 0, 0.1) 1px, transparent 1px),
   //   linear-gradient(90deg, rgba(0, 0, 0, 0.1) 1px, transparent 1px);
   // background-size: var(--canvas-grid-size) var(--canvas-grid-size);

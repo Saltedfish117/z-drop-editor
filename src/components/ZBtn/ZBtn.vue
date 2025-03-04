@@ -39,8 +39,10 @@ const props = withDefaults(defineProps<ZBtnProps>(), {
   background-color: rgba(var(--z-primary), 0.8);
   color: white;
   cursor: pointer;
-  transition: all 0.3s;
+  transition: all 0.1s;
   outline: none;
+  padding: 0;
+  transform-origin: center;
   &.is-round {
     border-radius: 24px;
   }
@@ -51,6 +53,14 @@ const props = withDefaults(defineProps<ZBtnProps>(), {
   &.is-padding {
     padding: 4px 8px;
   }
+  // 交互效果
+  &:not(.is-disabled):hover {
+    opacity: 0.9;
+    transform: scale(1.05);
+  }
+  &:not(.is-disabled):active {
+    transform: scale(0.95);
+  }
 }
 // 颜色扩展
 @each $color in primary, success, danger, warning, info, dark {
@@ -60,14 +70,6 @@ const props = withDefaults(defineProps<ZBtnProps>(), {
     &.is-plain {
       color: rgba(var(--z-#{$color}), 0.8);
       background-color: transparent;
-    }
-    // 交互效果
-    &:not(.is-disabled):hover {
-      opacity: 0.9;
-      transform: translateY(-1px);
-    }
-    &:not(.is-disabled):active {
-      transform: translateY(0);
     }
   }
   .z-btn-link-#{$color} {
@@ -95,18 +97,7 @@ const props = withDefaults(defineProps<ZBtnProps>(), {
     border: none;
     background-color: transparent;
     color: rgba(var(--z-#{$color}), 0.8);
-    // &:not(.is-disabled):hover {
-    //   background-color: rgba(var(--z-#{$color}), 0.3);
-    // }
-    // 交互效果
-    &:not(.is-disabled):hover {
-      opacity: 0.9;
-      background-color: rgba(var(--z-#{$color}), 0.3);
-      transform: translateY(-1px);
-    }
-    &:not(.is-disabled):active {
-      transform: translateY(0);
-    }
+    border: 1px solid transparent;
   }
 }
 // 特殊颜色处理
