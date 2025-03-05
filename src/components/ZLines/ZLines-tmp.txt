@@ -1,0 +1,351 @@
+<script setup lang="ts">
+import {
+  defineOptions,
+  defineProps,
+  defineModel,
+  computed,
+  withDefaults,
+} from "vue";
+import type { ZNodes } from "../ZDragEditor/types";
+import type { ZNode } from "../ZNode/types";
+import type { Layout } from "../ZDrag/types";
+import type { ZAdsorptions } from "./type";
+import { rotateLayout, getRotatedCorners } from "../../common/utils";
+// import * as d3 from "d3-quadtree";
+defineOptions({
+  name: "ZLines",
+});
+const moving = defineModel("moving", {
+  required: true,
+  type: Boolean,
+});
+const node = defineModel<ZNode | null>();
+const props = withDefaults(
+  defineProps<{
+    nodeMap: Map<string, ZNode>;
+    scale: number;
+    nodes: ZNodes;
+    interval: number;
+    diff: number;
+  }>(),
+  {
+    interval: 10,
+    diff: 3,
+  }
+);
+// const interval = 10;
+// const diff = 5;
+const adsorption = computed(() => {
+  if (!moving.value) return [] as ZAdsorptions;
+  return checkAdsorption();
+});
+// 辅助函数：计算节点间距离
+const getDistance = (a: ZNode, b: ZNode) => {
+  const aCenter = getCenterPoint(a.layout);
+  const bCenter = getCenterPoint(b.layout);
+  return Math.sqrt(
+    Math.pow(aCenter.x - bCenter.x, 2) + Math.pow(aCenter.y - bCenter.y, 2)
+  );
+};
+
+// 辅助函数：获取元素中心点
+const getCenterPoint = (layout: Layout) => {
+  const corners = getRotatedCorners(layout);
+  return {
+    x: (corners[0].x + corners[2].x) / 2,
+    y: (corners[0].y + corners[2].y) / 2,
+  };
+};
+
+// 生成标线数据
+const createLineData = (type: string, brother: ZNode) => {
+  const currentCorners = getRotatedCorners(node.value!.layout);
+  const brotherCorners = getRotatedCorners(brother.layout);
+  const currentRect = {
+    x: Math.min(...currentCorners.map((p) => p.x)),
+    y: Math.min(...currentCorners.map((p) => p.y)),
+    width:
+      Math.max(...currentCorners.map((p) => p.x)) -
+      Math.min(...currentCorners.map((p) => p.x)),
+    height:
+      Math.max(...currentCorners.map((p) => p.y)) -
+      Math.min(...currentCorners.map((p) => p.y)),
+  };
+  const brotherRect = {
+    x: Math.min(...brotherCorners.map((p) => p.x)),
+    y: Math.min(...brotherCorners.map((p) => p.y)),
+    width:
+      Math.max(...brotherCorners.map((p) => p.x)) -
+      Math.min(...brotherCorners.map((p) => p.x)),
+    height:
+      Math.max(...brotherCorners.map((p) => p.y)) -
+      Math.min(...brotherCorners.map((p) => p.y)),
+  };
+
+  switch (type) {
+    case "left":
+      return {
+        x: brotherRect.x + brotherRect.width + "px",
+        y: currentRect.y + "px",
+        width:
+          Math.abs(currentRect.x - (brotherRect.x + brotherRect.width)) + "px",
+        height: "1px",
+        label: {
+          text:
+            Math.abs(currentRect.x - (brotherRect.x + brotherRect.width)) +
+            "px",
+          style: { left: "50%", transform: "translateX(-50%)", top: "-18px" },
+        },
+        key: "left-" + node.id,
+      };
+
+    case "right":
+      return {
+        x: currentRect.x + currentRect.width + "px",
+        y: currentRect.y + "px",
+        width:
+          Math.abs(brotherRect.x - (currentRect.x + currentRect.width)) + "px",
+        height: "1px",
+        label: {
+          text:
+            Math.abs(brotherRect.x - (currentRect.x + currentRect.width)) +
+            "px",
+          style: { left: "50%", transform: "translateX(-50%)", top: "-18px" },
+        },
+        key: "right-" + node.id,
+      };
+
+    case "top":
+      return {
+        x: currentRect.x + "px",
+        y: brotherRect.y + brotherRect.height + "px",
+        width: "1px",
+        height:
+          Math.abs(currentRect.y - (brotherRect.y + brotherRect.height)) + "px",
+        label: {
+          text:
+            Math.abs(currentRect.y - (brotherRect.y + brotherRect.height)) +
+            "px",
+          style: { left: "-28px", top: "50%", transform: "translateY(-50%)" },
+        },
+        key: "top-" + node.id,
+      };
+
+    case "bottom":
+      return {
+        x: currentRect.x + "px",
+        y: currentRect.y + currentRect.height + "px",
+        width: "1px",
+        height:
+          Math.abs(brotherRect.y - (currentRect.y + currentRect.height)) + "px",
+        label: {
+          text:
+            Math.abs(brotherRect.y - (currentRect.y + currentRect.height)) +
+            "px",
+          style: { left: "-28px", top: "50%", transform: "translateY(-50%)" },
+        },
+        key: "bottom-" + node.id,
+      };
+
+    case "center-x":
+      return {
+        x: brotherRect.x + brotherRect.width / 2 + "px",
+        y: currentRect.y + "px",
+        width: "1px",
+        height: currentRect.height + "px",
+        label: {
+          text: "中心对齐",
+          style: { left: "-28px", top: "50%", transform: "translateY(-50%)" },
+        },
+        key: "center-x-" + node.id,
+      };
+
+    case "center-y":
+      return {
+        x: currentRect.x + "px",
+        y: brotherRect.y + brotherRect.height / 2 + "px",
+        width: currentRect.width + "px",
+        height: "1px",
+        label: {
+          text: "中心对齐",
+          style: { left: "50%", transform: "translateX(-50%)", top: "-18px" },
+        },
+        key: "center-y-" + node.id,
+      };
+
+    default:
+      return {} as any;
+  }
+};
+const checkAdsorption = () => {
+  let nodes: ZNode[] = [];
+  let parent = null;
+  if (!node.value) return [];
+  const current = node.value;
+
+  // 获取当前元素旋转后的实际包围盒
+  const currentCorners = getRotatedCorners(current.layout);
+  const currentRect = {
+    x: Math.min(...currentCorners.map((p) => p.x)),
+    y: Math.min(...currentCorners.map((p) => p.y)),
+    width:
+      Math.max(...currentCorners.map((p) => p.x)) -
+      Math.min(...currentCorners.map((p) => p.x)),
+    height:
+      Math.max(...currentCorners.map((p) => p.y)) -
+      Math.min(...currentCorners.map((p) => p.y)),
+  };
+
+  // 获取兄弟节点
+  if (
+    props.nodeMap.has(current.parentId!) &&
+    (parent = props.nodeMap.get(current.parentId!)) &&
+    parent.children
+  ) {
+    nodes = parent.children.filter((n) => n.id !== current.id);
+  } else {
+    nodes = props.nodes.filter((n) => n.id !== current.id);
+  }
+
+  const lins = new Map<string, ZNode[]>();
+  // 生成标线数据
+  const pushLineData = (type: string, brother: ZNode) => {
+    const key = `${type}-${brother.id}`;
+    if (!lins.has(key)) lins.set(key, []);
+    lins.get(key)!.push(brother);
+  };
+
+  // 遍历所有可能对齐的节点
+  nodes.forEach((brother) => {
+    const brotherCorners = getRotatedCorners(brother.layout);
+    const brotherRect = {
+      x: Math.min(...brotherCorners.map((p) => p.x)),
+      y: Math.min(...brotherCorners.map((p) => p.y)),
+      width:
+        Math.max(...brotherCorners.map((p) => p.x)) -
+        Math.min(...brotherCorners.map((p) => p.x)),
+      height:
+        Math.max(...brotherCorners.map((p) => p.y)) -
+        Math.min(...brotherCorners.map((p) => p.y)),
+    };
+
+    // 水平对齐检测
+    const checkXAlignment = () => {
+      // 左对齐
+      if (Math.abs(brotherRect.x - currentRect.x) < props.diff) {
+        const offset = brotherRect.x - currentCorners[0].x;
+        node.value!.layout.x += offset;
+        pushLineData("left", brother);
+      }
+      // 右对齐
+      if (
+        Math.abs(
+          brotherRect.x + brotherRect.width - currentRect.x - currentRect.width
+        ) < props.diff
+      ) {
+        const offset = brotherRect.x + brotherRect.width - currentCorners[1].x;
+        node.value!.layout.x += offset;
+        pushLineData("right", brother);
+      }
+    };
+
+    // 垂直对齐检测
+    const checkYAlignment = () => {
+      // 上对齐
+      if (Math.abs(brotherRect.y - currentRect.y) < props.diff) {
+        const offset = brotherRect.y - currentCorners[0].y;
+        node.value!.layout.y += offset;
+        pushLineData("top", brother);
+      }
+      // 下对齐
+      if (
+        Math.abs(
+          brotherRect.y +
+            brotherRect.height -
+            currentRect.y -
+            currentRect.height
+        ) < props.diff
+      ) {
+        const offset = brotherRect.y + brotherRect.height - currentCorners[2].y;
+        node.value!.layout.y += offset;
+        pushLineData("bottom", brother);
+      }
+    };
+
+    // 中心线对齐检测
+    const checkCenterAlignment = () => {
+      // 水平中线
+      const currentCenterX = currentRect.x + currentRect.width / 2;
+      const brotherCenterX = brotherRect.x + brotherRect.width / 2;
+      if (Math.abs(brotherCenterX - currentCenterX) < props.diff) {
+        const offset =
+          brotherCenterX - (currentCorners[0].x + currentRect.width / 2);
+        node.value!.layout.x += offset;
+        pushLineData("center-x", brother);
+      }
+
+      // 垂直中线
+      const currentCenterY = currentRect.y + currentRect.height / 2;
+      const brotherCenterY = brotherRect.y + brotherRect.height / 2;
+      if (Math.abs(brotherCenterY - currentCenterY) < props.diff) {
+        const offset =
+          brotherCenterY - (currentCorners[0].y + currentRect.height / 2);
+        node.value!.layout.y += offset;
+        pushLineData("center-y", brother);
+      }
+    };
+
+    checkXAlignment();
+    checkYAlignment();
+    checkCenterAlignment();
+  });
+
+  // 转换标线数据
+  const filterLines = Array.from(lins.entries()).map(([key, nodes]) => {
+    const closestNode = nodes.reduce((prev, curr) =>
+      getDistance(prev, current) < getDistance(curr, current) ? prev : curr
+    );
+    return createLineData(key.split("-")[0], closestNode);
+  });
+
+  return filterLines;
+};
+</script>
+<template>
+  <div class="ZLines">
+    <div
+      class="line"
+      v-for="line in adsorption"
+      :style="{
+        transform: `translate(${line.x}, ${line.y})`,
+        width: line.width,
+        height: line.height,
+      }"
+      :key="line.key"
+    >
+      <div v-if="line.label" class="line-label" :style="line.label.style">
+        {{ line.label.text }}
+      </div>
+    </div>
+  </div>
+</template>
+<style scoped lang="scss">
+.ZLines {
+  position: absolute;
+  top: 0;
+  left: 0;
+  .line {
+    position: absolute;
+    top: 0;
+    left: 0;
+    background-color: rgba(var(--z-primary), 1);
+    z-index: 999;
+    .line-label {
+      padding: 4px 8px;
+      font-size: 12px;
+      color: rgba(var(--z-primary), 1);
+      position: absolute;
+    }
+  }
+}
+</style>

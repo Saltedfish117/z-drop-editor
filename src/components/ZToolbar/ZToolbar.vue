@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import { defineOptions, defineModel, ref } from "vue";
 import ZBtn from "../ZBtn/ZBtn.vue";
+import ZTextField from "../ZTextField/ZTextField.vue";
+import ZScaleController from "../ZScaleController/ZScaleController.vue";
 defineOptions({
   name: "ZToolbar",
 });
-const scale = defineModel("scale", { type: Number, default: 1 });
+const scale = defineModel("scale", { type: Number, required: true });
 const layout = defineModel("layout", {
   type: Object,
   required: true,
@@ -12,20 +14,6 @@ const layout = defineModel("layout", {
 const setupOpen = ref(true);
 const setupOpenChange = () => {
   setupOpen.value = !setupOpen.value;
-};
-const changeScale = (e: Event) => {
-  const value = parseFloat((e.target as HTMLInputElement).value) / 100;
-  if (!Number.isNaN(value) && value >= 0.1 && value <= 5) {
-    scale.value = Number(value.toFixed(2));
-  } else {
-    (e.target as HTMLInputElement).value = (scale.value * 100).toString();
-  }
-};
-const adjustScale = (delta: number) => {
-  scale.value = Math.min(
-    5,
-    Math.max(0.1, Number((scale.value + delta).toFixed(2)))
-  );
 };
 </script>
 <template>
@@ -40,15 +28,7 @@ const adjustScale = (delta: number) => {
       >
         <img src="../../assets/setup.svg" />
       </ZBtn>
-      <div class="ZToolbar-scale">
-        <ZBtn color="text-primary" @click="adjustScale(0.1)">+</ZBtn>
-        <input
-          class="ZToolbar-scale-value"
-          @change="changeScale"
-          :value="scale * 100"
-        />
-        <ZBtn color="text-primary" @click="adjustScale(-0.1)">-</ZBtn>
-      </div>
+      <ZScaleController v-model="scale"></ZScaleController>
     </div>
     <div
       :class="{
@@ -56,7 +36,47 @@ const adjustScale = (delta: number) => {
       }"
       class="ZToolbar-setup"
     >
-      <div class="ZToolbar-setup-content"></div>
+      <div class="ZToolbar-setup-content">
+        <div class="row">
+          <ZTextField
+            class="col"
+            :model-value="layout.x"
+            label="X"
+            placeholder="x轴坐标"
+            required
+          />
+          <ZTextField
+            class="col"
+            :model-value="layout.x"
+            label="Y"
+            placeholder="Y轴坐标"
+            required
+          />
+          <ZTextField
+            class="col"
+            :model-value="layout.rotate"
+            label="°"
+            placeholder="Y轴坐标"
+            required
+          />
+        </div>
+        <div class="row">
+          <ZTextField
+            class="col"
+            :model-value="layout.width"
+            label="宽"
+            placeholder="x轴坐标"
+            required
+          />
+          <ZTextField
+            class="col"
+            :model-value="layout.height"
+            label="高"
+            placeholder="Y轴坐标"
+            required
+          />
+        </div>
+      </div>
     </div>
   </header>
 </template>
@@ -83,6 +103,7 @@ const adjustScale = (delta: number) => {
     padding: 4px 8px;
     &:hover {
       color: rgba(var(--z-primary), 1);
+      cursor: pointer;
     }
   }
   .ZToolbar-scale {
@@ -124,20 +145,32 @@ const adjustScale = (delta: number) => {
     right: 1px;
     width: 280px;
     background-color: #ffffff;
+    // overflow: hidden;
     transition: all 0.3s ease;
     transform: scaleY(0);
     border-radius: 0 0 16px 16px;
     transform-origin: top center;
     .ZToolbar-setup-content {
-      height: 300px;
+      border-radius: 0 0 16px 16px;
       opacity: 0;
       transition: opacity 0.1s ease;
+      padding: var(--z-size-sm);
+      box-shadow: 1px 1px 5px rgba(var(--z-quiet), 0.5);
+      .row {
+        display: flex;
+        align-items: center;
+        margin-bottom: var(--z-size-sm);
+        gap: var(--z-size-md);
+      }
+      .col {
+        flex: 1;
+      }
     }
   }
   .ZToolbar-setup.open {
     transform: scaleY(1);
     .ZToolbar-setup-content {
-      height: 300px;
+      // height: 300px;
       opacity: 1;
     }
   }

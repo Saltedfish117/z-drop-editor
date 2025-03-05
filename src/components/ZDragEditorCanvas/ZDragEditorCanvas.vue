@@ -1,5 +1,12 @@
 <template>
-  <div ref="canvasWrapper" @scroll="handleScrollbar" class="canvas-wrapper">
+  <div
+    ref="canvasWrapper"
+    @scroll="handleScrollbar"
+    class="canvas-wrapper"
+    :class="{
+      'hidden-scrollbar': scroll,
+    }"
+  >
     <article
       tabindex="-1"
       @keydown.space="spaceDown"
@@ -43,8 +50,11 @@ const props = defineProps({
   },
   scale: {
     type: Number,
-    required: true,
-    default: 1,
+    default: () => 1,
+  },
+  scroll: {
+    type: Boolean,
+    default: () => false,
   },
 });
 // 画布容器引用
@@ -150,14 +160,17 @@ onUnmounted(() => {
   --canvas-grid-color: 0, 0, 0;
   --canvas-grid-size: 20px;
   background-color: rgb(var(--canvas-bg-color));
+
   // 隐藏滚动条
-  scrollbar-width: none; /* Firefox */
-  -ms-overflow-style: none; /* IE/Edge */
-  &::-webkit-scrollbar {
-    display: none;
-    width: 0;
-    height: 0;
-    background: transparent;
+  &.hidden-scrollbar {
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE/Edge */
+    &::-webkit-scrollbar {
+      display: none;
+      width: 0;
+      height: 0;
+      background: transparent;
+    }
   }
   // background-image: linear-gradient(rgba(0, 0, 0, 0.1) 1px, transparent 1px),
   //   linear-gradient(90deg, rgba(0, 0, 0, 0.1) 1px, transparent 1px);

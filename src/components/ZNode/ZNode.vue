@@ -25,5 +25,6 @@ defineProps<ZNodeProps>();
   position: absolute;
   top: 0;
   left: 0;
+  // transform-origin: center center; /* 确保旋转基于中心点 */
 }
 </style>

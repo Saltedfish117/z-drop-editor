@@ -181,8 +181,8 @@ const resizeMove = {
     const layout = { ..._layout };
     const scaleFactor = 1 / props.scale; // 计算缩放修正因子
     const correct = {
-      x: (start.x - Number(e.clientX)) * scaleFactor,
-      y: (start.y - Number(e.clientY)) * scaleFactor,
+      x: Math.round((start.x - Number(e.clientX)) * scaleFactor),
+      y: Math.round((start.y - Number(e.clientY)) * scaleFactor),
     };
     layout.width = start.width + correct.x;
     layout.height = start.height - correct.y;
@@ -206,8 +206,8 @@ const resizeMove = {
     const layout = { ..._layout };
     const scaleFactor = 1 / props.scale; // 计算缩放修正因子
     const correct = {
-      x: (start.x - Number(e.clientX)) * scaleFactor,
-      y: (start.y - Number(e.clientY)) * scaleFactor,
+      x: Math.round((start.x - Number(e.clientX)) * scaleFactor),
+      y: Math.round((start.y - Number(e.clientY)) * scaleFactor),
     };
     layout.width = start.width + correct.x;
     layout.height = start.height + correct.y;
@@ -233,11 +233,10 @@ const resizeMove = {
   },
   rotate: (offset: Offset, _layout: Layout, _: MoveStart): Layout => {
     const layout = { ..._layout };
-    // const moveX = Number(e.clientX) - start.radiusX;
-    // const moveY = Number(e.clientY) - start.radiusY;
-    const angle = Math.atan2(offset.y, offset.x) * (180 / Math.PI);
-    // 限制角度在 0 到 360 度之间
-    layout.rotate = Math.round(((angle % 360) + 360) % 360);
+    // 计算角度并标准化到[0, 360)范围
+    const rawAngle = Math.atan2(offset.y, offset.x) * (180 / Math.PI);
+    const normalizedAngle = (rawAngle + 360) % 360;
+    layout.rotate = Math.round(normalizedAngle);
     return layout;
   },
 };
@@ -254,10 +253,11 @@ const mousedown = (e: MouseEvent, direction: keyof typeof resizeMove) => {
     width: model.value.width,
     height: model.value.height,
     rotate: model.value.rotate, // 旋转角度
-    radiusX: Number(e.clientX),
-    radiusY: Number(e.clientY),
     centerX: model.value.x + model.value.width / 2,
     centerY: model.value.y + model.value.height / 2,
+    // 获取对称点的坐标
+    symmetricX: model.value.x + model.value.width,
+    symmetricY: model.value.y + model.value.height,
   };
   let fist = true;
   document.documentElement.style.userSelect = "none";
@@ -270,17 +270,19 @@ const mousedown = (e: MouseEvent, direction: keyof typeof resizeMove) => {
     e.stopPropagation();
     const scaleFactor = 1 / props.scale; // 计算缩放修正因子
     // 根据缩放倍率修正偏移量
-    let offsetX = (e.clientX - start.x) * scaleFactor;
-    let offsetY = (e.clientY - start.y) * scaleFactor;
+    // let offsetX = (e.clientX - start.x) * scaleFactor;
+    // let offsetY = (e.clientY - start.y) * scaleFactor;
+    let offsetX = Math.round((e.clientX - start.x) * scaleFactor);
+    let offsetY = Math.round((e.clientY - start.y) * scaleFactor);
     const offset = { x: offsetX, y: offsetY };
     document.documentElement.style.userSelect = "none";
-    // emits("moving", e, direction);
+    emits("moving", e, direction);
+    console.log("move", direction);
     model.value = resizeMove[direction](offset, { ...model.value }, start, e);
     Object.keys(model.value).forEach((_key) => {
       const key = _key as keyof Layout;
       (model.value[key] as number) = Math.round(model.value[key] as number);
     });
-    // console.log(model.value);
   };
   const up = (e: MouseEvent) => {
     e.preventDefault();
@@ -315,6 +317,7 @@ const style = computed((): CSSProperties => {
   return {
     position: props.position,
     transform: `translate(${model.value.x}px, ${model.value.y}px) rotate(${model.value.rotate}deg)`,
+
     zIndex: model.value.zIndex + 1,
     width: model.value.width + "px",
     height: model.value.height + "px",

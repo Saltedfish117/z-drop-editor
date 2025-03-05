@@ -60,6 +60,12 @@ watch(
 );
 const active = computed(() => !!store.value.active);
 const moving = ref(false);
+const moveMode = ref("");
+const linesShow = computed(() => moving.value && moveMode.value !== "rotate");
+const handleMove = (_: MouseEvent, direction: string) => {
+  moveMode.value = direction;
+  // moving.value = true;
+};
 const activeLayout = computed({
   get: () => {
     if (store.value.active && store.value.active.layout) {
@@ -129,11 +135,15 @@ onUnmounted(() => {
 </script>
 <template>
   <article tabindex="0" class="ZDragEditor">
-    <ZToolbar v-model:scale="canvasSize.scale"></ZToolbar>
+    <ZToolbar
+      v-model:layout="activeLayout"
+      v-model:scale="canvasSize.scale"
+    ></ZToolbar>
     <ZDragEditorCanvas
       @mousewheel="mousewheel"
       :scale="canvasSize.scale"
       v-model:size="canvasSize"
+      :scroll="false"
       @mousedown="proxyMouseDown"
     >
       <template #default="{ canvasSize }">
@@ -148,7 +158,7 @@ onUnmounted(() => {
         <ZDrag
           @before-move="moving = true"
           @after-move="moving = false"
-          @moving="moving = true"
+          @moving="handleMove"
           :scale="canvasSize.scale"
           ref="zDragRef"
           :position="'absolute'"
@@ -161,7 +171,7 @@ onUnmounted(() => {
           :nodes="store.nodes"
           :scale="canvasSize.scale"
           :nodeMap="nodeMap"
-          v-model:moving="moving"
+          v-model:moving="linesShow"
           v-model="store.active"
         ></ZLines>
       </template>

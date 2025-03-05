@@ -11,7 +11,7 @@ export interface DragNode {
   id: string;
   layout: Layout;
 }
-export interface Offset{
+export interface Offset {
   x: number;
   y: number;
 }
@@ -20,8 +20,8 @@ export interface MoveStart extends Omit<Layout, "zIndex" | "lock"> {
   layoutY: number;
   centerX: number;
   centerY: number;
-  radiusX: number;
-  radiusY: number;
+  symmetricX: number;
+  symmetricY: number;
 }
 export interface ZDragProps {
   position: "absolute" | "fixed";
