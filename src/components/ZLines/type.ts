@@ -1,25 +1,37 @@
+import type { Layout } from "../ZDrag/types";
 export interface ZLinesProps {}
 // export enum {
 //     : string;
 // }
+export type lineType =
+  | "top-left"
+  | "top-right"
+  | "bottom-left"
+  | "bottom-right"
+  | "left-top"
+  | "left-bottom"
+  | "right-top"
+  | "right-bottom";
 export interface ZAdsorption {
-  x: number;
-  y: number;
+  x: string;
+  y: string;
   width: string;
   height: string;
   label: {
     text: string;
     style: {
-      position: string;
       left?: string;
       right?: string;
       bottom?: string;
       top?: string;
     };
   };
-  key: "top-left" | "top-right" | "bottom-left" | "bottom-right" | "center";
-  visible: boolean;
-  type: string;
-  nodeId: string;
+  key: lineType;
+  // visible: boolean;
+  // type: string;
+  // nodeId: string;
 }
+export type LineMap = {
+  [key in lineType]: (rect: Layout) => ZAdsorption;
+};
 export type ZAdsorptions = ZAdsorption[];

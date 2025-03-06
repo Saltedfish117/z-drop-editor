@@ -80,26 +80,32 @@ export const getRotatedCorners = (layout: Layout) => {
     return { x: rotatedX, y: rotatedY };
   });
 };
-export function sin(rotate:number) {
-  return Math.abs(Math.sin(angleToRadian(rotate)))
+export function sin(rotate: number) {
+  return Math.abs(Math.sin(angleToRadian(rotate)));
 }
 
-export function cos(rotate:number) {
-  return Math.abs(Math.cos(angleToRadian(rotate)))
+export function cos(rotate: number) {
+  return Math.abs(Math.cos(angleToRadian(rotate)));
 }
-function angleToRadian(angle:number) {
-  return (angle * Math.PI) / 180
+function angleToRadian(angle: number) {
+  return (angle * Math.PI) / 180;
 }
 export const rotateLayout = (_layout: Layout) => {
   const layout = { ..._layout };
-  const { rotate } = layout;
-
-  if (typeof rotate === "number" && rotate !== 0) {
-    const newW = 
+  if (typeof layout.rotate === "number" && layout.rotate !== 0) {
+    const { width, height, rotate, x, y } = layout;
+    const newWidth = width * cos(rotate) + height * sin(rotate);
+    const newX = Math.round((width - newWidth) / 2);
+    layout.x += newX;
+    layout.width = newWidth;
+    const newHeight = height * cos(rotate) + width * sin(rotate);
+    const newY = Math.round((newHeight - height) / 2);
+    layout.y -= newY;
+    layout.height = newHeight;
   }
-
   return layout;
 };
+
 // 计算元素旋转后的实际包围盒
 export const getRotatedBoundingBox = (layout: Layout) => {
   const corners = getRotatedCorners(layout);
@@ -147,6 +153,52 @@ export const checkAdsorption = (
   }
 
   return adsorptions;
+};
+/**
+ * 防抖函数
+ * @param func 目标函数
+ * @param delay 延迟时间(ms)
+ * @returns 包装后的防抖函数
+ */
+export const debounce = <T extends (...args: any[]) => any>(
+  func: T,
+  delay: number
+): ((...args: Parameters<T>) => void) => {
+  let timer: ReturnType<typeof setTimeout> | null = null;
+  return (...args: Parameters<T>) => {
+    if (timer) clearTimeout(timer);
+    timer = setTimeout(() => func(...args), delay);
+  };
+};
+/**
+ * 节流函数（时间戳版）
+ * @param func 目标函数
+ * @param limit 时间限制(ms)
+ * @returns 包装后的节流函数
+ */
+export const throttle = <T extends (...args: any[]) => any>(
+  func: T,
+  limit: number
+): ((...args: Parameters<T>) => void) => {
+  let lastTime = 0;
+  return (...args: Parameters<T>) => {
+    const now = Date.now();
+    if (now - lastTime >= limit) {
+      func(...args);
+      lastTime = now;
+    }
+  };
+};
+export const once = <T extends (...args: any[]) => any>(
+  func: T
+): ((...args: Parameters<T>) => void) => {
+  let flag = false;
+  return (...args: Parameters<T>) => {
+    if (!flag) {
+      flag = true;
+      func(...args);
+    }
+  };
 };
 // export const rotateLayout = (_layout: Layout) => {
 //   const layout = { ..._layout };

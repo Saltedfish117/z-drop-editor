@@ -47,7 +47,7 @@ const setupOpenChange = () => {
           />
           <ZTextField
             class="col"
-            :model-value="layout.x"
+            :model-value="layout.y"
             label="Y"
             placeholder="Y轴坐标"
             required

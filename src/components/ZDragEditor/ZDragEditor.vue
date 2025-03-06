@@ -61,7 +61,7 @@ watch(
 const active = computed(() => !!store.value.active);
 const moving = ref(false);
 const moveMode = ref("");
-const linesShow = computed(() => moving.value && moveMode.value !== "rotate");
+const linesShow = computed(() => moving.value && moveMode.value === "move");
 const handleMove = (_: MouseEvent, direction: string) => {
   moveMode.value = direction;
   // moving.value = true;

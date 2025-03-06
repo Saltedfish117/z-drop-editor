@@ -20,80 +20,7 @@ const emits = defineEmits([
   "after-move",
   "moving",
 ]);
-const resizes = [
-  {
-    direction: "n-resize",
-    style: {
-      left: "50%",
-      top: 0,
-      transform: "translate(-50%, -50%)",
-      // cursor: "n-resize",
-    },
-  },
-  {
-    direction: "s-resize",
-    style: {
-      left: "50%",
-      bottom: 0,
-      transform: "translate(-50%, 50%)",
-      // cursor: "s-resize",
-    },
-  },
-  {
-    direction: "e-resize",
-    style: {
-      right: 0,
-      top: "50%",
-      transform: "translate(50%, -50%)",
-      // cursor: "e-resize",
-    },
-  },
-  {
-    direction: "w-resize",
-    style: {
-      left: 0,
-      top: "50%",
-      transform: "translate(-50%, -50%)",
-      // cursor: "w-resize",
-    },
-  },
-  {
-    direction: "ne-resize",
-    style: {
-      right: 0,
-      top: 0,
-      transform: "translate(50%, -50%)",
-      // cursor: "ne-resize",
-    },
-  },
-  {
-    direction: "nw-resize",
-    style: {
-      left: 0,
-      top: 0,
-      transform: "translate(-50%, -50%)",
-      // cursor: "nw-resize",
-    },
-  },
-  {
-    direction: "se-resize",
-    style: {
-      right: 0,
-      bottom: 0,
-      transform: "translate(50%, 50%)",
-      // cursor: "se-resize",
-    },
-  },
-  {
-    direction: "sw-resize",
-    style: {
-      left: 0,
-      bottom: 0,
-      transform: "translate(-50%, 50%)",
-      // cursor: "sw-resize",
-    },
-  },
-];
+
 const resizeMove = {
   "n-resize": (offset: Offset, _layout: Layout, start: MoveStart): Layout => {
     const layout = { ..._layout };
@@ -317,11 +244,127 @@ const style = computed((): CSSProperties => {
   return {
     position: props.position,
     transform: `translate(${model.value.x}px, ${model.value.y}px) rotate(${model.value.rotate}deg)`,
-
+    // rotate(${model.value.rotate}deg)
     zIndex: model.value.zIndex + 1,
     width: model.value.width + "px",
     height: model.value.height + "px",
   };
+});
+const resizes = computed(() => {
+  let points = [
+    {
+      direction: "n-resize",
+      style: {
+        left: "50%",
+        top: 0,
+        transform: "translate(-50%, -50%)",
+        // cursor: "n-resize",
+      },
+    },
+    {
+      direction: "s-resize",
+      style: {
+        left: "50%",
+        bottom: 0,
+        transform: "translate(-50%, 50%)",
+        // cursor: "s-resize",
+      },
+    },
+    {
+      direction: "e-resize",
+      style: {
+        right: 0,
+        top: "50%",
+        transform: "translate(50%, -50%)",
+        // cursor: "e-resize",
+      },
+    },
+    {
+      direction: "w-resize",
+      style: {
+        left: 0,
+        top: "50%",
+        transform: "translate(-50%, -50%)",
+        // cursor: "w-resize",
+      },
+    },
+    {
+      direction: "ne-resize",
+      style: {
+        right: 0,
+        top: 0,
+        transform: "translate(50%, -50%)",
+        // cursor: "ne-resize",
+      },
+    },
+    {
+      direction: "nw-resize",
+      style: {
+        left: 0,
+        top: 0,
+        transform: "translate(-50%, -50%)",
+        // cursor: "nw-resize",
+      },
+    },
+    {
+      direction: "se-resize",
+      style: {
+        right: 0,
+        bottom: 0,
+        transform: "translate(50%, 50%)",
+        // cursor: "se-resize",
+      },
+    },
+    {
+      direction: "sw-resize",
+      style: {
+        left: 0,
+        bottom: 0,
+        transform: "translate(-50%, 50%)",
+        // cursor: "sw-resize",
+      },
+    },
+  ];
+  const angleToCursor = {
+    // 每个范围的角度对应的光标
+    nw: { start: 338, end: 23, cursor: "nw" },
+   "n": { start: 23, end: 68, cursor: "n" },
+   "ne": { start: 68, end: 113, cursor: "ne" },
+    "e":{ start: 113, end: 158, cursor: "e" },
+    { start: 158, end: 203, cursor: "se" },
+    { start: 203, end: 248, cursor: "s" },
+    { start: 248, end: 293, cursor: "sw" },
+    { start: 293, end: 338, cursor: "w" },
+  };
+  const initialAngle = {
+    // 每个点对应的初始角度
+    lt: 0,
+    t: 45,
+    rt: 90,
+    r: 135,
+    rb: 180,
+    b: 225,
+    lb: 270,
+    l: 315,
+  };
+  const rotate = (model.value.rotate + 360) % 360;
+  points.forEach((point) => {
+    const angle =
+      (initialAngle[
+        point.direction.split("-")[0] as keyof typeof initialAngle
+      ] +
+        rotate) %
+      360;
+    if (angle < 23 || angle >= 338) {
+      result[point] = "nw-resize";
+      return;
+    }
+    if (angleLimit.start <= angle && angle < angleLimit.end) {
+      result[point] = angleLimit.cursor + "-resize";
+      return;
+    }
+  });
+  return points;
 });
 defineExpose({
   mousedown,
@@ -341,7 +384,7 @@ defineExpose({
         <div
           v-for="res in resizes"
           :key="res.direction"
-          :style="{ ...res.style, '--cursor-rotate': model.rotate }"
+          :style="{ ...res.style }"
           :class="res.direction"
           @mousedown="
             mousedown($event, res.direction as keyof typeof resizeMove)
@@ -431,6 +474,6 @@ defineExpose({
   }
 }
 .active {
-  border: 1px solid rgba(var(--z-primary), 0.5);
+  border: 1px dashed rgba(var(--z-primary), 0.5);
 }
 </style>

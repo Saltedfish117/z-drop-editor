@@ -3,14 +3,14 @@ import {
   defineOptions,
   defineProps,
   defineModel,
-  computed,
   withDefaults,
+  computed,
 } from "vue";
 import type { ZNodes } from "../ZDragEditor/types";
 import type { ZNode } from "../ZNode/types";
 import type { Layout } from "../ZDrag/types";
-import type { ZAdsorptions } from "./type";
-import { rotateLayout } from "../../common/utils";
+import type { ZAdsorptions, LineMap, ZAdsorption } from "./type";
+import { rotateLayout, once } from "../../common/utils";
 defineOptions({
   name: "ZLines",
 });
@@ -32,21 +32,17 @@ const props = withDefaults(
     diff: 3,
   }
 );
-// const interval = 10;
-// const diff = 5;
-const adsorption = computed(() => {
-  if (!moving.value) return [] as ZAdsorptions;
-  return checkAdsorption();
+const adsorption = computed((): ZAdsorptions => {
+  if (node.value && node.value.layout && moving.value) return checkAdsorption();
+  else return [];
 });
-
-const checkAdsorption = () => {
+const checkAdsorption = (): ZAdsorptions => {
   // 重置所有标线状态
   let nodes: ZNode[] = [];
   let parent = null;
-  if (!node.value) return;
+  if (!node.value) return [];
   const current = node.value;
-  const currentRect = rotateLayout(current.layout);
-  console.log(currentRect);
+  let currentRect = rotateLayout(current.layout);
   if (
     props.nodeMap.has(node.value.parentId as string) &&
     (parent = props.nodeMap.get(node.value.parentId as string)) &&
@@ -56,70 +52,30 @@ const checkAdsorption = () => {
   } else {
     nodes = props.nodes.filter((n) => n.id !== current.id);
   }
-  const lins = new Map();
+  const lins = new Map<string, ZNodes>();
   let start = 0;
   let end = nodes.length - 1;
-  const filter = {
-    "top-left": (pre: ZNode, cur: ZNode) => {
-      if (pre.layout.x < cur.layout.x) {
-        return cur;
-      } else {
-        return pre;
-      }
-    },
-    "top-right": (pre: ZNode, cur: ZNode) => {
-      if (pre.layout.x > cur.layout.x) {
-        return cur;
-      } else {
-        return pre;
-      }
-    },
-    "bottom-left": (pre: ZNode, cur: ZNode) => {
-      if (pre.layout.x < cur.layout.x) {
-        return cur;
-      } else {
-        return pre;
-      }
-    },
-    "bottom-right": (pre: ZNode, cur: ZNode) => {
-      if (pre.layout.x > cur.layout.x) {
-        return cur;
-      } else {
-        return pre;
-      }
-    },
-    "left-top": (pre: ZNode, cur: ZNode) => {
-      if (pre.layout.y < cur.layout.y) {
-        return cur;
-      } else {
-        return pre;
-      }
-    },
-    "left-bottom": (pre: ZNode, cur: ZNode) => {
-      if (pre.layout.y > cur.layout.y) {
-        return cur;
-      } else {
-        return pre;
-      }
-    },
-    "right-top": (pre: ZNode, cur: ZNode) => {
-      if (pre.layout.y < cur.layout.y) {
-        return cur;
-      } else {
-        return pre;
-      }
-    },
-    "right-bottom": (pre: ZNode, cur: ZNode) => {
-      if (pre.layout.y > cur.layout.y) {
-        return cur;
-      } else {
-        return pre;
-      }
-    },
+  const filters = {
+    "top-left": (pre: ZNode, cur: ZNode) =>
+      pre.layout.x < cur.layout.x ? cur : pre,
+    "top-right": (pre: ZNode, cur: ZNode) =>
+      pre.layout.x > cur.layout.x ? cur : pre,
+    "bottom-left": (pre: ZNode, cur: ZNode) =>
+      pre.layout.x < cur.layout.x ? cur : pre,
+    "bottom-right": (pre: ZNode, cur: ZNode) =>
+      pre.layout.x > cur.layout.x ? cur : pre,
+    "left-top": (pre: ZNode, cur: ZNode) =>
+      pre.layout.y < cur.layout.y ? cur : pre,
+    "left-bottom": (pre: ZNode, cur: ZNode) =>
+      pre.layout.y > cur.layout.y ? cur : pre,
+    "right-top": (pre: ZNode, cur: ZNode) =>
+      pre.layout.y < cur.layout.y ? cur : pre,
+    "right-bottom": (pre: ZNode, cur: ZNode) =>
+      pre.layout.y > cur.layout.y ? cur : pre,
   };
-  const lineMap = {
-    "top-left": (rect: Layout) => {
-      const distance = Math.abs(currentRect.x - (rect.x + rect.width));
+  const lineMap: LineMap = {
+    "top-left": (rect: Layout): ZAdsorption => {
+      const distance = Math.round(currentRect.x - (rect.x + rect.width));
       return {
         y: currentRect.y + "px",
         x: rect.x + rect.width + "px",
@@ -134,113 +90,115 @@ const checkAdsorption = () => {
         key: "top-left",
       };
     },
-    "top-right": (rect: Layout) => {
-      const distance = Math.abs(rect.x - (currentRect.x + currentRect.width));
+    "top-right": (rect: Layout): ZAdsorption => {
+      const distance = Math.round(rect.x - (currentRect.x + currentRect.width));
       return {
         y: currentRect.y + "px",
-        x: currentRect.x + currentRect.width + "px",
-        width:
-          Math.abs(rect.x - (currentRect.x + currentRect.width / 2)) + "px",
+        x: currentRect.x + "px",
+        width: Math.abs(rect.x - currentRect.x) + "px",
         height: "1px",
         label: {
           text: distance + "px",
           style: {
-            left: "0",
+            right: "20%",
           },
         },
         key: "top-right",
       };
     },
-    "bottom-left": (rect: Layout) => {
-      const distance = Math.abs(currentRect.x - (rect.x + rect.width));
+    "bottom-left": (rect: Layout): ZAdsorption => {
+      const distance = Math.round(currentRect.x - (rect.x + rect.width));
       return {
         y: currentRect.y + currentRect.height + "px",
         x: rect.x + rect.width + "px",
         width:
-          Math.abs(
-            currentRect.x + currentRect.width / 2 - (rect.x + rect.width)
-          ) + "px",
+          Math.abs(currentRect.x + currentRect.width - (rect.x + rect.width)) +
+          "px",
         height: "1px",
         label: {
           text: distance + "px",
           style: {
-            right: "0",
+            left: "20%",
           },
         },
         key: "bottom-left",
       };
     },
-    "bottom-right": (rect: Layout) => {
-      const distance = Math.abs(rect.x - (currentRect.x + currentRect.width));
+    "bottom-right": (rect: Layout): ZAdsorption => {
+      const distance = Math.round(rect.x - (currentRect.x + currentRect.width));
       return {
         y: currentRect.y + currentRect.height + "px",
-        x: currentRect.x + currentRect.width + "px",
-        width: distance + "px",
+        x: currentRect.x + "px",
+        width: distance + currentRect.width + "px",
         height: "1px",
         label: {
           text: distance + "px",
           style: {
-            left: "0",
+            right: "20%",
           },
         },
         key: "bottom-right",
       };
     },
-    "left-top": (rect: Layout) => {
-      const distance = Math.abs(currentRect.y - (rect.y + rect.height));
+    "left-top": (rect: Layout): ZAdsorption => {
+      const distance = Math.round(currentRect.y - (rect.y + rect.height));
       return {
         key: "left-top",
         x: currentRect.x + "px",
         y: rect.y + rect.height + "px",
         width: "1px",
-        height: distance + "px",
+        height: distance + currentRect.height + "px",
         label: {
           text: distance + "px",
           style: {
-            bottom: "0",
+            top: "20%",
           },
         },
       };
     },
-    "left-bottom": (rect: Layout) => {
-      const distance = Math.abs(rect.y - (currentRect.y + currentRect.height));
+    "left-bottom": (rect: Layout): ZAdsorption => {
+      const distance = Math.round(
+        rect.y - (currentRect.y + currentRect.height)
+      );
       return {
         key: "left-bottom",
         x: currentRect.x + "px",
-        y: currentRect.y + currentRect.height + "px",
+        y: currentRect.y + "px",
         width: "1px",
-        height: distance + "px",
+        height: distance + currentRect.height + "px",
         label: {
           text: distance + "px",
           style: {
-            top: "0",
+            bottom: "20%",
           },
         },
       };
     },
-    "right-top": (rect: Layout) => {
-      const distance = Math.abs(currentRect.y - (rect.y + rect.height));
+    "right-top": (rect: Layout): ZAdsorption => {
+      const distance = Math.round(currentRect.y - (rect.y + rect.height));
       return {
         x: currentRect.x + currentRect.width + "px",
         y: rect.y + rect.height + "px",
         width: "1px",
-        height: distance + "px",
+        height: distance + currentRect.height + "px",
         label: {
           text: distance + "px",
           style: {
-            bottom: "0",
+            top: "20%",
           },
         },
         key: "right-top",
       };
     },
-    "right-bottom": (rect: Layout) => {
-      const distance = Math.abs(rect.y - (currentRect.y + currentRect.height));
+    "right-bottom": (rect: Layout): ZAdsorption => {
+      const distance = Math.round(
+        rect.y - (currentRect.y + currentRect.height)
+      );
       return {
         x: currentRect.x + currentRect.width + "px",
-        y: currentRect.y + currentRect.height + "px",
+        y: currentRect.y + "px",
         width: "1px",
-        height: distance + "px",
+        height: distance + currentRect.height + "px",
         label: {
           text: distance + "px",
           style: {
@@ -251,105 +209,99 @@ const checkAdsorption = () => {
       };
     },
   };
+
+  const diffMap = {
+    top: once((rect: Layout) => {
+      let diff = 0;
+      if (
+        Math.abs((diff = rect.y - currentRect.y)) <= props.diff ||
+        Math.abs((diff = rect.y + rect.height - currentRect.y)) <= props.diff
+      ) {
+        console.log(diff);
+
+        node.value!.layout.y += diff;
+      }
+    }),
+    bottom: once((rect: Layout) => {
+      let diff = 0;
+      if (
+        Math.abs(
+          (diff = rect.y + rect.height - (currentRect.y + currentRect.height))
+        ) <= props.interval ||
+        Math.abs((diff = rect.y - (currentRect.y + currentRect.height))) <=
+          props.interval
+      ) {
+        node.value!.layout.y += diff;
+      }
+    }),
+    left: once((rect: Layout) => {
+      let diff = 0;
+      if (
+        Math.abs(
+          (diff = rect.y + rect.height - (currentRect.y + currentRect.height))
+        ) <= props.interval ||
+        Math.abs((diff = rect.y - (currentRect.y + currentRect.height))) <=
+          props.interval
+      ) {
+        node.value!.layout.x += diff;
+      }
+    }),
+    right: once((rect: Layout) => {
+      let diff = 0;
+      if (
+        Math.abs(
+          (diff = rect.x + rect.width - currentRect.x - currentRect.width)
+        ) <= props.diff ||
+        Math.abs((diff = rect.x - (currentRect.x + currentRect.width))) <=
+          props.diff
+      ) {
+        node.value!.layout.x += diff;
+      }
+    }),
+  };
   while (start <= end) {
     const brothers = [nodes[start++], nodes[end--]];
     const diffFn = (brother: ZNode, _?: number, __?: ZNodes) => {
       const brotherRect = rotateLayout(brother.layout);
       const push = (key: string) => {
         if (lins.has(key)) {
-          lins.get(key).push(brother);
+          lins.get(key)!.push(brother);
         } else {
           lins.set(key, [brother]);
         }
       };
       const topIf = () => {
-        if (brotherRect.x + brotherRect.width < currentRect.x) {
+        if (brotherRect.x + brotherRect.width <= currentRect.x) {
           push("top-left");
-        } else if (brotherRect.x > currentRect.x + currentRect.width) {
+        } else if (brotherRect.x >= currentRect.x + currentRect.width) {
           push("top-right");
         }
-
-        // if (Math.abs(brotherRect.y - currentRect.y) < props.diff) {
-        //   node.value!.layout.y = brotherRect.y;
-        // } else if (Math.abs(brotherRect.y - currentRect.y) < props.diff) {
-        //   node.value!.layout.y = brotherRect.y;
-        // } else if (
-        //   Math.abs(brotherRect.y + brotherRect.height - currentRect.y) <
-        //   props.diff
-        // ) {
-        //   node.value!.layout.y = Math.round(brotherRect.y + brotherRect.height);
-        // }
       };
       const bottomIf = () => {
-        if (brotherRect.x + brotherRect.width < currentRect.x) {
+        if (brotherRect.x + brotherRect.width <= currentRect.x) {
           push("bottom-left");
         } else if (brotherRect.x > currentRect.x + currentRect.width) {
           push("bottom-right");
         }
-
-        // if (
-        //   Math.abs(
-        //     brotherRect.y +
-        //       brotherRect.height -
-        //       currentRect.y -
-        //       currentRect.height
-        //   ) < props.diff
-        // ) {
-        //   node.value!.layout.y = Math.round(
-        //     brotherRect.y + brotherRect.height - currentRect.height
-        //   );
-        // } else if (
-        //   Math.abs(brotherRect.y - (currentRect.y + currentRect.height)) <
-        //   props.diff
-        // ) {
-        //   node.value!.layout.y = Math.round(brotherRect.y - currentRect.height);
-        // }
       };
       const leftIf = () => {
-        if (brotherRect.y + brotherRect.height < currentRect.y) {
+        if (brotherRect.y + brotherRect.height <= currentRect.y) {
           push("left-top");
-        } else if (brotherRect.y > currentRect.y + currentRect.height) {
+        } else if (brotherRect.y >= currentRect.y + currentRect.height) {
           push("left-bottom");
         }
-
-        // if (Math.abs(brotherRect.x - currentRect.x) < props.diff) {
-        //   node.value!.layout.x = Math.round(brotherRect.x);
-        // } else if (
-        //   Math.abs(brotherRect.x + brotherRect.width - currentRect.x) <
-        //   props.diff
-        // ) {
-        //   node.value!.layout.x = Math.round(brotherRect.x + brotherRect.width);
-        // }
       };
       const rightIf = () => {
-        if (brotherRect.y + brotherRect.height < currentRect.y) {
+        if (brotherRect.y + brotherRect.height <= currentRect.y) {
           push("right-top");
-        } else if (brotherRect.y > currentRect.y + currentRect.height) {
+        } else if (brotherRect.y >= currentRect.y + currentRect.height) {
           push("right-bottom");
         }
-
-        // if (
-        //   Math.abs(
-        //     brotherRect.x +
-        //       brotherRect.width -
-        //       currentRect.x -
-        //       currentRect.width
-        //   ) < props.diff
-        // ) {
-        //   node.value!.layout.x =
-        //     brotherRect.x + brotherRect.width - currentRect.width;
-        // }
-        // if (
-        //   Math.abs(currentRect.x + currentRect.width - brotherRect.x) <
-        //   props.diff
-        // ) {
-        //   node.value!.layout.x = brotherRect.x - currentRect.width;
-        // }
       };
       // top
       if (
-        Math.abs(brotherRect.y - currentRect.y) < props.interval ||
-        Math.abs(brotherRect.y + brotherRect.height - currentRect.y) <
+        Math.abs(brotherRect.y - currentRect.y) <= props.interval ||
+        Math.abs(brotherRect.y + brotherRect.height - currentRect.y) <=
           props.interval
       ) {
         topIf();
@@ -360,16 +312,16 @@ const checkAdsorption = () => {
           brotherRect.y +
             brotherRect.height -
             (currentRect.y + currentRect.height)
-        ) < props.interval ||
-        Math.abs(brotherRect.y - (currentRect.y + currentRect.height)) <
+        ) <= props.interval ||
+        Math.abs(brotherRect.y - (currentRect.y + currentRect.height)) <=
           props.interval
       ) {
         bottomIf();
       }
       // left
       if (
-        Math.abs(brotherRect.x - currentRect.x) < props.interval ||
-        Math.abs(brotherRect.x + brotherRect.width - currentRect.x) <
+        Math.abs(brotherRect.x - currentRect.x) <= props.interval ||
+        Math.abs(brotherRect.x + brotherRect.width - currentRect.x) <=
           props.interval
       )
         leftIf();
@@ -377,8 +329,8 @@ const checkAdsorption = () => {
       if (
         Math.abs(
           brotherRect.x + brotherRect.width - currentRect.x - currentRect.width
-        ) < props.interval ||
-        Math.abs(brotherRect.x - (currentRect.x + currentRect.width)) <
+        ) <= props.interval ||
+        Math.abs(brotherRect.x - (currentRect.x + currentRect.width)) <=
           props.interval
       ) {
         rightIf();
@@ -390,32 +342,15 @@ const checkAdsorption = () => {
     }
     brothers.forEach(diffFn);
   }
-  // const filterFn = (
-  //   target: {
-  //     pre: ZNode;
-  //     cur: ZNode;
-  //     key: "x" | "y";
-  //   },
-  //   props.diff: ">" | "<"
-  // ) => {
-  //   switch (props.diff) {
-  //     case ">":
-  //       return target.pre.layout[target.key] > target.cur.layout[target.key]
-  //         ? target.cur
-  //         : target.pre;
-  //     case "<":
-  //       return target.pre.layout[target.key] < target.cur.layout[target.key]
-  //         ? target.cur
-  //         : target.pre;
-  //   }
-  // };
-
   const filterLines = Array.from(lins.keys()).map((key) => {
     const value = lins.get(key);
-    const keyNode = value.reduce(
+    const keyNode = value!.reduce(
       (pre: ZNode, cur: ZNode): ZNode =>
-        pre ? filter[key as keyof typeof filter](pre, cur) : cur
+        pre ? filters[key as keyof typeof filters](pre, cur) : cur
     );
+    const diffKey = key.split("-")[0] as keyof typeof diffMap;
+    diffMap[diffKey](rotateLayout(keyNode.layout));
+    currentRect = rotateLayout(node.value!.layout);
     return lineMap[key as keyof typeof lineMap](rotateLayout(keyNode.layout));
   });
   lins.clear();
