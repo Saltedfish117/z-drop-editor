@@ -90,6 +90,19 @@ export function cos(rotate: number) {
 function angleToRadian(angle: number) {
   return (angle * Math.PI) / 180;
 }
+export const convertOffsetToLocal = (
+  offset: {
+    x: number;
+    y: number;
+  },
+  rotate: number
+): { x: number; y: number } => {
+  const rad = -angleToRadian(rotate); // 取反旋转角度
+  return {
+    x: offset.x * Math.cos(rad) - offset.y * Math.sin(rad),
+    y: offset.x * Math.sin(rad) + offset.y * Math.cos(rad),
+  };
+};
 export const rotateLayout = (_layout: Layout) => {
   const layout = { ..._layout };
   if (typeof layout.rotate === "number" && layout.rotate !== 0) {

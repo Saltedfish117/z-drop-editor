@@ -217,9 +217,7 @@ const checkAdsorption = (): ZAdsorptions => {
         Math.abs((diff = rect.y - currentRect.y)) <= props.diff ||
         Math.abs((diff = rect.y + rect.height - currentRect.y)) <= props.diff
       ) {
-        console.log(diff);
-
-        node.value!.layout.y += diff;
+        node.value!.layout.y += Math.round(diff);
       }
     }),
     bottom: once((rect: Layout) => {
@@ -231,7 +229,7 @@ const checkAdsorption = (): ZAdsorptions => {
         Math.abs((diff = rect.y - (currentRect.y + currentRect.height))) <=
           props.interval
       ) {
-        node.value!.layout.y += diff;
+        node.value!.layout.y += Math.round(diff);
       }
     }),
     left: once((rect: Layout) => {
@@ -243,7 +241,7 @@ const checkAdsorption = (): ZAdsorptions => {
         Math.abs((diff = rect.y - (currentRect.y + currentRect.height))) <=
           props.interval
       ) {
-        node.value!.layout.x += diff;
+        node.value!.layout.x += Math.round(diff);
       }
     }),
     right: once((rect: Layout) => {
@@ -255,7 +253,7 @@ const checkAdsorption = (): ZAdsorptions => {
         Math.abs((diff = rect.x - (currentRect.x + currentRect.width))) <=
           props.diff
       ) {
-        node.value!.layout.x += diff;
+        node.value!.layout.x += Math.round(diff);
       }
     }),
   };

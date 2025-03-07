@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import ZDragEditor from "./components/ZDragEditor/ZDragEditor.vue";
+
 import { reactive } from "vue";
 let arr = Array.from({ length: 5 }, (_, k) => {
   return {

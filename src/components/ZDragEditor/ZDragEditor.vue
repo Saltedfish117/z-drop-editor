@@ -61,10 +61,8 @@ watch(
 const active = computed(() => !!store.value.active);
 const moving = ref(false);
 const moveMode = ref("");
-const linesShow = computed(() => moving.value && moveMode.value === "move");
 const handleMove = (_: MouseEvent, direction: string) => {
   moveMode.value = direction;
-  // moving.value = true;
 };
 const activeLayout = computed({
   get: () => {
@@ -171,7 +169,7 @@ onUnmounted(() => {
           :nodes="store.nodes"
           :scale="canvasSize.scale"
           :nodeMap="nodeMap"
-          v-model:moving="linesShow"
+          v-model:moving="moving"
           v-model="store.active"
         ></ZLines>
       </template>

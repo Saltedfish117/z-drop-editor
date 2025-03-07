@@ -7,8 +7,19 @@ import {
   defineProps,
   defineExpose,
 } from "vue";
-import type { Layout, ZDragProps, MoveStart, Offset } from "./types";
+import type {
+  Layout,
+  ZDragProps,
+  MoveStart,
+  Offset,
+  Direction,
+  Points,
+  AngleToCursor,
+  ResizeMove,
+} from "./types";
+import { convertOffsetToLocal } from "@/common/utils";
 import type { CSSProperties } from "vue";
+import ZSvgIcon from "../ZSvgIcon/ZSvgIcon.vue";
 defineOptions({
   name: "ZDrag",
 });
@@ -21,9 +32,10 @@ const emits = defineEmits([
   "moving",
 ]);
 
-const resizeMove = {
+const resizeMove: ResizeMove = {
   "n-resize": (offset: Offset, _layout: Layout, start: MoveStart): Layout => {
     const layout = { ..._layout };
+    // const offset = convertOffsetToLocal(_offset, layout.rotate);
     if (start.height - offset.y < 0) {
       layout.y = start.layoutY + start.height;
       layout.height = 0;
@@ -33,7 +45,6 @@ const resizeMove = {
     }
     return layout;
   },
-
   "e-resize": (offset: Offset, _layout: Layout, start: MoveStart): Layout => {
     const layout = { ..._layout };
     if (start.width + offset.x < 0) {
@@ -98,13 +109,13 @@ const resizeMove = {
     }
     return layout;
   },
-
   "sw-resize": (
     _: Offset,
     _layout: Layout,
     start: MoveStart,
-    e: MouseEvent
+    e?: MouseEvent
   ): Layout => {
+    if (!e) return _layout;
     const layout = { ..._layout };
     const scaleFactor = 1 / props.scale; // 计算缩放修正因子
     const correct = {
@@ -123,13 +134,13 @@ const resizeMove = {
     }
     return layout;
   },
-
   "nw-resize": (
     _: Offset,
     _layout: Layout,
     start: MoveStart,
-    e: MouseEvent
-  ): Layout => {
+    e?: MouseEvent
+  ) => {
+    if (!e) return _layout;
     const layout = { ..._layout };
     const scaleFactor = 1 / props.scale; // 计算缩放修正因子
     const correct = {
@@ -167,7 +178,7 @@ const resizeMove = {
     return layout;
   },
 };
-const mousedown = (e: MouseEvent, direction: keyof typeof resizeMove) => {
+const mousedown = (e: MouseEvent, direction: Direction) => {
   if (model.value.lock) return;
   emits("before-move", e, direction);
   e.preventDefault();
@@ -197,8 +208,6 @@ const mousedown = (e: MouseEvent, direction: keyof typeof resizeMove) => {
     e.stopPropagation();
     const scaleFactor = 1 / props.scale; // 计算缩放修正因子
     // 根据缩放倍率修正偏移量
-    // let offsetX = (e.clientX - start.x) * scaleFactor;
-    // let offsetY = (e.clientY - start.y) * scaleFactor;
     let offsetX = Math.round((e.clientX - start.x) * scaleFactor);
     let offsetY = Math.round((e.clientY - start.y) * scaleFactor);
     const offset = { x: offsetX, y: offsetY };
@@ -250,8 +259,8 @@ const style = computed((): CSSProperties => {
     height: model.value.height + "px",
   };
 });
-const resizes = computed(() => {
-  let points = [
+const createPoints = () => {
+  const points: Points = [
     {
       direction: "n-resize",
       style: {
@@ -325,28 +334,27 @@ const resizes = computed(() => {
       },
     },
   ];
-  const angleToCursor = {
+  const angleToCursor: AngleToCursor = [
     // 每个范围的角度对应的光标
-    nw: { start: 338, end: 23, cursor: "nw" },
-   "n": { start: 23, end: 68, cursor: "n" },
-   "ne": { start: 68, end: 113, cursor: "ne" },
-    "e":{ start: 113, end: 158, cursor: "e" },
-    { start: 158, end: 203, cursor: "se" },
-    { start: 203, end: 248, cursor: "s" },
-    { start: 248, end: 293, cursor: "sw" },
-    { start: 293, end: 338, cursor: "w" },
-  };
+    { start: 338, end: 23, cursor: "nw-resize" },
+    { start: 23, end: 68, cursor: "n-resize" },
+    { start: 68, end: 113, cursor: "ne-resize" },
+    { start: 113, end: 158, cursor: "e-resize" },
+    { start: 158, end: 203, cursor: "se-resize" },
+    { start: 203, end: 248, cursor: "s-resize" },
+    { start: 248, end: 293, cursor: "sw-resize" },
+    { start: 293, end: 338, cursor: "w-resize" },
+  ];
   const initialAngle = {
-    // 每个点对应的初始角度
-    lt: 0,
-    t: 45,
-    rt: 90,
-    r: 135,
-    rb: 180,
-    b: 225,
-    lb: 270,
-    l: 315,
-  };
+    nw: 0,
+    n: 45,
+    ne: 90,
+    e: 135,
+    se: 180,
+    s: 225,
+    sw: 270,
+    w: 315,
+  }; // 每个点对应的初始角度
   const rotate = (model.value.rotate + 360) % 360;
   points.forEach((point) => {
     const angle =
@@ -356,16 +364,20 @@ const resizes = computed(() => {
         rotate) %
       360;
     if (angle < 23 || angle >= 338) {
-      result[point] = "nw-resize";
+      point.style.cursor = "nw-resize";
       return;
     }
-    if (angleLimit.start <= angle && angle < angleLimit.end) {
-      result[point] = angleLimit.cursor + "-resize";
-      return;
-    }
+    angleToCursor.some(({ start, end, cursor }) => {
+      if (angle >= start && angle < end) {
+        point.style.cursor = cursor;
+        return true;
+      } else return false;
+    });
   });
   return points;
-});
+};
+const resizes = computed(createPoints);
+
 defineExpose({
   mousedown,
 });
@@ -377,6 +389,7 @@ defineExpose({
     :class="{
       active: active,
     }"
+    :tabindex="style.zIndex"
     :style="style"
   >
     <template v-if="!model.lock">
@@ -395,29 +408,25 @@ defineExpose({
         <slot name="resizes" :active="active" :layout="model"></slot>
       </template>
       <template v-if="!$slots.rotate">
-        <img
-          src="../../assets/rotate.svg"
-          class="rotate text-primary"
+        <ZSvgIcon
           @mousedown="mousedown($event, 'rotate')"
-        />
+          class="rotate"
+          color="primary"
+          name="rotate"
+        ></ZSvgIcon>
       </template>
       <template v-else>
         <slot name="rotate" :active="active" :layout="model"></slot>
       </template>
     </template>
     <template v-if="!$slots.lock">
-      <img
+      <ZSvgIcon
         @mousedown.stop="model.lock = !model.lock"
-        v-show="model.lock"
-        src="../../assets/lock-off.svg"
+        @mousedown="mousedown($event, 'rotate')"
         class="lock"
-      />
-      <img
-        @mousedown.stop="model.lock = !model.lock"
-        v-show="!model.lock"
-        src="../../assets/lock-on.svg"
-        class="lock"
-      />
+        color="primary"
+        :name="model.lock ? 'lock-off' : 'lock-on'"
+      ></ZSvgIcon>
     </template>
     <slot v-else name="lock" :active="active" :layout="model"></slot>
     <slot name="default" :active="active" :layout="model"></slot>
@@ -425,6 +434,10 @@ defineExpose({
 </template>
 <style scoped lang="scss">
 .ZDrag {
+  cursor: grab;
+  &:active {
+    cursor: grabbing;
+  }
   // // 定义resizes
   $resizes: (
     n-resize,

@@ -3,6 +3,7 @@ import { defineOptions, defineModel, ref } from "vue";
 import ZBtn from "../ZBtn/ZBtn.vue";
 import ZTextField from "../ZTextField/ZTextField.vue";
 import ZScaleController from "../ZScaleController/ZScaleController.vue";
+import ZSvgIcon from "@/components/ZSvgIcon/ZSvgIcon.vue";
 defineOptions({
   name: "ZToolbar",
 });
@@ -26,7 +27,7 @@ const setupOpenChange = () => {
         color="text-primary"
         class="ZToolbar-setup-icon"
       >
-        <img src="../../assets/setup.svg" />
+        <ZSvgIcon name="setup"></ZSvgIcon>
       </ZBtn>
       <ZScaleController v-model="scale"></ZScaleController>
     </div>
