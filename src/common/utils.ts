@@ -34,52 +34,6 @@ export function withInstallAll(components: { name: string }[]): Plugin {
     },
   };
 }
-// export const rotateLayout = (_layout: Layout) => {
-//   // 直接返回原始布局参数
-//   return { ..._layout };
-// };
-
-// export const getRotatedCorners = (layout: Layout) => {
-//   const { x, y, width, height, rotate = 0 } = layout;
-//   const rad = (rotate * Math.PI) / 180;
-
-//   // 计算四个角原始坐标（相对于元素中心）
-//   const corners = [
-//     { x: -width / 2, y: -height / 2 }, // 左上
-//     { x: width / 2, y: -height / 2 }, // 右上
-//     { x: width / 2, y: height / 2 }, // 右下
-//     { x: -width / 2, y: height / 2 }, // 左下
-//   ];
-
-//   // 应用旋转矩阵并转换为绝对坐标
-//   return corners.map((p) => {
-//     const rotatedX = p.x * Math.cos(rad) - p.y * Math.sin(rad);
-//     const rotatedY = p.x * Math.sin(rad) + p.y * Math.cos(rad);
-//     return {
-//       x: x + rotatedX + width / 2,
-//       y: y + rotatedY + height / 2,
-//     };
-//   });
-// };
-export const getRotatedCorners = (layout: Layout) => {
-  const { x, y, width, height, rotate = 0 } = layout;
-  const rad = (rotate * Math.PI) / 180;
-
-  // 计算四个角原始坐标
-  const corners = [
-    { x: 0, y: 0 }, // 左上
-    { x: width, y: 0 }, // 右上
-    { x: width, y: height }, // 右下
-    { x: 0, y: height }, // 左下
-  ];
-
-  // 应用旋转矩阵
-  return corners.map((p) => {
-    const rotatedX = p.x * Math.cos(rad) - p.y * Math.sin(rad) + x;
-    const rotatedY = p.x * Math.sin(rad) + p.y * Math.cos(rad) + y;
-    return { x: rotatedX, y: rotatedY };
-  });
-};
 export function sin(rotate: number) {
   return Math.abs(Math.sin(angleToRadian(rotate)));
 }
@@ -90,23 +44,10 @@ export function cos(rotate: number) {
 function angleToRadian(angle: number) {
   return (angle * Math.PI) / 180;
 }
-export const convertOffsetToLocal = (
-  offset: {
-    x: number;
-    y: number;
-  },
-  rotate: number
-): { x: number; y: number } => {
-  const rad = -angleToRadian(rotate); // 取反旋转角度
-  return {
-    x: offset.x * Math.cos(rad) - offset.y * Math.sin(rad),
-    y: offset.x * Math.sin(rad) + offset.y * Math.cos(rad),
-  };
-};
 export const rotateLayout = (_layout: Layout) => {
   const layout = { ..._layout };
   if (typeof layout.rotate === "number" && layout.rotate !== 0) {
-    const { width, height, rotate, x, y } = layout;
+    const { width, height, rotate } = layout;
     const newWidth = width * cos(rotate) + height * sin(rotate);
     const newX = Math.round((width - newWidth) / 2);
     layout.x += newX;
@@ -118,55 +59,55 @@ export const rotateLayout = (_layout: Layout) => {
   }
   return layout;
 };
-
-// 计算元素旋转后的实际包围盒
-export const getRotatedBoundingBox = (layout: Layout) => {
-  const corners = getRotatedCorners(layout);
-  const xs = corners.map((p) => p.x);
-  const ys = corners.map((p) => p.y);
+/**
+ * 计算绕指定中心点旋转后的坐标
+ *
+ * 根据二维旋转公式，将输入坐标绕给定中心点旋转指定角度后，返回新的整数坐标
+ *
+ * @param realTimeCoordinates - 需要旋转的原始坐标对象，包含x/y分量（单位应与中心点一致）
+ * @param centerCoordinate - 旋转中心坐标对象，包含x/y分量
+ * @param _rotate - 旋转角度值（角度制，顺时针方向为正方向）
+ * @returns 返回旋转后的坐标对象，x/y分量已进行四舍五入取整
+ *
+ * @remarks
+ * 实现原理：
+ * 1. 将角度转换为弧度并取反，用于处理坐标系差异（将常见的顺时针旋转转为数学的正方向计算）
+ * 2. 应用二维旋转矩阵公式计算新坐标
+ * 3. 对结果坐标进行四舍五入处理
+ */
+export const calculateRotateCoordinate = (
+  realTimeCoordinates: { x: number; y: number },
+  centerCoordinate: {
+    x: number;
+    y: number;
+  },
+  _rotate: number
+) => {
+  /** 转换角度为弧度并取反，适配数学坐标系计算 */
+  const rotate = angleToRadian(-_rotate); // 角度制转弧度制并取反
+  // 应用旋转矩阵公式计算新坐标，并四舍五入到最近整数
   return {
-    minX: Math.min(...xs),
-    maxX: Math.max(...xs),
-    minY: Math.min(...ys),
-    maxY: Math.max(...ys),
-    width: Math.max(...xs) - Math.min(...xs),
-    height: Math.max(...ys) - Math.min(...ys),
-    centerX: (Math.min(...xs) + Math.max(...xs)) / 2,
-    centerY: (Math.min(...ys) + Math.max(...ys)) / 2,
+    x:
+      (realTimeCoordinates.x - centerCoordinate.x) * Math.cos(rotate) -
+      (realTimeCoordinates.y - centerCoordinate.y) * Math.sin(rotate) +
+      centerCoordinate.x,
+    y:
+      (realTimeCoordinates.x - centerCoordinate.x) * Math.sin(rotate) +
+      (realTimeCoordinates.y - centerCoordinate.y) * Math.cos(rotate) +
+      centerCoordinate.y,
   };
 };
-// 自动吸附检测函数
-export const checkAdsorption = (
-  current: Layout,
-  targets: Layout[],
-  threshold: number = 5
-) => {
-  const currentBox = getRotatedBoundingBox(current);
-  const adsorptions = [];
-
-  for (const target of targets) {
-    const targetBox = getRotatedBoundingBox(target);
-
-    // 水平方向吸附检测
-    if (Math.abs(currentBox.minX - targetBox.minX) < threshold) {
-      adsorptions.push({ axis: "x", value: targetBox.minX, type: "min-min" });
-    }
-    if (Math.abs(currentBox.minX - targetBox.maxX) < threshold) {
-      adsorptions.push({ axis: "x", value: targetBox.maxX, type: "min-max" });
-    }
-    // 垂直方向吸附检测同理
-
-    // 中心点对齐检测
-    if (Math.abs(currentBox.centerX - targetBox.centerX) < threshold) {
-      adsorptions.push({ axis: "x", value: targetBox.centerX, type: "center" });
-    }
-    if (Math.abs(currentBox.centerY - targetBox.centerY) < threshold) {
-      adsorptions.push({ axis: "y", value: targetBox.centerY, type: "center" });
-    }
+// 求两点之间的中点坐标
+export const getCenterCoordinate = (
+  RealTimeCoordinates: { x: number; y: number },
+  symmetric: {
+    x: number;
+    y: number;
   }
-
-  return adsorptions;
-};
+) => ({
+  x: (RealTimeCoordinates.x + symmetric.x) / 2,
+  y: (RealTimeCoordinates.y + symmetric.y) / 2,
+});
 /**
  * 防抖函数
  * @param func 目标函数
@@ -213,22 +154,3 @@ export const once = <T extends (...args: any[]) => any>(
     }
   };
 };
-// export const rotateLayout = (_layout: Layout) => {
-//   const layout = { ..._layout };
-//   if (typeof layout.rotate === "number" && layout.rotate !== 0) {
-//     const { width, height, rotate, x, y } = layout;
-//     const newWidth =
-//       width * Math.cos((rotate * Math.PI) / 180) +
-//       height * Math.sin((rotate * Math.PI) / 180);
-//     const newX = Math.round(x + (width - newWidth) / 2);
-//     layout.x = newX;
-//     layout.width = newWidth;
-//     const newHeight =
-//       height * Math.cos((rotate * Math.PI) / 180) +
-//       width * Math.sin((rotate * Math.PI) / 180);
-//     const newY = Math.round(y + (height - newHeight) / 2);
-//     layout.y = newY;
-//     layout.height = newHeight;
-//   }
-//   return layout;
-// };

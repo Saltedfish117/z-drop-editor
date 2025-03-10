@@ -1,7 +1,9 @@
 import type { CSSProperties } from "vue";
-export interface Layout {
+export interface Axis {
   x: number;
   y: number;
+}
+export interface Layout extends Axis {
   width: number;
   height: number;
   rotate: number;
@@ -19,14 +21,17 @@ export interface Offset {
 export interface MoveStart extends Omit<Layout, "zIndex" | "lock"> {
   layoutX: number;
   layoutY: number;
-  centerX: number;
-  centerY: number;
-  symmetricX: number;
-  symmetricY: number;
+  center: Axis;
+  symmetric: Axis;
+  point?: Axis;
 }
 export interface ZDragProps {
   position: "absolute" | "fixed";
   scale: number;
+  canvasSize: {
+    width: number;
+    height: number;
+  };
 }
 export type Direction =
   | "n-resize"

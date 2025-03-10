@@ -143,6 +143,7 @@ onUnmounted(() => {
       v-model:size="canvasSize"
       :scroll="false"
       @mousedown="proxyMouseDown"
+      class="canvas"
     >
       <template #default="{ canvasSize }">
         <ZNode
@@ -157,6 +158,7 @@ onUnmounted(() => {
           @before-move="moving = true"
           @after-move="moving = false"
           @moving="handleMove"
+          :canvasSize="canvasSize"
           :scale="canvasSize.scale"
           ref="zDragRef"
           :position="'absolute'"
@@ -182,5 +184,12 @@ onUnmounted(() => {
   height: 100vh;
   overflow: auto;
   box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  .canvas {
+    flex: 1;
+    max-width: 100vw;
+    max-height: calc(100vh - 50px);
+  }
 }
 </style>

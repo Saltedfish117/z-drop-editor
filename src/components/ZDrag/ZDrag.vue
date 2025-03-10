@@ -17,7 +17,7 @@ import type {
   AngleToCursor,
   ResizeMove,
 } from "./types";
-import { convertOffsetToLocal } from "@/common/utils";
+import { getCenterCoordinate, calculateRotateCoordinate } from "@/common/utils";
 import type { CSSProperties } from "vue";
 import ZSvgIcon from "../ZSvgIcon/ZSvgIcon.vue";
 defineOptions({
@@ -78,25 +78,129 @@ const resizeMove: ResizeMove = {
 
     return layout;
   },
-  "ne-resize": (offset: Offset, _layout: Layout, start: MoveStart): Layout => {
+  "nw-resize": (
+    _: Offset,
+    _layout: Layout,
+    start: MoveStart,
+    e?: MouseEvent
+  ) => {
+    if (!e) return _layout;
+    // console.dir(e);
     const layout = { ..._layout };
-    if (start.layoutY + offset.y < 0) {
-      layout.y = 0;
-      layout.height = start.height + start.layoutY;
-    } else if (start.height - offset.y < 0) {
-      layout.y = start.layoutY + start.height;
-      layout.height = 0;
+    if (layout.rotate !== 0) {
+      if (e.layerX < 0 || e.layerY < 0) return layout;
+      const realTimeCoordinates = {
+        x: e.layerX,
+        y: e.layerY,
+      };
+      const centerCoordinate = getCenterCoordinate(
+        realTimeCoordinates,
+        start.symmetric
+      );
+      const currentPoint = calculateRotateCoordinate(
+        realTimeCoordinates,
+        centerCoordinate,
+        layout.rotate
+      );
+      const symmetricPoint = calculateRotateCoordinate(
+        start.symmetric,
+        centerCoordinate,
+        layout.rotate
+      );
+      const width = symmetricPoint.x - currentPoint.x;
+      const height = symmetricPoint.y - currentPoint.y;
+      if (width > 0 && height > 0) {
+        layout.width = width;
+        layout.height = height;
+        layout.x = currentPoint.x;
+        layout.y = currentPoint.y;
+      }
+      // console.log("point", topLeftPoint, bottomRightPoint);
+      // console.log("size", width, height);
     } else {
-      layout.y = start.layoutY + offset.y;
-      layout.height = start.height - offset.y;
+      const scaleFactor = 1 / props.scale; // 计算缩放修正因子
+      const correct = {
+        x: Math.round((start.x - Number(e.clientX)) * scaleFactor),
+        y: Math.round((start.y - Number(e.clientY)) * scaleFactor),
+      };
+      layout.width = start.width + correct.x;
+      layout.height = start.height + correct.y;
+      layout.x = start.layoutX - correct.x;
+      layout.y = start.layoutY - correct.y;
+      if (layout.height < 0) {
+        layout.height = 0;
+        layout.y = start.layoutY + start.height;
+      }
+      if (layout.width < 0) {
+        layout.width = 0;
+        layout.x = start.layoutX + start.width;
+      }
     }
-    if (start.width + offset.x < 0) {
-      layout.width = 0;
-    } else {
-      layout.width = start.width + offset.x;
-    }
+
     return layout;
   },
+  "ne-resize": (
+    offset: Offset,
+    _layout: Layout,
+    start: MoveStart,
+    e?: MouseEvent
+  ): Layout => {
+    if (!e) return _layout;
+    const layout = { ..._layout };
+    if (layout.rotate !== 0) {
+      if (e.layerX < 0 || e.layerY < 0) return layout;
+      const realTimeCoordinates = {
+        x: e.layerX,
+        y: e.layerY,
+      };
+      const centerCoordinate = getCenterCoordinate(
+        realTimeCoordinates,
+        start.symmetric
+      );
+      const currentPoint = calculateRotateCoordinate(
+        realTimeCoordinates,
+        centerCoordinate,
+        layout.rotate
+      );
+      const symmetricPoint = calculateRotateCoordinate(
+        start.symmetric,
+        centerCoordinate,
+        layout.rotate
+      );
+      const width = currentPoint.x - symmetricPoint.x;
+      const height = symmetricPoint.y - currentPoint.y;
+      if (
+        width > 0 &&
+        height > 0 &&
+        symmetricPoint.x > 0 &&
+        currentPoint.y > 0
+      ) {
+        layout.width = width;
+        layout.height = height;
+        layout.x = symmetricPoint.x;
+        layout.y = currentPoint.y;
+      }
+    } else {
+      if (start.layoutY + offset.y < 0) {
+        layout.y = 0;
+        layout.height = start.height + start.layoutY;
+      } else if (start.height - offset.y < 0) {
+        layout.y = start.layoutY + start.height;
+        layout.height = 0;
+      } else {
+        layout.y = start.layoutY + offset.y;
+        layout.height = start.height - offset.y;
+      }
+      if (start.width + offset.x < 0) {
+        layout.width = 0;
+      } else {
+        layout.width = start.width + offset.x;
+      }
+    }
+
+    return layout;
+  },
+
   "se-resize": (offset: Offset, _layout: Layout, start: MoveStart): Layout => {
     const layout = { ..._layout };
     layout.width = start.width + offset.x;
@@ -134,33 +238,7 @@ const resizeMove: ResizeMove = {
     }
     return layout;
   },
-  "nw-resize": (
-    _: Offset,
-    _layout: Layout,
-    start: MoveStart,
-    e?: MouseEvent
-  ) => {
-    if (!e) return _layout;
-    const layout = { ..._layout };
-    const scaleFactor = 1 / props.scale; // 计算缩放修正因子
-    const correct = {
-      x: Math.round((start.x - Number(e.clientX)) * scaleFactor),
-      y: Math.round((start.y - Number(e.clientY)) * scaleFactor),
-    };
-    layout.width = start.width + correct.x;
-    layout.height = start.height + correct.y;
-    layout.x = start.layoutX - correct.x;
-    layout.y = start.layoutY - correct.y;
-    if (layout.height < 0) {
-      layout.height = 0;
-      layout.y = start.layoutY + start.height;
-    }
-    if (layout.width < 0) {
-      layout.width = 0;
-      layout.x = start.layoutX + start.width;
-    }
-    return layout;
-  },
+
   move: (offset: Offset, _layout: Layout, start: MoveStart): Layout => {
     const layout = { ..._layout };
     const resultX = start.layoutX + offset.x;
@@ -183,6 +261,20 @@ const mousedown = (e: MouseEvent, direction: Direction) => {
   emits("before-move", e, direction);
   e.preventDefault();
   e.stopPropagation();
+  // console.log(e.clientX);
+  const center = {
+    x: model.value.x + model.value.width / 2,
+    y: model.value.y + model.value.height / 2,
+  };
+  const point = {
+    x: e.layerX,
+    y: e.layerY,
+  };
+  // 获取对称点坐标
+  const symmetric = {
+    x: 2 * center.x - point.x,
+    y: 2 * center.y - point.y,
+  };
   const start: MoveStart = {
     x: Number(e.clientX),
     y: Number(e.clientY),
@@ -191,11 +283,11 @@ const mousedown = (e: MouseEvent, direction: Direction) => {
     width: model.value.width,
     height: model.value.height,
     rotate: model.value.rotate, // 旋转角度
-    centerX: model.value.x + model.value.width / 2,
-    centerY: model.value.y + model.value.height / 2,
-    // 获取对称点的坐标
-    symmetricX: model.value.x + model.value.width,
-    symmetricY: model.value.y + model.value.height,
+    center: center,
+    symmetric,
+    // point:{
+    //   x:e.clientX
+    // }
   };
   let fist = true;
   document.documentElement.style.userSelect = "none";
@@ -227,9 +319,11 @@ const mousedown = (e: MouseEvent, direction: Direction) => {
     document.documentElement.style.userSelect = "auto";
     document.removeEventListener("mousemove", move);
     document.removeEventListener("mouseup", up);
+    window.removeEventListener("mouseleave", up);
   };
   document.addEventListener("mousemove", move);
   document.addEventListener("mouseup", up);
+  window.addEventListener("mouseleave", up);
 };
 const model = defineModel<Layout>({
   type: Object,

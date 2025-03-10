@@ -83,8 +83,8 @@ const setupOpenChange = () => {
 </template>
 <style scoped lang="scss">
 .ZToolbar {
-  position: fixed;
-  top: 0;
+  position: relative;
+  // top: 0;
   height: 50px;
   max-height: 120px;
   width: 100%;

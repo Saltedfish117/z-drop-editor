@@ -150,10 +150,10 @@ onUnmounted(() => {
 
 <style scoped lang="scss">
 .canvas-wrapper {
-  width: 100vw;
-  height: 100vh;
-  max-width: 100vw;
-  max-height: 100vh;
+  // width: 100%;
+  // height: 100%;
+  // max-width: 100%;
+  // max-height: 100%;
   overflow: scroll;
   box-sizing: border-box;
   --canvas-bg-color: 244, 245, 247;
