@@ -87,26 +87,28 @@ export const calculateRotateCoordinate = (
   const rotate = angleToRadian(-_rotate); // 角度制转弧度制并取反
   // 应用旋转矩阵公式计算新坐标，并四舍五入到最近整数
   return {
-    x:
+    x: Math.round(
       (realTimeCoordinates.x - centerCoordinate.x) * Math.cos(rotate) -
-      (realTimeCoordinates.y - centerCoordinate.y) * Math.sin(rotate) +
-      centerCoordinate.x,
-    y:
+        (realTimeCoordinates.y - centerCoordinate.y) * Math.sin(rotate) +
+        centerCoordinate.x
+    ),
+    y: Math.round(
       (realTimeCoordinates.x - centerCoordinate.x) * Math.sin(rotate) +
-      (realTimeCoordinates.y - centerCoordinate.y) * Math.cos(rotate) +
-      centerCoordinate.y,
+        (realTimeCoordinates.y - centerCoordinate.y) * Math.cos(rotate) +
+        centerCoordinate.y
+    ),
   };
 };
 // 求两点之间的中点坐标
 export const getCenterCoordinate = (
-  RealTimeCoordinates: { x: number; y: number },
+  realTimeCoordinates: { x: number; y: number },
   symmetric: {
     x: number;
     y: number;
   }
 ) => ({
-  x: (RealTimeCoordinates.x + symmetric.x) / 2,
-  y: (RealTimeCoordinates.y + symmetric.y) / 2,
+  x: (realTimeCoordinates.x + symmetric.x) / 2,
+  y: (realTimeCoordinates.y + symmetric.y) / 2,
 });
 /**
  * 防抖函数

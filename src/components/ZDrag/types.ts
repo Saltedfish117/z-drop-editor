@@ -21,9 +21,10 @@ export interface Offset {
 export interface MoveStart extends Omit<Layout, "zIndex" | "lock"> {
   layoutX: number;
   layoutY: number;
+  beforeAngle: number;
   center: Axis;
   symmetric: Axis;
-  point?: Axis;
+  point: Axis;
 }
 export interface ZDragProps {
   position: "absolute" | "fixed";

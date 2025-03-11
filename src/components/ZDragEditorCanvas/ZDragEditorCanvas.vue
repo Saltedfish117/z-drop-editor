@@ -97,7 +97,6 @@ const handleMouseMove = (e: MouseEvent) => {
   let resultX = startPos.scrollLeft - offsetX;
   let resultY = startPos.scrollTop - offsetY;
   canvasWrapper.value?.scrollTo(resultX, resultY);
-  checkBoundary();
 };
 const handleMouseUp = (e: MouseEvent) => {
   e.preventDefault();
@@ -124,14 +123,8 @@ const spaceUp = (e: KeyboardEvent) => {
   document.removeEventListener("mousemove", handleMouseMove);
   document.removeEventListener("mouseup", handleMouseUp);
 };
-
-// 动态扩展边界检测
-const checkBoundary = () => {
-  if (!canvasWrapper.value) return;
-};
 const handleScrollbar = () => {
   if (!canvasWrapper.value) return;
-  checkBoundary();
 };
 // 生命周期
 onMounted(() => {
@@ -141,7 +134,6 @@ onMounted(() => {
   canvasWrapper.value.scrollTop =
     size.value.height / 2 - window.innerHeight / 2;
 });
-
 onUnmounted(() => {
   document.removeEventListener("mousemove", handleMouseMove);
   document.removeEventListener("mouseup", handleMouseUp);

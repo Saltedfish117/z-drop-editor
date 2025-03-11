@@ -42,8 +42,8 @@ watch(
       val.reduce((prev, curr) => (prev += curr.layout.width), 0) +
       50 * val.length;
     let maxHeight = Math.max(...val.map((i) => i.layout.height));
-    canvasSize.value.width = Math.round(nodesWidth * 20);
-    canvasSize.value.height = Math.round(maxHeight * 20);
+    canvasSize.value.width = Math.round(nodesWidth * 2);
+    canvasSize.value.height = Math.round(maxHeight * 2);
     let startX = Math.round(canvasSize.value.width / 2 - nodesWidth / 2);
     let y = Math.round(canvasSize.value.height / 2 - maxHeight / 2);
     val.forEach((node) => {
