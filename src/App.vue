@@ -5,7 +5,7 @@ import { reactive } from "vue";
 let arr = Array.from({ length: 5 }, (_, k) => {
   return {
     id: (k + 1).toString(),
-    component: "a4",
+    component: "page",
     layout: {
       x: 0,
       y: 0,
@@ -15,14 +15,44 @@ let arr = Array.from({ length: 5 }, (_, k) => {
       zIndex: 1,
       lock: false,
     },
+    children: [
+      {
+        id: (k + 1).toString() + `-kids`,
+        component: "a4",
+        parentId: (k + 1).toString(),
+        layout: {
+          x: 0,
+          y: 0,
+          width: 200,
+          height: 200,
+          rotate: 0,
+          zIndex: 1,
+          lock: false,
+        },
+      },
+      {
+        id: (k + 2).toString() + `-kids-3`,
+        component: "a4",
+        parentId: (k + 1).toString(),
+        layout: {
+          x: 0,
+          y: 0,
+          width: 200,
+          height: 200,
+          rotate: 0,
+          zIndex: 1,
+          lock: false,
+        },
+      },
+    ],
   };
 });
 const store = reactive({
   nodes: arr,
   components: [
     {
-      id: "a4",
-      component: "a4",
+      id: "page",
+      component: "page",
       layout: {
         x: 0,
         y: 0,
@@ -34,15 +64,25 @@ const store = reactive({
       },
     },
   ],
-  active: null,
+  canvas: {
+    width: window.innerWidth,
+    height: window.innerHeight,
+    scale: 0.8,
+  },
+  moving: false,
+  active: undefined,
 });
 </script>
 <template>
   <article>
-    <ZDragEditor v-model="store"></ZDragEditor>
+    <ZDragEditor class="editor" v-model="store"></ZDragEditor>
   </article>
 </template>
 
 <style scoped lang="scss">
 //
+.editor {
+  width: 100vw;
+  height: 100vh;
+}
 </style>

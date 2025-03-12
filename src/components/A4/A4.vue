@@ -3,12 +3,7 @@ import { defineOptions, defineProps } from "vue";
 defineOptions({
   name: "A4",
 });
-defineProps({
-  canvasSize: {
-    type: Object,
-    required: true,
-  },
-});
+defineProps();
 </script>
 <template>
   <article class="A4"></article>
@@ -18,6 +13,7 @@ defineProps({
   width: 100%;
   height: 100%;
   background-color: white;
+  border: 1px solid;
   // box-shadow: 1px 1px 5px #cccccc;
 }
 </style>

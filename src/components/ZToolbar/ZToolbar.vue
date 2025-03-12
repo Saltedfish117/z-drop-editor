@@ -4,13 +4,28 @@ import ZBtn from "../ZBtn/ZBtn.vue";
 import ZTextField from "../ZTextField/ZTextField.vue";
 import ZScaleController from "../ZScaleController/ZScaleController.vue";
 import ZSvgIcon from "@/components/ZSvgIcon/ZSvgIcon.vue";
+import type { ZNode } from "../ZNode/types";
 defineOptions({
   name: "ZToolbar",
 });
 const scale = defineModel("scale", { type: Number, required: true });
-const layout = defineModel("layout", {
-  type: Object,
-  required: true,
+
+const node = defineModel<ZNode>("node", {
+  default: () => ({
+    id: "tool-default",
+    component: "tool-default",
+    name: "default",
+    parentId: "",
+    layout: {
+      x: 0,
+      y: 0,
+      width: 0,
+      height: 0,
+      rotate: 0,
+      zIndex: 1,
+      lock: false,
+    },
+  }),
 });
 const setupOpen = ref(true);
 const setupOpenChange = () => {
@@ -41,21 +56,21 @@ const setupOpenChange = () => {
         <div class="row">
           <ZTextField
             class="col"
-            :model-value="layout.x"
+            :model-value="node.layout.x"
             label="X"
             placeholder="x轴坐标"
             required
           />
           <ZTextField
             class="col"
-            :model-value="layout.y"
+            :model-value="node.layout.y"
             label="Y"
             placeholder="Y轴坐标"
             required
           />
           <ZTextField
             class="col"
-            :model-value="layout.rotate"
+            :model-value="node.layout.rotate"
             label="°"
             placeholder="Y轴坐标"
             required
@@ -64,14 +79,14 @@ const setupOpenChange = () => {
         <div class="row">
           <ZTextField
             class="col"
-            :model-value="layout.width"
+            :model-value="node.layout.width"
             label="宽"
             placeholder="x轴坐标"
             required
           />
           <ZTextField
             class="col"
-            :model-value="layout.height"
+            :model-value="node.layout.height"
             label="高"
             placeholder="Y轴坐标"
             required

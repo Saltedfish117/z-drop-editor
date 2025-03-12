@@ -12,13 +12,14 @@
       @keydown.space="spaceDown"
       @keyup.space="spaceUp"
       class="infinite-canvas"
+      ref="infiniteCanvas"
       :style="{
         width: size.width + 'px',
         height: size.height + 'px',
         transform: `scale(${scale})`,
       }"
     >
-      <slot :isDragging="isDragging" :canvasSize="size" name="default"></slot>
+      <slot :canvas="infiniteCanvas" :size="size" name="default"></slot>
     </article>
   </div>
 </template>
@@ -31,6 +32,7 @@ import {
   onUnmounted,
   defineOptions,
   defineModel,
+  defineExpose,
 } from "vue";
 
 defineOptions({
@@ -59,6 +61,7 @@ const props = defineProps({
 });
 // 画布容器引用
 const canvasWrapper = ref<HTMLElement | null>(null);
+const infiniteCanvas = ref<HTMLElement | null>(null);
 // 初始尺寸
 const size = defineModel("size", {
   type: Object,
@@ -71,13 +74,11 @@ const size = defineModel("size", {
   },
 });
 
-const isDragging = ref(false); // 画布状态
 const startPos = reactive({ x: 0, y: 0, scrollLeft: 0, scrollTop: 0 });
 // 拖拽处理
 const handleMouseDown = (e: MouseEvent) => {
   if (!canvasWrapper.value) return;
   // 判断是否按下空格键
-  isDragging.value = true;
   startPos.x = e.clientX;
   startPos.y = e.clientY;
   startPos.scrollLeft = canvasWrapper.value.scrollLeft;
@@ -101,7 +102,7 @@ const handleMouseMove = (e: MouseEvent) => {
 const handleMouseUp = (e: MouseEvent) => {
   e.preventDefault();
   e.stopPropagation();
-  isDragging.value = false;
+
   document.documentElement.style.cursor = "grab";
   document.removeEventListener("mousemove", handleMouseMove);
   document.removeEventListener("mouseup", handleMouseUp);
@@ -115,7 +116,7 @@ const spaceDown = (e: KeyboardEvent) => {
 };
 const spaceUp = (e: KeyboardEvent) => {
   e.preventDefault();
-  isDragging.value = false;
+
   e.stopPropagation();
   document.documentElement.style.cursor = "default";
   document.documentElement.style.userSelect = "auto";
@@ -126,6 +127,10 @@ const spaceUp = (e: KeyboardEvent) => {
 const handleScrollbar = () => {
   if (!canvasWrapper.value) return;
 };
+defineExpose({
+  infiniteCanvas,
+  canvasWrapper,
+});
 // 生命周期
 onMounted(() => {
   if (!canvasWrapper.value) return;

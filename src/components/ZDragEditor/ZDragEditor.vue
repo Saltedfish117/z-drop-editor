@@ -8,6 +8,7 @@ import {
   nextTick,
   reactive,
   onUnmounted,
+  provide,
 } from "vue";
 import ZDragEditorCanvas from "../ZDragEditorCanvas/ZDragEditorCanvas.vue";
 import ZToolbar from "../ZToolbar/ZToolbar.vue";
@@ -15,20 +16,29 @@ import ZDrag from "../ZDrag/ZDrag.vue";
 import ZNode from "../ZNode/ZNode.vue";
 import ZLines from "../ZLines/ZLines.vue";
 import type { ZNode as Node } from "../ZNode/types";
-import type { ZDragEditorModel } from "./types";
-import type { Layout } from "../ZDrag/types";
+import type { ZDragEditorModel, ZNodeMap } from "./types";
+// import type { Layout } from "../ZDrag/types";
 defineOptions({
   name: "ZDragEditor",
 });
 const store = defineModel<ZDragEditorModel>({
   required: true,
+  default: () => ({
+    nodes: [],
+    canvas: {
+      width: window.innerWidth,
+      height: window.innerHeight,
+      scale: 0.8,
+    },
+    active: undefined,
+    moving: false,
+    components: [],
+  }),
 });
-const nodeMap = reactive(new Map());
-const canvasSize = ref({
-  width: 0,
-  height: 0,
-  scale: 0.8,
-});
+const useStore = () => {
+  return store.value;
+};
+const nodeMap = reactive<ZNodeMap>(new Map());
 watch(
   () => store.value.nodes,
   (val) => {
@@ -42,10 +52,10 @@ watch(
       val.reduce((prev, curr) => (prev += curr.layout.width), 0) +
       50 * val.length;
     let maxHeight = Math.max(...val.map((i) => i.layout.height));
-    canvasSize.value.width = Math.round(nodesWidth * 2);
-    canvasSize.value.height = Math.round(maxHeight * 2);
-    let startX = Math.round(canvasSize.value.width / 2 - nodesWidth / 2);
-    let y = Math.round(canvasSize.value.height / 2 - maxHeight / 2);
+    store.value.canvas.width = Math.round(nodesWidth * 3);
+    store.value.canvas.height = Math.round(maxHeight * 3);
+    let startX = Math.round(store.value.canvas.width / 2 - nodesWidth / 2);
+    let y = Math.round(store.value.canvas.height / 2 - maxHeight / 2);
     val.forEach((node) => {
       node.layout.x = startX + 50;
       startX += node.layout.width + 50;
@@ -58,39 +68,10 @@ watch(
     once: true,
   }
 );
-const active = computed(() => !!store.value.active);
-const moving = ref(false);
-const moveMode = ref("");
-const handleMove = (_: MouseEvent, direction: string) => {
-  moveMode.value = direction;
-};
-const activeLayout = computed({
-  get: () => {
-    if (store.value.active && store.value.active.layout) {
-      return store.value.active.layout;
-    } else {
-      return {
-        x: 0,
-        y: 0,
-        width: 0,
-        height: 0,
-        rotate: 0,
-        zIndex: 1,
-        lock: false,
-      };
-    }
-  },
-  set: (val: Layout) => {
-    if (store.value.active && store.value.active.layout) {
-      store.value.active.layout = val;
-    } else {
-      return;
-    }
-  },
-});
 const zDragRef = ref<InstanceType<typeof ZDrag> | null>(null);
-const proxyMouseDown = (e: MouseEvent, node?: Node) => {
-  if (!node) return (store.value.active = null);
+const proxyMousedown = (e: MouseEvent, node?: Node) => {
+  console.log("editor", node);
+  if (!node) return (store.value.active = undefined);
   if (nodeMap.has(node.id)) {
     store.value.active = nodeMap.get(node.id);
     nextTick(() => {
@@ -98,18 +79,18 @@ const proxyMouseDown = (e: MouseEvent, node?: Node) => {
         zDragRef.value.mousedown(e, "move");
       }
     });
-  } else store.value.active = null;
+  } else store.value.active = undefined;
 };
 const zoomOut = () => {
-  if (canvasSize.value.scale - 0.1 < 0.1) return;
-  canvasSize.value.scale = Number.parseFloat(
-    (canvasSize.value.scale - 0.1).toFixed(1)
+  if (store.value.canvas.scale - 0.1 < 0.1) return;
+  store.value.canvas.scale = Number.parseFloat(
+    (store.value.canvas.scale - 0.1).toFixed(1)
   );
 };
 const zoomIn = () => {
-  if (canvasSize.value.scale + 0.1 > 5) return;
-  canvasSize.value.scale = Number.parseFloat(
-    (canvasSize.value.scale + 0.1).toFixed(1)
+  if (store.value.canvas.scale + 0.1 > 5) return;
+  store.value.canvas.scale = Number.parseFloat(
+    (store.value.canvas.scale + 0.1).toFixed(1)
   );
 };
 const mousewheel = (e: WheelEvent) => {
@@ -127,6 +108,9 @@ const mousewheel = (e: WheelEvent) => {
     }
   }
 };
+provide("useStore", useStore);
+provide("change", proxyMousedown);
+provide("nodeMap", nodeMap);
 onUnmounted(() => {
   nodeMap.clear();
 });
@@ -134,62 +118,59 @@ onUnmounted(() => {
 <template>
   <article tabindex="0" class="ZDragEditor">
     <ZToolbar
-      v-model:layout="activeLayout"
-      v-model:scale="canvasSize.scale"
+      class="toolbar"
+      v-model:node="store.active"
+      v-model:scale="store.canvas.scale"
     ></ZToolbar>
     <ZDragEditorCanvas
       @mousewheel="mousewheel"
-      :scale="canvasSize.scale"
-      v-model:size="canvasSize"
+      :scale="store.canvas.scale"
+      v-model:size="store.canvas"
       :scroll="false"
-      @mousedown="proxyMouseDown"
+      @mousedown="proxyMousedown"
       class="canvas"
     >
-      <template #default="{ canvasSize }">
-        <ZNode
-          @mousedown.stop="proxyMouseDown($event, node)"
-          v-for="node in store.nodes"
-          :key="node.id"
-          :active="active"
-          :node="node"
-          :canvasSize="canvasSize"
-        ></ZNode>
-        <ZDrag
-          @before-move="moving = true"
-          @after-move="moving = false"
-          @moving="handleMove"
-          :canvasSize="canvasSize"
-          :scale="canvasSize.scale"
-          ref="zDragRef"
-          :position="'absolute'"
-          v-model:active="active"
-          v-model="activeLayout"
-        ></ZDrag>
-        <ZLines
-          :diff="3"
-          :interval="10"
-          :nodes="store.nodes"
-          :scale="canvasSize.scale"
-          :nodeMap="nodeMap"
-          v-model:moving="moving"
-          v-model="store.active"
-        ></ZLines>
+      <template #default="{ canvas }">
+        <div>
+          <!-- <ZDrag
+            v-model="node.layout"
+            position="absolute"
+            :parent="canvas as HTMLElement"
+            :scale="store.canvas.scale"
+            :active="Boolean(store.active) && store.active?.id === node.id"
+            v-show="Boolean(store.active) && store.active?.id === node.id"
+          >
+          </ZDrag> -->
+          <ZNode
+            v-for="node in store.nodes"
+            :key="node.id"
+            @change="proxyMousedown"
+            :node="node"
+            :parent="(canvas as HTMLElement)"
+          ></ZNode>
+          <!-- <ZLines
+            :diff="3"
+            :interval="10"
+            :nodes="store.nodes"
+            :moving="Boolean(store.active) && store.active?.id === node.id"
+            v-model="store.active"
+          ></ZLines> -->
+        </div>
       </template>
     </ZDragEditorCanvas>
   </article>
 </template>
 <style scoped lang="scss">
 .ZDragEditor {
-  width: 100vw;
-  height: 100vh;
-  overflow: auto;
+  overflow: hidden;
   box-sizing: border-box;
-  display: flex;
-  flex-direction: column;
+  .toolbar {
+    position: fixed;
+    top: 0;
+  }
   .canvas {
-    flex: 1;
-    max-width: 100vw;
-    max-height: calc(100vh - 50px);
+    width: 100%;
+    height: 100%;
   }
 }
 </style>

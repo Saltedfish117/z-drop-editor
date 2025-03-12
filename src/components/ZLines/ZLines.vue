@@ -18,11 +18,9 @@ const moving = defineModel("moving", {
   required: true,
   type: Boolean,
 });
-const node = defineModel<ZNode | null>();
+const node = defineModel<ZNode | null | undefined>();
 const props = withDefaults(
   defineProps<{
-    nodeMap: Map<string, ZNode>;
-    scale: number;
     nodes: ZNodes;
     interval: number;
     diff: number;
@@ -32,26 +30,21 @@ const props = withDefaults(
     diff: 3,
   }
 );
-const adsorption = computed((): ZAdsorptions => {
-  if (node.value && node.value.layout && moving.value) return checkAdsorption();
-  else return [];
-});
-const checkAdsorption = (): ZAdsorptions => {
-  // 重置所有标线状态
-  let nodes: ZNode[] = [];
-  let parent = null;
+const createAdsorptions = (_nodes: ZNodes): ZAdsorptions => {
+  // let parent = null;
   if (!node.value) return [];
   const current = node.value;
+  let nodes: ZNode[] = _nodes.filter((n) => n.id !== current.id);
   let currentRect = rotateLayout(current.layout);
-  if (
-    props.nodeMap.has(node.value.parentId as string) &&
-    (parent = props.nodeMap.get(node.value.parentId as string)) &&
-    parent.children
-  ) {
-    nodes = parent.children.filter((n) => n.id !== current.id);
-  } else {
-    nodes = props.nodes.filter((n) => n.id !== current.id);
-  }
+  // if (
+  //   props.nodeMap.has(node.value.parentId as string) &&
+  //   (parent = props.nodeMap.get(node.value.parentId as string)) &&
+  //   parent.children
+  // ) {
+  //   nodes = parent.children.filter((n) => n.id !== current.id);
+  // } else {
+  //   nodes = props.nodes.filter((n) => n.id !== current.id);
+  // }
   const lins = new Map<string, ZNodes>();
   let start = 0;
   let end = nodes.length - 1;
@@ -354,6 +347,11 @@ const checkAdsorption = (): ZAdsorptions => {
   lins.clear();
   return filterLines;
 };
+const adsorption = computed((): ZAdsorptions => {
+  if (node.value && node.value.layout && moving.value)
+    return createAdsorptions(props.nodes);
+  else return [];
+});
 </script>
 <template>
   <div class="ZLines">

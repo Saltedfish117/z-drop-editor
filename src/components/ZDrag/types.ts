@@ -11,7 +11,6 @@ export interface Layout extends Axis {
   lock: boolean;
 }
 export interface DragNode {
-  id: string;
   layout: Layout;
 }
 export interface Offset {
@@ -29,10 +28,12 @@ export interface MoveStart extends Omit<Layout, "zIndex" | "lock"> {
 export interface ZDragProps {
   position: "absolute" | "fixed";
   scale: number;
-  canvasSize: {
-    width: number;
-    height: number;
-  };
+  active: boolean;
+  // canvasSize: {
+  //   width: number;
+  //   height: number;
+  // };
+  parent: HTMLElement;
 }
 export type Direction =
   | "n-resize"
@@ -42,9 +43,7 @@ export type Direction =
   | "ne-resize"
   | "se-resize"
   | "sw-resize"
-  | "nw-resize"
-  | "move"
-  | "rotate";
+  | "nw-resize";
 export interface Point {
   direction: Direction;
   style: CSSProperties;
@@ -55,8 +54,15 @@ export type AngleToCursor = {
   end: number;
   cursor: Direction;
 }[];
-export type ResizeFunction = {
-  (offset: Offset, _layout: Layout, start: MoveStart): Layout;
-  (offset: Offset, _layout: Layout, start: MoveStart, e?: MouseEvent): Layout;
+export type Moves = "move" | "rotate";
+export interface Option {
+  layout: Layout;
+  start: MoveStart;
+  realTimeCoordinates: {
+    x: number;
+    y: number;
+  };
+}
+export type Resize = {
+  [key in Direction]: (option: Option) => Layout;
 };
-export type ResizeMove = Record<Direction, ResizeFunction>;
