@@ -4,7 +4,7 @@
     @scroll="handleScrollbar"
     class="canvas-wrapper"
     :class="{
-      'hidden-scrollbar': scroll,
+      'hidden-scrollbar': hiddenScroll,
     }"
   >
     <article
@@ -17,6 +17,7 @@
         width: size.width + 'px',
         height: size.height + 'px',
         transform: `scale(${scale})`,
+        pointerEvents: drag ? 'none' : 'auto',
       }"
     >
       <slot :canvas="infiniteCanvas" :size="size" name="default"></slot>
@@ -33,37 +34,61 @@ import {
   defineOptions,
   defineModel,
   defineExpose,
+  watch,
+  withDefaults,
 } from "vue";
 
 defineOptions({
   name: "ZDragEditorCanvas",
   directives: {},
 });
-const props = defineProps({
-  size: {
-    type: Object,
-    required: true,
-    default: () => {
-      return {
-        width: 5000,
-        height: 5000,
-      };
+/**
+ * {
+    size: {
+      type: Object,
+      required: true,
+      default: () => {
+        return {
+          width: 5000,
+          height: 5000,
+        };
+      },
     },
-  },
-  scale: {
-    type: Number,
-    default: () => 1,
-  },
-  scroll: {
-    type: Boolean,
-    default: () => false,
-  },
-});
+    scale: {
+      type: Number,
+      default: () => 1,
+    },
+    "hidden-scroll": {
+      type: Boolean,
+      default: () => false,
+    },
+    drag: {
+      type: Boolean,
+      default: () => false,
+    },
+  }
+ */
+const props = withDefaults(
+  defineProps<{
+    size: { width: number; height: number };
+    scale: number;
+    drag: boolean;
+    hiddenScroll: boolean;
+  }>(),
+  {
+    hiddenScroll: false,
+    drag: false,
+    scale: 1,
+  }
+);
 // 画布容器引用
 const canvasWrapper = ref<HTMLElement | null>(null);
 const infiniteCanvas = ref<HTMLElement | null>(null);
 // 初始尺寸
-const size = defineModel("size", {
+const size = defineModel<{
+  width: number;
+  height: number;
+}>("size", {
   type: Object,
   required: true,
   default: () => {
@@ -109,14 +134,15 @@ const handleMouseUp = (e: MouseEvent) => {
   document.documentElement.style.userSelect = "none";
 };
 const spaceDown = (e: KeyboardEvent) => {
+  if (props.drag) return;
   e.preventDefault();
   e.stopPropagation();
   document.addEventListener("mousedown", handleMouseDown);
   document.documentElement.style.userSelect = "none"; // 禁用文本选中
 };
 const spaceUp = (e: KeyboardEvent) => {
+  if (props.drag) return;
   e.preventDefault();
-
   e.stopPropagation();
   document.documentElement.style.cursor = "default";
   document.documentElement.style.userSelect = "auto";
@@ -131,6 +157,25 @@ defineExpose({
   infiniteCanvas,
   canvasWrapper,
 });
+watch(
+  () => props.drag,
+  (val) => {
+    if (val) {
+      document.addEventListener("mousedown", handleMouseDown);
+      document.documentElement.style.cursor = "grab";
+      document.documentElement.style.userSelect = "none"; // 禁用文本选中
+    } else {
+      document.documentElement.style.cursor = "default";
+      document.documentElement.style.userSelect = "auto";
+      document.removeEventListener("mousedown", handleMouseDown);
+      document.removeEventListener("mousemove", handleMouseMove);
+      document.removeEventListener("mouseup", handleMouseUp);
+    }
+  },
+  {
+    immediate: true,
+  }
+);
 // 生命周期
 onMounted(() => {
   if (!canvasWrapper.value) return;
@@ -147,10 +192,6 @@ onUnmounted(() => {
 
 <style scoped lang="scss">
 .canvas-wrapper {
-  // width: 100%;
-  // height: 100%;
-  // max-width: 100%;
-  // max-height: 100%;
   overflow: scroll;
   box-sizing: border-box;
   --canvas-bg-color: 244, 245, 247;

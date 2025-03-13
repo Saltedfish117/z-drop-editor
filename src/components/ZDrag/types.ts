@@ -29,10 +29,7 @@ export interface ZDragProps {
   position: "absolute" | "fixed";
   scale: number;
   active: boolean;
-  // canvasSize: {
-  //   width: number;
-  //   height: number;
-  // };
+  rotate: boolean;
   parent: HTMLElement;
 }
 export type Direction =

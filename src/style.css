@@ -2,6 +2,9 @@ body {
   padding: 0;
   margin: 0;
 }
+html[data-theme="dark"]:root {
+  --z-text: 245, 245, 245;
+}
 :root {
   --z-primary: 13, 111, 209;
   --z-success: 62, 161, 16;
@@ -10,8 +13,7 @@ body {
   --z-info: 23, 176, 207;
   --z-dark: 29, 29, 29;
   --z-dark-page: 18, 18, 18;
-  --z-light-text: #1d1d1d;
-  --z-dark-text: #f5f5f5;
+  --z-text: 29, 29, 29;
   --z-quiet: 212, 217, 225;
   --z-font-xl: 20px;
   --z-font-lg: 18px;

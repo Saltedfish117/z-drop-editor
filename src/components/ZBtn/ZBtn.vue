@@ -7,7 +7,7 @@ defineOptions({
 });
 
 const props = withDefaults(defineProps<ZBtnProps>(), {
-  color: "primary",
+  color: "default",
   plain: false,
   round: false,
   disabled: false,
@@ -34,12 +34,12 @@ const props = withDefaults(defineProps<ZBtnProps>(), {
 <style scoped lang="scss">
 .ZBtn {
   position: relative;
-  border: 1px solid rgba(var(--z-primary), 0.8);
+  border: 1px solid rgba(var(--z-quiet), 0.8);
   border-radius: 4px;
-  background-color: rgba(var(--z-primary), 0.8);
-  color: white;
+  color: var(--z-text);
+  background-color: transparent;
   cursor: pointer;
-  transition: all 0.1s;
+  transition: all 0.15s;
   outline: none;
   padding: 0;
   transform-origin: center;
@@ -52,8 +52,7 @@ const props = withDefaults(defineProps<ZBtnProps>(), {
   }
   &.is-padding {
     padding: 4px 8px;
-  }
-  // 交互效果
+  } // 交互效果
   &:not(.is-disabled):hover {
     opacity: 0.9;
     transform: scale(1.05);
@@ -62,8 +61,36 @@ const props = withDefaults(defineProps<ZBtnProps>(), {
     transform: scale(0.95);
   }
 }
+.z-btn-default {
+  &:not(.is-disabled):hover {
+    border: 1px solid rgba(var(--z-primary), 0.8);
+    color: rgba(var(--z-primary), 1);
+  }
+}
+.z-btn-text-default {
+  border: none;
+  background-color: transparent;
+  color: rgba(var(--z-text), 1);
+  border: 1px solid transparent;
+  &:not(.is-disabled):hover {
+    color: rgba(var(--z-primary), 1);
+  }
+}
+.z-btn-link-default {
+  border: none;
+  color: rgba(var(--z-text), 1);
+  transition: background-size 1s, transform 0.15s, opacity 0.15s;
+  position: relative;
+  background: linear-gradient(to right, rgb(var(--z-text)), rgb(var(--z-text)))
+    no-repeat right bottom;
+  background-size: 0 1px;
+  &:not(.is-disabled):hover {
+    background-position: left bottom;
+    background-size: 100% 1px;
+  }
+}
 // 颜色扩展
-@each $color in primary, success, danger, warning, info, dark {
+@each $color in primary, success, danger, warning, info {
   .z-btn-#{$color} {
     border-color: rgba(var(--z-#{$color}), 0.8);
     background-color: rgba(var(--z-#{$color}), 0.8);
@@ -75,22 +102,20 @@ const props = withDefaults(defineProps<ZBtnProps>(), {
   .z-btn-link-#{$color} {
     border: none;
     background-color: transparent;
-    color: rgba(var(--z-#{$color}), 0.8);
+    color: rgba(var(--z-#{$color}), 1);
     position: relative;
-    &::after {
-      position: absolute;
-      content: "";
-      display: block;
-      width: 0%;
-      transition: width 0.3s ease-in-out;
-      bottom: 0;
-      height: 1px;
-      left: 50%;
-      transform: translateX(-50%);
-      background-color: rgba(var(--z-#{$color}), 0.6);
-    }
-    &:not(.is-disabled):hover::after {
-      width: 100%;
+    background: linear-gradient(
+        to right,
+        rgb(var(--z-#{$color})),
+        rgb(var(--z-#{$color}))
+      )
+      no-repeat
+      right
+      bottom;
+    background-size: 0 1px;
+    &:not(.is-disabled):hover {
+      background-position: left bottom;
+      background-size: 100% 1px;
     }
   }
   .z-btn-text-#{$color} {
@@ -98,16 +123,6 @@ const props = withDefaults(defineProps<ZBtnProps>(), {
     background-color: transparent;
     color: rgba(var(--z-#{$color}), 0.8);
     border: 1px solid transparent;
-  }
-}
-// 特殊颜色处理
-.z-btn-light {
-  border-color: #f5f5f5;
-  background-color: #f5f5f5;
-  color: var(--z-dark);
-  &.is-plain {
-    color: var(--z-dark);
-    background-color: transparent;
   }
 }
 </style>

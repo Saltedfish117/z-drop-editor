@@ -26,7 +26,10 @@ import ZSvgIcon from "../ZSvgIcon/ZSvgIcon.vue";
 defineOptions({
   name: "ZDrag",
 });
-const props = withDefaults(defineProps<ZDragProps>(), { position: "absolute" });
+const props = withDefaults(defineProps<ZDragProps>(), {
+  position: "absolute",
+  rotate: true,
+});
 const emits = defineEmits([
   "update:model",
   "before-move",
@@ -45,18 +48,21 @@ const moves = {
     return layout;
   },
   rotate: (
-    _offset: Offset,
+    offset: Offset,
     _layout: Layout,
-    start: MoveStart,
+    _start: MoveStart,
     e?: MouseEvent
   ): Layout => {
     const layout = { ..._layout };
     if (!e) return layout;
+    // 处理零偏移量的边界情况
+    if (offset.x === 0 && offset.y === 0) {
+      return { ...layout, rotate: 0 };
+    }
     // 计算角度并标准化到[0, 360)范围
-    const rawAngle =
-      Math.atan2(e.layerY - start.center.y, e.layerX - start.center.x) /
-      (Math.PI / 180);
-    layout.rotate = Math.round(start.rotate + rawAngle - start.beforeAngle);
+    const rawAngle = Math.atan2(offset.y, offset.x) * (180 / Math.PI);
+    const normalizedAngle = (rawAngle + 360) % 360;
+    layout.rotate = Math.round(normalizedAngle);
     return layout;
   },
 };
@@ -316,6 +322,7 @@ const resize: Resize = {
 };
 const mousedown = (e: MouseEvent, direction: Direction | Moves) => {
   if (model.value.lock) return;
+  if (!props.active) return;
   emits("before-move", e, direction);
   e.preventDefault();
   e.stopPropagation();
@@ -342,7 +349,11 @@ const mousedown = (e: MouseEvent, direction: Direction | Moves) => {
     height: model.value.height,
     rotate: model.value.rotate,
     beforeAngle:
-      Math.atan2(e.layerY - center.y, e.layerX - center.x) / (Math.PI / 180), // 旋转角度
+      Math.atan2(
+        (e.layerY - center.y) * scaleFactor.value,
+        (e.layerX - center.x) * scaleFactor.value
+      ) /
+      (Math.PI / 180), // 旋转角度
     center: center,
     symmetric,
     point,
@@ -410,9 +421,10 @@ const model = defineModel<Layout>({
 const style = computed((): CSSProperties => {
   return {
     position: props.position,
+    left: 0,
+    top: 0,
     transform: `translate(${model.value.x}px, ${model.value.y}px) rotate(${model.value.rotate}deg) translate3d(0,0,0)`,
-    // rotate(${model.value.rotate}deg)
-    zIndex: model.value.zIndex + 1,
+    zIndex: model.value.zIndex,
     width: model.value.width + "px",
     height: model.value.height + "px",
   };
@@ -549,23 +561,27 @@ defineExpose({
           v-for="res in resizes"
           :key="res.direction"
           :style="{ ...res.style }"
-          :class="res.direction"
+          :class="{
+            'resize-point': true,
+            [res.direction]: true,
+          }"
           @mousedown="mousedown($event, res.direction)"
         ></div>
       </template>
       <template v-else>
         <slot name="resizes" :active="active" :layout="model"></slot>
       </template>
-      <template v-if="!$slots.rotate">
-        <ZSvgIcon
-          @mousedown="mousedown($event, 'rotate')"
-          class="rotate"
-          color="primary"
-          name="rotate"
-        ></ZSvgIcon>
-      </template>
-      <template v-else>
-        <slot name="rotate" :active="active" :layout="model"></slot>
+      <template v-if="rotate">
+        <template v-if="!$slots.rotate">
+          <ZSvgIcon
+            @mousedown="mousedown($event, 'rotate')"
+            class="rotate"
+            color="primary"
+            name="rotate"
+          ></ZSvgIcon> </template
+        ><template v-else>
+          <slot name="rotate" :active="active" :layout="model"></slot>
+        </template>
       </template>
     </template>
     <template v-if="!$slots.lock">
@@ -578,7 +594,7 @@ defineExpose({
       ></ZSvgIcon>
     </template>
     <slot v-else name="lock" :active="active" :layout="model"></slot>
-    <slot name="default" :active="active" :layout="model"></slot>
+    <slot name="default" :active="active" :style="style" :layout="model"></slot>
   </div>
 </template>
 <style scoped lang="scss">
@@ -611,7 +627,6 @@ $resizes: (
   &:active {
     cursor: grabbing;
   }
-
   .rotate {
     position: absolute;
     width: 24px;
@@ -621,6 +636,7 @@ $resizes: (
     left: 50%;
     transform: translateX(-50%);
     cursor: grab;
+    display: none;
     &:active {
       cursor: grabbing;
     }
@@ -633,10 +649,22 @@ $resizes: (
     top: -28px;
     right: 0;
     cursor: pointer;
-    display: block;
+    display: none;
   }
-}
-.active {
-  border: 1px dashed rgba(var(--z-primary), 0.5);
+  .resize-point {
+    display: none;
+  }
+  &.active {
+    border: 1px dashed rgba(var(--z-primary), 0.5);
+    .resize-point {
+      display: block;
+    }
+    .lock {
+      display: block;
+    }
+    .rotate {
+      display: block;
+    }
+  }
 }
 </style>

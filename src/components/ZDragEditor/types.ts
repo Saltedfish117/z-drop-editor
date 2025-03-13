@@ -11,8 +11,18 @@ export interface ZDragEditorModel {
     width: number;
     height: number;
     scale: number;
+    drag: boolean;
   };
   moving: boolean;
   active: ZNode | undefined;
   components: ZNodes;
+}
+export interface ZOption {
+  lines: {
+    show: boolean;
+    color: string;
+    width: number;
+    diff: number;
+    interval: number;
+  };
 }

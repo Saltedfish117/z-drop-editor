@@ -1,24 +1,23 @@
 export interface ZBtnProps {
   color?:
+    | "default"
     | "primary"
     | "success"
     | "danger"
     | "warning"
     | "info"
-    | "light"
-    | "dark"
+    | "link-default"
     | "link-primary"
     | "link-success"
     | "link-danger"
     | "link-warning"
     | "link-info"
-    | "link-dark"
+    | "text-default"
     | "text-primary"
     | "text-success"
     | "text-danger"
     | "text-warning"
-    | "text-info"
-    | "text-dark";
+    | "text-info";
   plain?: boolean;
   round?: boolean;
   disabled?: boolean;

@@ -25,13 +25,13 @@ const adjustScale = (delta: number) => {
 </script>
 <template>
   <div class="ZScaleController">
-    <ZBtn color="text-primary" @click="adjustScale(0.1)">+</ZBtn>
+    <ZBtn color="text-default" @click="adjustScale(0.1)">+</ZBtn>
     <input
       class="ZScaleController-value"
       @change="changeScale"
       :value="scale * 100"
     />
-    <ZBtn color="text-primary" @click="adjustScale(-0.1)">-</ZBtn>
+    <ZBtn color="text-default" @click="adjustScale(-0.1)">-</ZBtn>
   </div>
 </template>
 <style scoped lang="scss">

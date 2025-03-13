@@ -43,20 +43,21 @@ watch(
     if (icons[props.name]) {
       icons[props.name]()
         .then((response: string) => {
-          const fillReg = /fill\s*=\s*(["']?)([^"']*)\1/gi;
-          const sizeReg = /(width|height)\s*=\s*["']\d+["']/g;
-          let svg = response
-            .replace(fillReg, `fill="currentColor"`)
-            .replace(sizeReg, ``)
-            .replace(/<svg/, '<svg width="100%" height="100%"');
-          icon.value = svg;
-          //   let svgDoc = domParser.parseFromString(svg, "image/svg+xml");
-          //   let svgDom = svgDoc.getElementsByTagName("svg")[0];
-          //   svgDom.setAttribute("width", "100%");
-          //   svgDom.setAttribute("height", "100%");
-          //   svgDom.setAttribute("fill", "currentColor");
-          //   const serializer = new XMLSerializer();
-          //   icon.value = serializer.serializeToString(svgDom);
+          // const fillReg = /fill\s*=\s*(["']?)([^"']*)\1/gi;
+          // const sizeReg = /(width|height)\s*=\s*["']\d+["']/g;
+          let svg = response;
+          //   .replace(fillReg, `fill="currentColor"`)
+          //   .replace(sizeReg, ``)
+          //   .replace(/<svg/, '<svg width="100%" height="100%"');
+          // icon.value = svg;
+          const domParser = new DOMParser();
+          let svgDoc = domParser.parseFromString(svg, "image/svg+xml");
+          let svgDom = svgDoc.getElementsByTagName("svg")[0];
+          svgDom.setAttribute("width", "100%");
+          svgDom.setAttribute("height", "100%");
+          svgDom.setAttribute("fill", "currentColor");
+          const serializer = new XMLSerializer();
+          icon.value = serializer.serializeToString(svgDom);
           //   console.log(response);
           //   icon.value = response.default;
         })

@@ -11,6 +11,7 @@ import type { ZNode } from "../ZNode/types";
 import type { Layout } from "../ZDrag/types";
 import type { ZAdsorptions, LineMap, ZAdsorption } from "./type";
 import { rotateLayout, once } from "../../common/utils";
+import { Color } from "@/common/type";
 defineOptions({
   name: "ZLines",
 });
@@ -24,12 +25,22 @@ const props = withDefaults(
     nodes: ZNodes;
     interval: number;
     diff: number;
+    color: string;
   }>(),
   {
     interval: 10,
     diff: 3,
+    color: "primary",
   }
 );
+const lineColor = computed(() => {
+  if (Object.keys(Color).includes(props.color)) {
+    return Color[props.color as keyof typeof Color];
+  } else {
+    return props.color;
+  }
+});
+console.log(lineColor.value);
 const createAdsorptions = (_nodes: ZNodes): ZAdsorptions => {
   // let parent = null;
   if (!node.value) return [];
@@ -354,7 +365,12 @@ const adsorption = computed((): ZAdsorptions => {
 });
 </script>
 <template>
-  <div class="ZLines">
+  <div
+    class="ZLines"
+    :style="{
+      '--line-color': lineColor,
+    }"
+  >
     <div
       class="line"
       v-for="line in adsorption"
@@ -376,16 +392,17 @@ const adsorption = computed((): ZAdsorptions => {
   position: absolute;
   top: 0;
   left: 0;
+  --line-color: rgba(var(--z-primary), 1);
   .line {
     position: absolute;
     top: 0;
     left: 0;
-    background-color: rgba(var(--z-primary), 1);
+    background-color: var(--line-color);
     z-index: 999;
     .line-label {
       padding: 4px 8px;
       font-size: 12px;
-      color: rgba(var(--z-primary), 1);
+      color: var(--line-color);
       position: absolute;
     }
   }

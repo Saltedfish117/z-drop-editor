@@ -1,105 +1,30 @@
 <script setup lang="ts">
-import { defineOptions, defineModel, ref } from "vue";
-import ZBtn from "../ZBtn/ZBtn.vue";
-import ZTextField from "../ZTextField/ZTextField.vue";
-import ZScaleController from "../ZScaleController/ZScaleController.vue";
-import ZSvgIcon from "@/components/ZSvgIcon/ZSvgIcon.vue";
-import type { ZNode } from "../ZNode/types";
+import { defineOptions, defineModel } from "vue";
+import type { ZDragEditorModel } from "../ZDragEditor/types";
 defineOptions({
   name: "ZToolbar",
 });
-const scale = defineModel("scale", { type: Number, required: true });
-
-const node = defineModel<ZNode>("node", {
-  default: () => ({
-    id: "tool-default",
-    component: "tool-default",
-    name: "default",
-    parentId: "",
-    layout: {
-      x: 0,
-      y: 0,
-      width: 0,
-      height: 0,
-      rotate: 0,
-      zIndex: 1,
-      lock: false,
-    },
-  }),
-});
-const setupOpen = ref(true);
-const setupOpenChange = () => {
-  setupOpen.value = !setupOpen.value;
-};
+const store = defineModel<ZDragEditorModel>("store", { required: true });
 </script>
 <template>
   <header class="ZToolbar">
-    <h1 class="ZToolbar-logo">ZDragEditor</h1>
-    <div class="ZToolbar-end">
-      <ZBtn
-        @click="setupOpenChange"
-        :padding="false"
-        color="text-primary"
-        class="ZToolbar-setup-icon"
-      >
-        <ZSvgIcon name="setup"></ZSvgIcon>
-      </ZBtn>
-      <ZScaleController v-model="scale"></ZScaleController>
+    <div class="ZToolbar-item ZToolbar-left">
+      <template v-if="!$slots['left']"> </template>
+      <slot :store="store" name="left"></slot>
     </div>
-    <div
-      :class="{
-        open: setupOpen,
-      }"
-      class="ZToolbar-setup"
-    >
-      <div class="ZToolbar-setup-content">
-        <div class="row">
-          <ZTextField
-            class="col"
-            :model-value="node.layout.x"
-            label="X"
-            placeholder="x轴坐标"
-            required
-          />
-          <ZTextField
-            class="col"
-            :model-value="node.layout.y"
-            label="Y"
-            placeholder="Y轴坐标"
-            required
-          />
-          <ZTextField
-            class="col"
-            :model-value="node.layout.rotate"
-            label="°"
-            placeholder="Y轴坐标"
-            required
-          />
-        </div>
-        <div class="row">
-          <ZTextField
-            class="col"
-            :model-value="node.layout.width"
-            label="宽"
-            placeholder="x轴坐标"
-            required
-          />
-          <ZTextField
-            class="col"
-            :model-value="node.layout.height"
-            label="高"
-            placeholder="Y轴坐标"
-            required
-          />
-        </div>
-      </div>
+    <div class="ZToolbar-item ZToolbar-center">
+      <template v-if="!$slots['center']"> </template>
+      <slot :store="store" name="center"></slot>
+    </div>
+    <div class="ZToolbar-item ZToolbar-right">
+      <template v-if="!$slots['right']"> </template>
+      <slot :store="store" name="right"></slot>
     </div>
   </header>
 </template>
 <style scoped lang="scss">
 .ZToolbar {
   position: relative;
-  // top: 0;
   height: 50px;
   max-height: 120px;
   width: 100%;
@@ -109,86 +34,21 @@ const setupOpenChange = () => {
   align-items: center;
   justify-content: space-between;
   z-index: 2;
-  .ZToolbar-end {
+
+  & > .ZToolbar-item {
+    flex: 1;
+    height: 100%;
     display: flex;
     align-items: center;
   }
-  .ZToolbar-logo {
-    margin: 0;
-    font-size: var(--z-font-xl);
-    padding: 4px 8px;
-    &:hover {
-      color: rgba(var(--z-primary), 1);
-      cursor: pointer;
-    }
+  .ZToolbar-left {
+    justify-content: flex-start;
   }
-  .ZToolbar-scale {
-    margin: 0 20px;
-    display: flex;
-    align-items: center;
-    .ZToolbar-scale-value {
-      width: 20px;
-      outline: none;
-      border-radius: 4px;
-      border-width: 1px;
-      border-color: rgba(var(--z-quiet), 1);
-      border-style: solid;
-      padding: 4px 8px;
-      margin: 0 8px;
-      font-size: var(--z-font-xs);
-      // color: rgba(var(--z-quiet), 1);
-      &:hover {
-        border-color: rgba(var(--z-primary), 1);
-      }
-      &:focus {
-        border-color: rgba(var(--z-primary), 1);
-      }
-    }
+  .ZToolbar-center {
+    justify-content: center;
   }
-  .ZToolbar-setup-icon {
-    img {
-      width: 20px;
-      height: 20px;
-      display: block;
-      cursor: pointer;
-    }
-    position: relative;
-  }
-  .ZToolbar-setup {
-    position: absolute;
-    top: calc(100% + 1px);
-    max-height: calc(100vh - 50px);
-    right: 1px;
-    width: 280px;
-    background-color: #ffffff;
-    // overflow: hidden;
-    transition: all 0.3s ease;
-    transform: scaleY(0);
-    border-radius: 0 0 16px 16px;
-    transform-origin: top center;
-    .ZToolbar-setup-content {
-      border-radius: 0 0 16px 16px;
-      opacity: 0;
-      transition: opacity 0.1s ease;
-      padding: var(--z-size-sm);
-      box-shadow: 1px 1px 5px rgba(var(--z-quiet), 0.5);
-      .row {
-        display: flex;
-        align-items: center;
-        margin-bottom: var(--z-size-sm);
-        gap: var(--z-size-md);
-      }
-      .col {
-        flex: 1;
-      }
-    }
-  }
-  .ZToolbar-setup.open {
-    transform: scaleY(1);
-    .ZToolbar-setup-content {
-      // height: 300px;
-      opacity: 1;
-    }
+  .ZToolbar-right {
+    justify-content: flex-end;
   }
 }
 </style>
