@@ -11,10 +11,11 @@ html[data-theme="dark"]:root {
   --z-warning: 245, 208, 105;
   --z-danger: 184, 6, 26;
   --z-info: 23, 176, 207;
-  --z-dark: 29, 29, 29;
-  --z-dark-page: 18, 18, 18;
   --z-text: 29, 29, 29;
-  --z-quiet: 212, 217, 225;
+  --z-text-light: 245, 245, 245;
+  /* --z-quiet: 212, 217, 225; */
+  --z-quiet: 167, 167, 167;
+  --z-page: 255, 255, 255;
   --z-font-xl: 20px;
   --z-font-lg: 18px;
   --z-font-md: 16px;
@@ -25,4 +26,14 @@ html[data-theme="dark"]:root {
   --z-size-md: 16px;
   --z-size-sm: 12px;
   --z-size-xs: 8px;
+}
+@keyframes z-ripple {
+  from {
+    transform: scale(0);
+    opacity: 1;
+  }
+  to {
+    transform: scale(2);
+    opacity: 0;
+  }
 }

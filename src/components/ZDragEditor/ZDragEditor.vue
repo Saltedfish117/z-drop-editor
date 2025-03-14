@@ -8,10 +8,21 @@ import {
   defineAsyncComponent,
   ref,
   withDefaults,
+  computed,
 } from "vue";
-import ZDragEditorCanvas from "../ZDragEditorCanvas/ZDragEditorCanvas.vue";
-import ZToolbar from "../ZToolbar/ZToolbar.vue";
-import ZTextField from "../ZTextField/ZTextField.vue";
+const ZDragEditorCanvas = defineAsyncComponent(
+  () => import("../ZDragEditorCanvas/ZDragEditorCanvas.vue")
+);
+const ZToolbar = defineAsyncComponent(() => import("../ZToolbar/ZToolbar.vue"));
+const ZTextField = defineAsyncComponent(
+  () => import("../ZTextField/ZTextField.vue")
+);
+const ContextMenu = defineAsyncComponent(
+  () => import("../ZContextMenu/ZContextMenu.vue")
+);
+const ZSplitter = defineAsyncComponent(
+  () => import("../ZSplitter/ZSplitter.vue")
+);
 const ZScaleController = defineAsyncComponent(
   () => import("@/components/ZScaleController/ZScaleController.vue")
 );
@@ -19,9 +30,9 @@ const ZBtn = defineAsyncComponent(() => import("@/components/ZBtn/ZBtn.vue"));
 const ZSvgIcon = defineAsyncComponent(
   () => import("@/components/ZSvgIcon/ZSvgIcon.vue")
 );
-import ZDrag from "../ZDrag/ZDrag.vue";
-import ZNode from "../ZNode/ZNode.vue";
-import ZLines from "../ZLines/ZLines.vue";
+const ZDrag = defineAsyncComponent(() => import("../ZDrag/ZDrag.vue"));
+const ZNode = defineAsyncComponent(() => import("../ZNode/ZNode.vue"));
+const ZLines = defineAsyncComponent(() => import("../ZLines/ZLines.vue"));
 import type { ZNode as Node } from "../ZNode/types";
 import type { ZDragEditorModel, ZNodeMap, ZOption } from "./types";
 defineOptions({
@@ -42,21 +53,31 @@ const store = defineModel<ZDragEditorModel>({
     components: [],
   }),
 });
-withDefaults(
+const props = withDefaults(
   defineProps<{
-    option: ZOption;
+    option: Partial<ZOption>;
   }>(),
   {
     option: () => ({
       lines: {
-        show: true,
-        color: "warning",
-        width: 1,
+        color: "primary",
         diff: 3,
         interval: 8,
       },
     }),
   }
+);
+const withOption = computed(() =>
+  Object.assign(
+    {
+      lines: {
+        color: "primary",
+        diff: 3,
+        interval: 8,
+      },
+    },
+    props.option
+  )
 );
 const active = ref<Node | null>(null);
 const nodeMap = reactive<ZNodeMap>(new Map());
@@ -103,7 +124,6 @@ watch(
   }
 );
 const change = (node?: Node) => {
-  // console.log("editor", node);
   store.value.active = node;
 };
 const zoomOut = () => {
@@ -136,6 +156,25 @@ const mousewheel = (e: WheelEvent) => {
 onUnmounted(() => {
   nodeMap.clear();
 });
+const selectedNode = ref({ id: 1, name: "node1" });
+const menuItems = [
+  {
+    label: "重命名",
+    action: (node: Node) => console.log("重命名", node),
+    icon: "",
+  },
+  {
+    label: "删除",
+    action: (node: Node) => console.log("删除", node),
+    icon: "",
+    disabled: false,
+  },
+  {
+    label: "复制",
+    action: (node: Node) => console.log("复制", node),
+  },
+];
+const leftHidden = ref(false);
 </script>
 <template>
   <article tabindex="0" class="ZDragEditor">
@@ -145,6 +184,9 @@ onUnmounted(() => {
           <slot v-if="$slots['toolbar-left']" name="left" v-bind="scope"></slot>
           <template v-else>
             <h1 class="logo">ZDragEditor</h1>
+            <ZBtn color="default" @click="leftHidden = !leftHidden"
+              >{{ leftHidden ? "展示" : "隐藏" }}左侧面板
+            </ZBtn>
           </template>
         </template>
         <template #center="scope">
@@ -156,16 +198,16 @@ onUnmounted(() => {
           <template v-else>
             <div class="toolbar-center-btns">
               <ZBtn
-                @click="scope.store.canvas.drag = false"
+                @click="scope.store.canvas.drag = !scope.store.canvas.drag"
                 :color="
                   !scope.store.canvas.drag ? 'text-primary' : 'text-default'
                 "
                 :padding="false"
               >
-                <ZSvgIcon size="sm" name="cursor"></ZSvgIcon>
+                <ZSvgIcon size="md" name="cursor"></ZSvgIcon>
               </ZBtn>
               <ZBtn
-                @click="scope.store.canvas.drag = true"
+                @click="scope.store.canvas.drag = !scope.store.canvas.drag"
                 :color="
                   scope.store.canvas.drag ? 'text-primary' : 'text-default'
                 "
@@ -183,115 +225,162 @@ onUnmounted(() => {
             v-bind="scope"
           ></slot>
           <template v-else>
-            <div
-              style="
-                flex: 1;
-                position: relative;
-                display: flex;
-                justify-content: flex-end;
-              "
-            >
-              <ZScaleController
-                v-model="scope.store.canvas.scale"
-              ></ZScaleController>
-              <div style="position: absolute; top: 100%; right: 0">
-                <div v-if="store.active">
-                  <div class="row">
-                    <ZTextField
-                      class="col"
-                      :model-value="store.active.layout.x"
-                      label="X"
-                      placeholder="x轴坐标"
-                      required
-                    />
-                    <ZTextField
-                      class="col"
-                      :model-value="store.active.layout.y"
-                      label="Y"
-                      placeholder="Y轴坐标"
-                      required
-                    />
-                    <ZTextField
-                      class="col"
-                      :model-value="store.active.layout.rotate"
-                      label="°"
-                      placeholder="Y轴坐标"
-                      required
-                    />
-                  </div>
-                  <div class="row">
-                    <ZTextField
-                      class="col"
-                      :model-value="store.active.layout.width"
-                      label="宽"
-                      placeholder="x轴坐标"
-                      required
-                    />
-                    <ZTextField
-                      class="col"
-                      :model-value="store.active.layout.height"
-                      label="高"
-                      placeholder="Y轴坐标"
-                      required
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
+            <ZScaleController
+              v-model="scope.store.canvas.scale"
+            ></ZScaleController>
           </template>
         </template>
       </ZToolbar>
     </template>
     <slot name="toolbar" :store="store"></slot>
-    <ZDragEditorCanvas
-      @mousewheel="mousewheel"
-      :scale="store.canvas.scale"
-      v-model:size="store.canvas"
-      :hidden-scroll="false"
-      @mousedown="change()"
-      class="canvas"
-      :drag="store.canvas.drag"
-    >
-      <template #default="{ canvas }">
-        <ZDrag
-          v-if="active"
-          v-model="active.layout"
-          position="absolute"
-          :parent="(canvas as HTMLElement)"
-          :scale="store.canvas.scale"
-          :active="Boolean(active)"
-          :rotate="active.type !== 'page'"
-        >
-        </ZDrag>
-        <ZLines
-          v-if="option.lines.show"
-          v-model="active"
-          :diff="option.lines.diff"
-          :interval="option.lines.interval"
-          :color="option.lines.color"
-          :nodes="store.nodes"
-          :moving="Boolean(active)"
-        ></ZLines>
-        <ZNode
-          v-for="(node, index) in store.nodes"
-          :key="node.id"
-          v-model:store="store"
-          v-model="store.nodes[index]"
-          :parent="(canvas as HTMLElement)"
-          @mousedown.stop="change(node)"
-          :option="option"
-        ></ZNode>
+    <ZSplitter v-if="!$slots.default" class="splitter" :leftHidden="leftHidden">
+      <template #left>
+        <div v-if="!$slots.left" class="left-content"></div>
+        <slot name="left" :store="store"></slot>
       </template>
-    </ZDragEditorCanvas>
+      <template #center>
+        <div v-if="!$slots.center" class="main-content">
+          <ContextMenu :menuItems="menuItems"></ContextMenu>
+          <ZDragEditorCanvas
+            @mousewheel="mousewheel"
+            :scale="store.canvas.scale"
+            v-model:size="store.canvas"
+            :hidden-scroll="false"
+            @mousedown="change()"
+            class="canvas"
+            :drag="store.canvas.drag"
+          >
+            <template #default="{ canvas }">
+              <ZDrag
+                v-if="active"
+                v-model="active.layout"
+                position="absolute"
+                :parent="(canvas as HTMLElement)"
+                :scale="store.canvas.scale"
+                :active="Boolean(active)"
+                :rotate="active.type !== 'page'"
+              >
+              </ZDrag>
+              <ZLines
+                v-if="withOption.lines"
+                v-model="active"
+                :diff="withOption.lines.diff"
+                :interval="withOption.lines.interval"
+                :color="withOption.lines.color"
+                :nodes="store.nodes"
+                :moving="Boolean(active)"
+              ></ZLines>
+              <ZNode
+                v-for="(node, index) in store.nodes"
+                :key="node.id"
+                v-model:store="store"
+                v-model="store.nodes[index]"
+                :parent="(canvas as HTMLElement)"
+                @mousedown.stop="change(node)"
+                :option="withOption"
+              ></ZNode>
+            </template>
+          </ZDragEditorCanvas>
+        </div>
+        <slot name="center" :store="store"></slot>
+      </template>
+      <template #right>
+        <div v-if="!$slots.right" class="right-content">
+          <div v-if="store.active">
+            <div class="row">
+              <ZTextField
+                class="col"
+                :model-value="store.active.layout.x"
+                label="X"
+                placeholder="x轴坐标"
+                required
+              />
+              <ZTextField
+                class="col"
+                :model-value="store.active.layout.y"
+                label="Y"
+                placeholder="Y轴坐标"
+                required
+              />
+              <ZTextField
+                class="col"
+                :model-value="store.active.layout.rotate"
+                label="°"
+                placeholder="Y轴坐标"
+                required
+              />
+            </div>
+            <div class="row">
+              <ZTextField
+                class="col"
+                :model-value="store.active.layout.width"
+                label="宽"
+                placeholder="x轴坐标"
+                required
+              />
+              <ZTextField
+                class="col"
+                :model-value="store.active.layout.height"
+                label="高"
+                placeholder="Y轴坐标"
+                required
+              />
+            </div>
+          </div>
+        </div>
+        <slot name="right" :store="store"></slot>
+      </template>
+    </ZSplitter>
+    <slot name="default"></slot>
+    <!-- <ZDragEditorCanvas
+        @mousewheel="mousewheel"
+        :scale="store.canvas.scale"
+        v-model:size="store.canvas"
+        :hidden-scroll="false"
+        @mousedown="change()"
+        class="canvas"
+        :drag="store.canvas.drag"
+      >
+        <template #default="{ canvas }">
+          <ZDrag
+            v-if="active"
+            v-model="active.layout"
+            position="absolute"
+            :parent="(canvas as HTMLElement)"
+            :scale="store.canvas.scale"
+            :active="Boolean(active)"
+            :rotate="active.type !== 'page'"
+          >
+          </ZDrag>
+          <ZLines
+            v-if="withOption.lines"
+            v-model="active"
+            :diff="withOption.lines.diff"
+            :interval="withOption.lines.interval"
+            :color="withOption.lines.color"
+            :nodes="store.nodes"
+            :moving="Boolean(active)"
+          ></ZLines>
+          <ZNode
+            v-for="(node, index) in store.nodes"
+            :key="node.id"
+            v-model:store="store"
+            v-model="store.nodes[index]"
+            :parent="(canvas as HTMLElement)"
+            @mousedown.stop="change(node)"
+            :option="withOption"
+          ></ZNode>
+        </template>
+      </ZDragEditorCanvas>
+      <ContextMenu :menuItems="menuItems"></ContextMenu> -->
   </article>
 </template>
 <style scoped lang="scss">
 .ZDragEditor {
   overflow: hidden;
   box-sizing: border-box;
-  .toolbar {
-    position: fixed;
-    top: 0;
+  .splitter {
+    height: calc(100% - 50px);
   }
   .canvas {
     width: 100%;
@@ -311,6 +400,17 @@ onUnmounted(() => {
       color: rgba(var(--z-primary), 1);
       cursor: pointer;
     }
+  }
+  .left-content {
+    padding: 8px 16px;
+  }
+  .main-content {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+  }
+  .right-content {
+    padding: 8px 16px;
   }
 }
 </style>

@@ -23,18 +23,15 @@ const node = defineModel<ZNode>({
 // };
 </script>
 <template>
-  <div>
-    <component
-      :style="{
-        width: `${node.layout.width}px`,
-        height: `${node.layout.height}px`,
-        transform: `translate(${node.layout.x}px,${node.layout.y}px) rotate(${node.layout.rotate}deg)`,
-      }"
-      class="ZNode"
-      v-bind="$attrs"
-      :is="node.component"
-      v-model="node"
-    ></component>
+  <div
+    :style="{
+      width: `${node.layout.width}px`,
+      height: `${node.layout.height}px`,
+      transform: `translate(${node.layout.x}px,${node.layout.y}px) rotate(${node.layout.rotate}deg)`,
+    }"
+    class="ZNode"
+  >
+    <component v-bind="$attrs" :is="node.component" v-model="node"></component>
   </div>
 </template>
 <style scoped lang="scss">
@@ -42,5 +39,7 @@ const node = defineModel<ZNode>({
   position: absolute;
   top: 0;
   left: 0;
+  &:hover {
+  }
 }
 </style>

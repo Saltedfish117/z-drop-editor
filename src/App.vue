@@ -128,10 +128,12 @@ const store = reactive({
   moving: false,
   active: undefined,
 });
+const option = {
+};
 </script>
 <template>
   <article>
-    <ZDragEditor class="editor" v-model="store"></ZDragEditor>
+    <ZDragEditor :option="option" class="editor" v-model="store"></ZDragEditor>
   </article>
 </template>
 

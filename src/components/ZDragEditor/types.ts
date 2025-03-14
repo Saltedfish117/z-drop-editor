@@ -18,11 +18,9 @@ export interface ZDragEditorModel {
   components: ZNodes;
 }
 export interface ZOption {
-  lines: {
-    show: boolean;
+  lines: Partial<{
     color: string;
-    width: number;
     diff: number;
     interval: number;
-  };
+  }>;
 }

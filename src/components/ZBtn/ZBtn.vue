@@ -54,11 +54,11 @@ const props = withDefaults(defineProps<ZBtnProps>(), {
     padding: 4px 8px;
   } // 交互效果
   &:not(.is-disabled):hover {
-    opacity: 0.9;
-    transform: scale(1.05);
+    // opacity: 0.9;
+    transform: scale(1.03);
   }
   &:not(.is-disabled):active {
-    transform: scale(0.95);
+    transform: scale(0.97);
   }
 }
 .z-btn-default {
@@ -94,6 +94,7 @@ const props = withDefaults(defineProps<ZBtnProps>(), {
   .z-btn-#{$color} {
     border-color: rgba(var(--z-#{$color}), 0.8);
     background-color: rgba(var(--z-#{$color}), 0.8);
+    color: rgb(var(--z-text-light));
     &.is-plain {
       color: rgba(var(--z-#{$color}), 0.8);
       background-color: transparent;

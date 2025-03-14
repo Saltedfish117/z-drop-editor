@@ -23,9 +23,9 @@ const node = defineModel<ZNode | null | undefined>();
 const props = withDefaults(
   defineProps<{
     nodes: ZNodes;
-    interval: number;
-    diff: number;
-    color: string;
+    interval?: number;
+    diff?: number;
+    color?: string;
   }>(),
   {
     interval: 10,

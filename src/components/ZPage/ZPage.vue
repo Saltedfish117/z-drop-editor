@@ -52,7 +52,7 @@ const pageRef = ref<HTMLElement | null>(null);
     >
     </ZDrag>
     <ZLines
-      v-if="active && page.children"
+      v-if="option.lines && active && page.children"
       v-model="active"
       :diff="option.lines.diff"
       :interval="option.lines.interval"
@@ -89,9 +89,5 @@ const pageRef = ref<HTMLElement | null>(null);
   background-color: white;
   box-sizing: border-box;
   position: relative;
-  // position: absolute;
-  // left: 0;
-  // top: 0;
-  // border: 1px solid ;
 }
 </style>

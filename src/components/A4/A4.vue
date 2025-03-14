@@ -14,6 +14,7 @@ defineProps();
   height: 100%;
   background-color: white;
   border: 1px solid;
+  // box-sizing: border-box;
   // box-shadow: 1px 1px 5px #cccccc;
 }
 </style>

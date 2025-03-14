@@ -624,6 +624,7 @@ $resizes: (
 }
 .ZDrag {
   cursor: grab;
+  box-sizing: border-box;
   &:active {
     cursor: grabbing;
   }

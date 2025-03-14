@@ -1,23 +1,24 @@
 <template>
   <div
     ref="canvasWrapper"
-    @scroll="handleScrollbar"
     class="canvas-wrapper"
     :class="{
       'hidden-scrollbar': hiddenScroll,
     }"
+    :style="{
+      cursor: cursor,
+    }"
   >
+    <!--   @keydown.space="spaceDown"
+      @keyup.space="spaceUp" -->
     <article
-      tabindex="-1"
-      @keydown.space="spaceDown"
-      @keyup.space="spaceUp"
       class="infinite-canvas"
       ref="infiniteCanvas"
       :style="{
         width: size.width + 'px',
         height: size.height + 'px',
         transform: `scale(${scale})`,
-        pointerEvents: drag ? 'none' : 'auto',
+        pointerEvents: pointerEvents,
       }"
     >
       <slot :canvas="infiniteCanvas" :size="size" name="default"></slot>
@@ -36,38 +37,14 @@ import {
   defineExpose,
   watch,
   withDefaults,
+  computed,
 } from "vue";
 
 defineOptions({
   name: "ZDragEditorCanvas",
   directives: {},
 });
-/**
- * {
-    size: {
-      type: Object,
-      required: true,
-      default: () => {
-        return {
-          width: 5000,
-          height: 5000,
-        };
-      },
-    },
-    scale: {
-      type: Number,
-      default: () => 1,
-    },
-    "hidden-scroll": {
-      type: Boolean,
-      default: () => false,
-    },
-    drag: {
-      type: Boolean,
-      default: () => false,
-    },
-  }
- */
+
 const props = withDefaults(
   defineProps<{
     size: { width: number; height: number };
@@ -84,6 +61,12 @@ const props = withDefaults(
 // 画布容器引用
 const canvasWrapper = ref<HTMLElement | null>(null);
 const infiniteCanvas = ref<HTMLElement | null>(null);
+const dragging = ref(false);
+const cursor = ref("default");
+const pointerEvents = computed(() => {
+  if (props.drag) return "none";
+  return dragging.value ? "none" : "auto";
+});
 // 初始尺寸
 const size = defineModel<{
   width: number;
@@ -103,19 +86,19 @@ const startPos = reactive({ x: 0, y: 0, scrollLeft: 0, scrollTop: 0 });
 // 拖拽处理
 const handleMouseDown = (e: MouseEvent) => {
   if (!canvasWrapper.value) return;
-  // 判断是否按下空格键
+  dragging.value = true;
   startPos.x = e.clientX;
   startPos.y = e.clientY;
   startPos.scrollLeft = canvasWrapper.value.scrollLeft;
   startPos.scrollTop = canvasWrapper.value.scrollTop;
-  document.documentElement.style.cursor = "grabbing";
+  cursor.value = "grabbing";
   document.addEventListener("mousemove", handleMouseMove);
   document.addEventListener("mouseup", handleMouseUp);
 };
 const handleMouseMove = (e: MouseEvent) => {
   e.preventDefault();
   e.stopPropagation();
-  document.documentElement.style.cursor = "grabbing";
+  cursor.value = "grabbing";
   const scaleFactor = 1 / props.scale; // 计算缩放修正因子
   // 根据缩放倍率修正偏移量
   let offsetX = (e.clientX - startPos.x) * scaleFactor;
@@ -125,34 +108,42 @@ const handleMouseMove = (e: MouseEvent) => {
   canvasWrapper.value?.scrollTo(resultX, resultY);
 };
 const handleMouseUp = (e: MouseEvent) => {
+  dragging.value = false;
   e.preventDefault();
   e.stopPropagation();
-
-  document.documentElement.style.cursor = "grab";
+  cursor.value = "grab";
   document.removeEventListener("mousemove", handleMouseMove);
   document.removeEventListener("mouseup", handleMouseUp);
   document.documentElement.style.userSelect = "none";
 };
 const spaceDown = (e: KeyboardEvent) => {
   if (props.drag) return;
+  if (e.key !== " ") return;
   e.preventDefault();
   e.stopPropagation();
-  document.addEventListener("mousedown", handleMouseDown);
+  if (dragging.value) return;
+  if (!canvasWrapper.value) return;
+  dragging.value = true;
+  canvasWrapper.value.addEventListener("mousedown", handleMouseDown);
+  cursor.value = "grab";
   document.documentElement.style.userSelect = "none"; // 禁用文本选中
 };
 const spaceUp = (e: KeyboardEvent) => {
-  if (props.drag) return;
+  if (props.drag && e.key !== " ") return;
+  dragging.value = false;
   e.preventDefault();
   e.stopPropagation();
-  document.documentElement.style.cursor = "default";
+  if (!canvasWrapper.value) return;
+  cursor.value = "default";
   document.documentElement.style.userSelect = "auto";
-  document.removeEventListener("mousedown", handleMouseDown);
+  canvasWrapper.value.removeEventListener("mousedown", handleMouseDown);
+  // document.removeEventListener("mousedown", handleMouseDown);
   document.removeEventListener("mousemove", handleMouseMove);
   document.removeEventListener("mouseup", handleMouseUp);
 };
-const handleScrollbar = () => {
-  if (!canvasWrapper.value) return;
-};
+// const handleScrollbar = () => {
+//   if (!canvasWrapper.value) return;
+// };
 defineExpose({
   infiniteCanvas,
   canvasWrapper,
@@ -160,14 +151,15 @@ defineExpose({
 watch(
   () => props.drag,
   (val) => {
+    if (!canvasWrapper.value) return;
     if (val) {
-      document.addEventListener("mousedown", handleMouseDown);
-      document.documentElement.style.cursor = "grab";
+      canvasWrapper.value.addEventListener("mousedown", handleMouseDown);
+      cursor.value = "grab";
       document.documentElement.style.userSelect = "none"; // 禁用文本选中
     } else {
-      document.documentElement.style.cursor = "default";
+      cursor.value = "default";
       document.documentElement.style.userSelect = "auto";
-      document.removeEventListener("mousedown", handleMouseDown);
+      canvasWrapper.value.removeEventListener("mousedown", handleMouseDown);
       document.removeEventListener("mousemove", handleMouseMove);
       document.removeEventListener("mouseup", handleMouseUp);
     }
@@ -179,12 +171,16 @@ watch(
 // 生命周期
 onMounted(() => {
   if (!canvasWrapper.value) return;
+  document.addEventListener("keydown", spaceDown);
+  document.addEventListener("keyup", spaceUp);
   // 初始居中
   canvasWrapper.value.scrollLeft = size.value.width / 2 - window.innerWidth / 2;
   canvasWrapper.value.scrollTop =
     size.value.height / 2 - window.innerHeight / 2;
 });
 onUnmounted(() => {
+  document.removeEventListener("keydown", spaceDown);
+  document.removeEventListener("keyup", spaceUp);
   document.removeEventListener("mousemove", handleMouseMove);
   document.removeEventListener("mouseup", handleMouseUp);
 });
@@ -197,6 +193,15 @@ onUnmounted(() => {
   --canvas-bg-color: 244, 245, 247;
   background-color: rgb(var(--canvas-bg-color));
   // 隐藏滚动条
+  &::-webkit-scrollbar {
+    background: transparent;
+    width: 8px;
+    height: 8px;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: rgb(var(--z-quiet));
+    border-radius: 8px;
+  }
   &.hidden-scrollbar {
     scrollbar-width: none; /* Firefox */
     -ms-overflow-style: none; /* IE/Edge */
