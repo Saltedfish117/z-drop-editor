@@ -1,9 +1,11 @@
 import { createApp } from "vue";
 import "./style.css";
 import App from "./App.vue";
-import A4 from "./components/A4/A4.vue";
+import Group from "./components/ZGroup/ZGroup.vue";
+import Rectangle from "./components/components/Rectangle.vue";
 import ZPage from "./components/ZPage/ZPage.vue";
 const app = createApp(App);
-app.component("a4", A4);
+app.component("Rectangle", Rectangle);
+app.component("Group", Group);
 app.component("page", ZPage);
 app.mount("#app");

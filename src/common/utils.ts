@@ -156,3 +156,75 @@ export const once = <T extends (...args: any[]) => any>(
     }
   };
 };
+/**
+ * 深度克隆一个对象，支持处理多种数据类型，包括基本类型、Date、RegExp、Map、Set、数组和普通对象。
+ * 使用 WeakMap 来缓存已克隆的对象，避免循环引用导致的无限递归。
+ *
+ * @param obj - 需要克隆的对象，可以是任意类型。
+ * @param hash - 用于缓存已克隆对象的 WeakMap，避免循环引用。默认为一个新的 WeakMap。
+ * @returns 返回克隆后的对象，类型与输入对象相同。
+ */
+export function deepClone(obj: any, hash = new WeakMap()) {
+  // 如果 obj 是基本类型或 null，直接返回
+  if (obj === null || typeof obj !== "object") {
+    return obj;
+  }
+
+  // 处理 Date 类型，返回一个新的 Date 对象
+  if (obj instanceof Date) {
+    return new Date(obj);
+  }
+
+  // 处理 RegExp 类型，返回一个新的 RegExp 对象
+  if (obj instanceof RegExp) {
+    return new RegExp(obj);
+  }
+
+  // 处理 Map 类型，递归克隆 Map 的键和值
+  if (obj instanceof Map) {
+    const mapCopy = new Map();
+    hash.set(obj, mapCopy);
+    obj.forEach((value, key) => {
+      mapCopy.set(deepClone(key, hash), deepClone(value, hash));
+    });
+    return mapCopy;
+  }
+
+  // 处理 Set 类型，递归克隆 Set 的值
+  if (obj instanceof Set) {
+    const setCopy = new Set();
+    hash.set(obj, setCopy);
+    obj.forEach((value) => {
+      setCopy.add(deepClone(value, hash));
+    });
+    return setCopy;
+  }
+
+  // 处理数组类型，递归克隆数组的每个元素
+  if (Array.isArray(obj)) {
+    const arrCopy: any[] = [];
+    hash.set(obj, arrCopy);
+    for (let i = 0; i < obj.length; i++) {
+      arrCopy[i] = deepClone(obj[i], hash);
+    }
+    return arrCopy;
+  }
+
+  // 如果对象已经被克隆过，直接返回缓存中的克隆对象
+  if (hash.has(obj)) {
+    return hash.get(obj);
+  }
+
+  // 创建一个与原对象相同原型的新对象
+  const objCopy = Object.create(Object.getPrototypeOf(obj));
+  hash.set(obj, objCopy);
+
+  // 递归克隆对象的普通属性和 Symbol 属性
+  Reflect.ownKeys(obj).forEach((key) => {
+    if (obj.hasOwnProperty(key)) {
+      objCopy[key] = deepClone(obj[key], hash);
+    }
+  });
+
+  return objCopy;
+}

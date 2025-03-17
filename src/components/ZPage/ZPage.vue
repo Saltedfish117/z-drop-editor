@@ -8,8 +8,8 @@ import ZDrag from "../ZDrag/ZDrag.vue";
 defineOptions({
   name: "ZPage",
 });
-const props = defineProps<{
-  parent: HTMLElement;
+defineProps<{
+  container: HTMLElement;
   option: ZOption;
 }>();
 const page = defineModel<Node>({
@@ -19,8 +19,7 @@ const store = defineModel<ZDragEditorModel>("store", {
   required: true,
 });
 const emits = defineEmits<{
-  (e: "update:active", value: boolean): void;
-  (e: "change", event: MouseEvent, node: Node): void;
+  (e: "moveEnd"): void;
 }>();
 const active = ref<Node | null>(null);
 const change = (node?: Node) => {
@@ -35,20 +34,44 @@ watch(
     } else {
       active.value = null;
     }
+  },
+  {
+    deep: true,
   }
 );
 const pageRef = ref<HTMLElement | null>(null);
+const moveEnd = () => {
+  emits("moveEnd");
+};
 </script>
 <template>
-  <div>
+  <!-- <div> -->
+
+  <!--    width: `${page.layout.width}px`,
+      height: `${page.layout.height}px`,
+        :style="{
+      width: `${page.layout.width}px`,
+      height: `${page.layout.height}px`,
+    }" -->
+
+  <div
+    :style="{
+      transform: `translate(${page.layout.x}px,${page.layout.y}px) rotate(${page.layout.rotate}deg)`,
+      position: 'absolute',
+      left: 0,
+      top: 0,
+      zIndex: page.layout.zIndex,
+    }"
+  >
     <ZDrag
       v-if="active"
       v-model="active.layout"
       position="absolute"
-      :parent="(pageRef as HTMLElement)"
+      @after-move="moveEnd"
+      :container="(pageRef as HTMLElement)"
       :scale="store.canvas.scale"
       :active="Boolean(active)"
-      rotate
+      :rotate="active.rotate"
     >
     </ZDrag>
     <ZLines
@@ -60,34 +83,29 @@ const pageRef = ref<HTMLElement | null>(null);
       :nodes="page.children"
       :moving="Boolean(active)"
     ></ZLines>
-    <article
-      :style="{
-        width: `${page.layout.width}px`,
-        height: `${page.layout.height}px`,
-      }"
-      ref="pageRef"
-      class="ZPage"
-    >
-      <div
-        v-if="page.children"
-        v-for="(node, index) in page.children"
-        :key="node.id"
-        @mousedown.stop="change(node)"
-      >
-        <ZNode
-          v-model:store="store"
-          v-model="page.children[index]"
-          :parent="(pageRef as HTMLElement)"
-        ></ZNode>
-      </div>
-    </article>
   </div>
+  <article v-bind="$attrs" ref="pageRef" class="ZPage">
+    <div
+      v-if="page.children"
+      v-for="(node, index) in page.children"
+      :key="node.id"
+      @mousedown.stop="change(node)"
+    >
+      <ZNode
+        v-model:store="store"
+        v-model="page.children[index]"
+        :container="(pageRef as HTMLElement)"
+      ></ZNode>
+    </div>
+  </article>
+
+  <!-- </div> -->
 </template>
 <style scoped lang="scss">
 .ZPage {
   overflow: hidden;
   background-color: white;
   box-sizing: border-box;
-  position: relative;
+  // position: relative;
 }
 </style>

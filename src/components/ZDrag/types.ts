@@ -30,7 +30,7 @@ export interface ZDragProps {
   scale: number;
   active: boolean;
   rotate: boolean;
-  parent: HTMLElement;
+  container: HTMLElement;
 }
 export type Direction =
   | "n-resize"

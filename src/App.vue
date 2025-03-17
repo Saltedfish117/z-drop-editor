@@ -1,58 +1,10 @@
 <script setup lang="ts">
 import ZDragEditor from "./components/ZDragEditor/ZDragEditor.vue";
 import { reactive } from "vue";
+import type { ZNode } from "./components/ZNode/types";
 
-// let arr = Array.from({ length: 5 }, (_, k) => {
-//   return {
-//     id: (k + 1).toString(),
-//     component: "page",
-//     layout: {
-//       x: 0,
-//       y: 0,
-//       width: 794,
-//       height: 1123,
-//       rotate: 0,
-//       zIndex: 1,
-//       lock: false,
-//     },
-//     type: "page",
-//     children: [
-//       {
-//         id: (k + 1).toString() + `-kids`,
-//         component: "a4",
-//         parentId: (k + 1).toString(),
-//         layout: {
-//           x: 0,
-//           y: 0,
-//           width: 200,
-//           height: 200,
-//           rotate: 0,
-//           zIndex: 1,
-//           lock: false,
-//         },
-//         type: "component",
-//       },
-//       {
-//         id: (k + 2).toString() + `-kids-3`,
-//         component: "a4",
-//         parentId: (k + 1).toString(),
-//         layout: {
-//           x: 0,
-//           y: 0,
-//           width: 200,
-//           height: 200,
-//           rotate: 0,
-//           zIndex: 1,
-//           lock: false,
-//         },
-//         type: "component",
-//       },
-//     ],
-//   };
-// });
-let arr = [];
-for (let k = 0; k < 2; k++) {
-  let item = {
+let arr = Array.from({ length: 1 }, (_, k) => {
+  return {
     id: (k + 1).toString(),
     component: "page",
     layout: {
@@ -64,11 +16,12 @@ for (let k = 0; k < 2; k++) {
       zIndex: 1,
       lock: false,
     },
+    rotate: false,
     type: "page",
     children: [
       {
         id: (k + 1).toString() + `-kids`,
-        component: "a4",
+        component: "Rectangle",
         parentId: (k + 1).toString(),
         layout: {
           x: 0,
@@ -79,44 +32,80 @@ for (let k = 0; k < 2; k++) {
           zIndex: 1,
           lock: false,
         },
+
         type: "component",
       },
       {
-        id: (k + 2).toString() + `-kids-3`,
-        component: "a4",
+        id: (k + 2).toString() + `-Group-3`,
+        component: "Group",
+        label: "分组",
         parentId: (k + 1).toString(),
+        rotate: false,
         layout: {
           x: 200,
           y: 0,
-          width: 200,
-          height: 200,
+          width: 0,
+          height: 0,
           rotate: 0,
           zIndex: 1,
           lock: false,
         },
-        type: "component",
+        children: [
+          {
+            id: `group-k-1`,
+            component: "Rectangle",
+            parentId: (k + 2).toString() + `-Group-3`,
+            layout: {
+              x: 400,
+              y: 0,
+              width: 200,
+              height: 200,
+              rotate: 0,
+              zIndex: 1,
+              lock: false,
+            },
+            rotate: true,
+            type: "component",
+          },
+          {
+            id: `group-k-2`,
+            component: "Rectangle",
+            parentId: (k + 2).toString() + `-Group-3`,
+            layout: {
+              x: 200,
+              y: 0,
+              width: 200,
+              height: 200,
+              rotate: 0,
+              zIndex: 1,
+              lock: false,
+            },
+            rotate: true,
+            type: "component",
+          },
+        ],
       },
     ],
   };
-  arr.push(item);
-}
-console.log(arr);
+});
 const store = reactive({
-  nodes: arr,
+  nodes: arr as ZNode[],
   components: [
     {
-      id: "page",
-      component: "page",
-      type: "page",
+      id: `-kids`,
+      component: "Rectangle",
+      label: "矩形",
+      parentId: "",
       layout: {
         x: 0,
         y: 0,
-        width: 794,
-        height: 1123,
+        width: 200,
+        height: 200,
         rotate: 0,
         zIndex: 1,
         lock: false,
       },
+      type: "component",
     },
   ],
   canvas: {
@@ -128,8 +117,7 @@ const store = reactive({
   moving: false,
   active: undefined,
 });
-const option = {
-};
+const option = {};
 </script>
 <template>
   <article>

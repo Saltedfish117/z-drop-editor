@@ -326,7 +326,7 @@ const mousedown = (e: MouseEvent, direction: Direction | Moves) => {
   emits("before-move", e, direction);
   e.preventDefault();
   e.stopPropagation();
-  const canvasRect = props.parent.getBoundingClientRect();
+  const canvasRect = props.container.getBoundingClientRect();
   const point = {
     x: (e.clientX - canvasRect.left) * scaleFactor.value,
     y: (e.clientY - canvasRect.top) * scaleFactor.value,
@@ -424,7 +424,7 @@ const style = computed((): CSSProperties => {
     left: 0,
     top: 0,
     transform: `translate(${model.value.x}px, ${model.value.y}px) rotate(${model.value.rotate}deg) translate3d(0,0,0)`,
-    zIndex: model.value.zIndex,
+    zIndex: model.value.zIndex + 1,
     width: model.value.width + "px",
     height: model.value.height + "px",
   };

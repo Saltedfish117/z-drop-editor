@@ -14,6 +14,7 @@ const props = defineProps({
     required: true,
   },
 });
+const menuRef = ref<HTMLElement | null>(null);
 const visible = ref(false);
 const x = ref(0);
 const y = ref(0);
@@ -22,9 +23,9 @@ const showMenu = (position: { clientX: number; clientY: number }) => {
   x.value = position.clientX;
   y.value = position.clientY;
 };
-const handleContextMenu = (e: MouseEvent) => {
+const handleContextMenu = (e: Event) => {
   e.preventDefault();
-  showMenu(e);
+  showMenu(e as MouseEvent);
 };
 const handleMenuItemClick = (item: MenuItem) => {
   if (item.disabled) return;
@@ -47,11 +48,12 @@ const handleClickOutside = (e: Event) => {
   }
 };
 const parent = computed(() => {
-  return getCurrentInstance()!.parent?.proxy?.$el || document;
+  if (!menuRef.value) return document;
+  else
+    return menuRef.value.parentElement ? menuRef.value.parentElement : document;
 });
 onMounted(() => {
-  console.log(parent.value);
-
+  // console.log(parent.value);
   parent.value.addEventListener("contextmenu", handleContextMenu);
   document.addEventListener("click", handleClickOutside);
   document.addEventListener("scroll", closeMenu);
@@ -72,6 +74,7 @@ onUnmounted(() => {
     class="context-menu"
     :style="{ left: x + 'px', top: y + 'px' }"
     @click.stop="closeMenu"
+    ref="menuRef"
   >
     <template v-if="!$slots.default">
       <div
@@ -103,9 +106,9 @@ onUnmounted(() => {
   padding: 8px;
   border-radius: 8px;
   background: rgba(var(--z-page), 0.9);
-  box-shadow: 0px 4px 10px 0px rgba(var(--z-quiet), 0.2);
+  box-shadow: 0px 4px 10px 0px rgba(var(--z-quiet), 0.6);
   //   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
-  border: 1px solid rgba(var(--z-quiet), 0.3);
+  border: 1px solid rgba(var(--z-quiet), 0.6);
   backdrop-filter: blur(8px);
   &.touch-device {
     min-width: 200px;

@@ -1,14 +1,5 @@
 <script setup lang="ts">
-import {
-  defineOptions,
-  ref,
-  onMounted,
-  onUnmounted,
-  withDefaults,
-  defineModel,
-  reactive,
-  nextTick,
-} from "vue";
+import { defineOptions, ref, withDefaults } from "vue";
 defineOptions({
   name: "ZSplitter",
 });
@@ -28,11 +19,8 @@ const props = withDefaults(
 );
 const leftWidth = ref(props.leftMinWidth);
 const rightWidth = ref(props.rightMinWidth);
-const isDragging = ref(false);
 const dragLeft = ref(false);
 const dragRight = ref(false);
-const leftCacheWidth = ref(leftWidth.value);
-const rightCacheWidth = ref(rightWidth.value);
 const handleMouseDown = (e: MouseEvent, direction: "left" | "right") => {
   try {
     const widthMap = {
@@ -88,6 +76,7 @@ const handleMouseDown = (e: MouseEvent, direction: "left" | "right") => {
     >
       <div class="content"><slot :width="leftWidth" name="left"></slot></div>
     </div>
+
     <div
       class="splitter-bar"
       @mousedown="handleMouseDown($event, 'left')"

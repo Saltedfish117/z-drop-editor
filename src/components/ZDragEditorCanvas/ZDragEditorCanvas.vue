@@ -141,9 +141,6 @@ const spaceUp = (e: KeyboardEvent) => {
   document.removeEventListener("mousemove", handleMouseMove);
   document.removeEventListener("mouseup", handleMouseUp);
 };
-// const handleScrollbar = () => {
-//   if (!canvasWrapper.value) return;
-// };
 defineExpose({
   infiniteCanvas,
   canvasWrapper,

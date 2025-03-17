@@ -9,6 +9,7 @@ import {
   ref,
   withDefaults,
   computed,
+  nextTick,
 } from "vue";
 const ZDragEditorCanvas = defineAsyncComponent(
   () => import("../ZDragEditorCanvas/ZDragEditorCanvas.vue")
@@ -33,8 +34,9 @@ const ZSvgIcon = defineAsyncComponent(
 const ZDrag = defineAsyncComponent(() => import("../ZDrag/ZDrag.vue"));
 const ZNode = defineAsyncComponent(() => import("../ZNode/ZNode.vue"));
 const ZLines = defineAsyncComponent(() => import("../ZLines/ZLines.vue"));
-import type { ZNode as Node } from "../ZNode/types";
+import type { ZNode as Node, ZNode } from "../ZNode/types";
 import type { ZDragEditorModel, ZNodeMap, ZOption } from "./types";
+// import { deepClone } from "@/common/utils";
 defineOptions({
   name: "ZDragEditor",
 });
@@ -81,17 +83,21 @@ const withOption = computed(() =>
 );
 const active = ref<Node | null>(null);
 const nodeMap = reactive<ZNodeMap>(new Map());
+const prefixId = computed(() => Array.from(nodeMap.keys()).join("-"));
 watch(
   () => store.value.active,
   (value) => {
-    console.log(value);
+    // console.log("watch editor active", value);
     if (!value) return (active.value = null);
     if (value.parentId) {
       active.value = null;
     } else {
       active.value = value;
     }
-    console.log(active.value);
+    // console.log(active.value);
+  },
+  {
+    deep: true,
   }
 );
 watch(
@@ -156,7 +162,6 @@ const mousewheel = (e: WheelEvent) => {
 onUnmounted(() => {
   nodeMap.clear();
 });
-const selectedNode = ref({ id: 1, name: "node1" });
 const menuItems = [
   {
     label: "重命名",
@@ -174,7 +179,104 @@ const menuItems = [
     action: (node: Node) => console.log("复制", node),
   },
 ];
-const leftHidden = ref(false);
+const drop = (event: DragEvent) => {
+  event.preventDefault();
+  event.stopPropagation();
+  let dt = event.dataTransfer;
+  const str = dt?.getData("component");
+  if (!str) return false;
+  let com = JSON.parse(str) as ZNode;
+  com.id = prefixId.value + "-" + Math.round(Math.random() * 100 + 1);
+  const { type, id } = (event.target as HTMLElement).dataset;
+  const { layerX, layerY } = event;
+  if (type === "page" && id) {
+    const parent = nodeMap.get(id);
+    if (parent) {
+      com.parentId = parent.id;
+      parent.children = parent.children || [];
+      com.layout.x = layerX - parent.layout.x;
+      com.layout.y = layerY - parent.layout.y;
+      parent.children.push(com);
+      return;
+    }
+    console.log(parent);
+  }
+  com.layout.x = layerX;
+  com.layout.y = layerY;
+  store.value.nodes.push(com);
+};
+const dragenter = (event: DragEvent) => {
+  event.preventDefault();
+  console.log("enter");
+};
+const dragover = (event: DragEvent) => {
+  event.preventDefault();
+};
+const itemDragstart = (event: DragEvent, com: any) => {
+  let dt = event.dataTransfer;
+  dt?.setData("component", JSON.stringify(com));
+};
+const itemDragend = (event: DragEvent) => {
+  event.preventDefault();
+};
+const moveEnd = () => {
+  if (!store.value.active) return;
+  const node = store.value.active;
+  if (node.type === "page") return;
+  const { x, y, width, height } = store.value.active.layout;
+  if (!node.parentId) {
+    const nodes = store.value.nodes.filter(
+      (i) => i.id !== node.id && i.type === "page"
+    );
+    nodes.forEach((n) => {
+      const page = nodeMap.get(n.id);
+      if (!page) return;
+      const pageLo = page.layout;
+      if (
+        pageLo.x < x &&
+        pageLo.y < y &&
+        pageLo.x + pageLo.width > x + width &&
+        pageLo.y + pageLo.height > y + height
+      ) {
+        const children = page.children || [];
+        node.parentId = page.id;
+        node.layout.x = x - pageLo.x;
+        node.layout.y = y - pageLo.y;
+        page.children = [...children, node];
+        active.value = null;
+        const filterNode = store.value.nodes.filter((c) => {
+          console.log(c.id !== node.id);
+          return c.id !== node.id;
+        });
+        store.value.nodes = filterNode;
+        nextTick(() => {
+          change(node);
+        });
+        return true;
+      } else return false;
+    });
+    return;
+  }
+  const parent = nodeMap.get(node.parentId as string);
+  if (parent) {
+    const parentLo = parent.layout;
+    if (
+      (x < 0 && Math.abs(x) >= width) ||
+      (y < 0 && Math.abs(y) >= height) ||
+      x > parentLo.width ||
+      y > parentLo.height
+    ) {
+      node.layout.x = parentLo.x + node.layout.x;
+      node.layout.y = parentLo.y + node.layout.y;
+
+      let children = parent.children || [];
+      parent.children = children.filter((i) => i.id !== node.id);
+      node.parentId = undefined;
+      store.value.nodes.push(node);
+      nextTick(() => change(node));
+    }
+  }
+};
 </script>
 <template>
   <article tabindex="0" class="ZDragEditor">
@@ -184,9 +286,6 @@ const leftHidden = ref(false);
           <slot v-if="$slots['toolbar-left']" name="left" v-bind="scope"></slot>
           <template v-else>
             <h1 class="logo">ZDragEditor</h1>
-            <ZBtn color="default" @click="leftHidden = !leftHidden"
-              >{{ leftHidden ? "展示" : "隐藏" }}左侧面板
-            </ZBtn>
           </template>
         </template>
         <template #center="scope">
@@ -233,9 +332,23 @@ const leftHidden = ref(false);
       </ZToolbar>
     </template>
     <slot name="toolbar" :store="store"></slot>
-    <ZSplitter v-if="!$slots.default" class="splitter" :leftHidden="leftHidden">
+    <ZSplitter v-if="!$slots.default" class="splitter">
       <template #left>
-        <div v-if="!$slots.left" class="left-content"></div>
+        <div v-if="!$slots.left" class="left-content">
+          <ul class="drag-menu">
+            <li
+              @dragstart="itemDragstart($event, com)"
+              @dragend="itemDragend"
+              draggable="true"
+              v-for="(com, i) in store.components"
+              :tabindex="-i"
+              :key="com.id"
+              class="drag-menu-item"
+            >
+              {{ com.label }}
+            </li>
+          </ul>
+        </div>
         <slot name="left" :store="store"></slot>
       </template>
       <template #center>
@@ -249,13 +362,17 @@ const leftHidden = ref(false);
             @mousedown="change()"
             class="canvas"
             :drag="store.canvas.drag"
+            @drop="drop"
+            @dragenter="dragenter"
+            @dragover="dragover"
           >
             <template #default="{ canvas }">
               <ZDrag
                 v-if="active"
                 v-model="active.layout"
+                @after-move="moveEnd"
                 position="absolute"
-                :parent="(canvas as HTMLElement)"
+                :container="(canvas as HTMLElement)"
                 :scale="store.canvas.scale"
                 :active="Boolean(active)"
                 :rotate="active.type !== 'page'"
@@ -271,13 +388,19 @@ const leftHidden = ref(false);
                 :moving="Boolean(active)"
               ></ZLines>
               <ZNode
+                @drop="drop"
+                @dragenter="dragenter"
+                @dragover="dragover"
                 v-for="(node, index) in store.nodes"
                 :key="node.id"
+                :data-type="node.type"
+                :data-id="node.id"
                 v-model:store="store"
                 v-model="store.nodes[index]"
-                :parent="(canvas as HTMLElement)"
+                :container="(canvas as HTMLElement)"
                 @mousedown.stop="change(node)"
                 :option="withOption"
+                @moveEnd="moveEnd"
               ></ZNode>
             </template>
           </ZDragEditorCanvas>
@@ -411,6 +534,33 @@ const leftHidden = ref(false);
   }
   .right-content {
     padding: 8px 16px;
+  }
+}
+.drag-menu {
+  margin: 0;
+  list-style: none;
+  padding: 4px 8px;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  .drag-menu-item {
+    min-width: 50px;
+    width: 70px;
+    min-height: 50px;
+    height: 70px;
+    border: 1px solid rgb(var(--z-quiet));
+    border-radius: 8px;
+    background-color: rgba(var(--z-quiet), 0.3);
+    transition: all 0.1s ease;
+    &:hover {
+      cursor: grab;
+      background-color: rgba(var(--z-quiet), 0.6);
+    }
+    &:active {
+      cursor: grabbing;
+      background-color: rgba(var(--z-quiet), 1);
+      user-select: none;
+    }
   }
 }
 </style>
