@@ -1,5 +1,6 @@
 import type { App, Plugin } from "vue";
 import type { Layout } from "../components/ZDrag/types";
+import type { ZNode as Node } from "../components/ZNode/types";
 /**
  * 为组件添加 install 方法的类型扩展
  */
@@ -58,6 +59,47 @@ export const rotateLayout = (_layout: Layout) => {
     layout.height = newHeight;
   }
   return layout;
+};
+export const calculateGroupLayout = (nodes: Node[]) => {
+  const layouts = nodes.map((kid) => {
+    return rotateLayout(kid.layout);
+  });
+  const xs = layouts.map((kid) => kid.x);
+  const ys = layouts.map((kid) => kid.y);
+  const is = layouts.map((kid) => kid.zIndex);
+  const mw = layouts.reduce((prev, curr) => {
+    return prev.x + prev.width > curr.x + curr.width ? prev : curr;
+  });
+  const mh = layouts.reduce((prev, curr) => {
+    return prev.y + prev.height > curr.y + curr.height ? prev : curr;
+  });
+  const x = Math.min(...xs);
+  const y = Math.min(...ys);
+  const w = mw.x + mw.width - x;
+  const h = mh.y + mh.height - y;
+  const z = Math.max(...is);
+  return {
+    x: x,
+    y: y,
+    width: w,
+    height: h,
+    zIndex: z,
+  };
+};
+export const calculateMousePosition = (
+  axis: {
+    clientX: number;
+    clientY: number;
+  },
+  dom: HTMLElement,
+  scale: number
+) => {
+  const scaleFactor = 1 / scale;
+  const rect = dom.getBoundingClientRect();
+  return {
+    x: Math.round((axis.clientX - rect.left) * scaleFactor),
+    y: Math.round((axis.clientY - rect.top) * scaleFactor),
+  };
 };
 /**
  * 计算绕指定中心点旋转后的坐标

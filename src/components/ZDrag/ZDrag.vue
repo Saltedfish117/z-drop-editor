@@ -320,12 +320,26 @@ const resize: Resize = {
     return layout;
   },
 };
+const model = defineModel<Layout>({
+  type: Object,
+  default: (): Layout => {
+    return {
+      x: 0,
+      y: 0,
+      width: 100,
+      height: 100,
+      zIndex: 1,
+      rotate: 0,
+      lock: false,
+    };
+  },
+});
 const mousedown = (e: MouseEvent, direction: Direction | Moves) => {
   if (model.value.lock) return;
   if (!props.active) return;
-  emits("before-move", e, direction);
   e.preventDefault();
   e.stopPropagation();
+  emits("before-move", e, direction);
   const canvasRect = props.container.getBoundingClientRect();
   const point = {
     x: (e.clientX - canvasRect.left) * scaleFactor.value,
@@ -386,10 +400,6 @@ const mousedown = (e: MouseEvent, direction: Direction | Moves) => {
     } else {
       model.value = moves[direction as Moves](offset, model.value, start, e);
     }
-    // Object.keys(model.value).forEach((_key) => {
-    //   const key = _key as keyof Layout;
-    //   (model.value[key] as number) = Math.round(model.value[key] as number);
-    // });
   };
   const up = (e: MouseEvent) => {
     e.preventDefault();
@@ -404,20 +414,7 @@ const mousedown = (e: MouseEvent, direction: Direction | Moves) => {
   document.addEventListener("mouseup", up);
   window.addEventListener("mouseleave", up);
 };
-const model = defineModel<Layout>({
-  type: Object,
-  default: (): Layout => {
-    return {
-      x: 0,
-      y: 0,
-      width: 100,
-      height: 100,
-      zIndex: 1,
-      rotate: 0,
-      lock: false,
-    };
-  },
-});
+
 const style = computed((): CSSProperties => {
   return {
     position: props.position,
@@ -552,7 +549,7 @@ defineExpose({
     :class="{
       active: active,
     }"
-    :tabindex="style.zIndex"
+    :tabindex="style.zIndex ? -style.zIndex : '-1'"
     :style="style"
   >
     <template v-if="!model.lock">

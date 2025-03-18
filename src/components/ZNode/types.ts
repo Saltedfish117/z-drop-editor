@@ -7,7 +7,8 @@ export interface ZNode extends DragNode {
   component: string | Component;
   children?: ZNode[];
   parentId?: string;
-  rotate: boolean;
+  rotate?: boolean;
+  relativeCanvas: "canvas" | string;
 }
 // export interface ZNodeProps {
 //   node: ZNode;

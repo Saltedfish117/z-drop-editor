@@ -12,6 +12,10 @@ export interface ZDragEditorModel {
     height: number;
     scale: number;
     drag: boolean;
+    scroll: {
+      top: number;
+      left: number;
+    };
   };
   moving: boolean;
   active: ZNode | undefined;

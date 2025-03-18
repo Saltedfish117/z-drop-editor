@@ -26,7 +26,8 @@ const store = defineModel<ZDragEditorModel>("store", { required: true });
 .ZToolbar {
   position: relative;
   height: 50px;
-  max-height: 120px;
+  min-height: 50px;
+  // max-height: 120px;
   width: 100%;
   background-color: rgba(255, 255, 255, 1);
   box-shadow: 1px 1px 5px rgba(204, 197, 197, 0.5);

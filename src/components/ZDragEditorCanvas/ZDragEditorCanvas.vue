@@ -1,31 +1,3 @@
-<template>
-  <div
-    ref="canvasWrapper"
-    class="canvas-wrapper"
-    :class="{
-      'hidden-scrollbar': hiddenScroll,
-    }"
-    :style="{
-      cursor: cursor,
-    }"
-  >
-    <!--   @keydown.space="spaceDown"
-      @keyup.space="spaceUp" -->
-    <article
-      class="infinite-canvas"
-      ref="infiniteCanvas"
-      :style="{
-        width: size.width + 'px',
-        height: size.height + 'px',
-        transform: `scale(${scale})`,
-        pointerEvents: pointerEvents,
-      }"
-    >
-      <slot :canvas="infiniteCanvas" :size="size" name="default"></slot>
-    </article>
-  </div>
-</template>
-
 <script setup lang="ts">
 import {
   ref,
@@ -81,7 +53,13 @@ const size = defineModel<{
     };
   },
 });
-
+const scroll = defineModel<{
+  top: number;
+  left: number;
+}>("scroll", {
+  type: Object,
+  required: true,
+});
 const startPos = reactive({ x: 0, y: 0, scrollLeft: 0, scrollTop: 0 });
 // 拖拽处理
 const handleMouseDown = (e: MouseEvent) => {
@@ -105,7 +83,8 @@ const handleMouseMove = (e: MouseEvent) => {
   let offsetY = (e.clientY - startPos.y) * scaleFactor;
   let resultX = startPos.scrollLeft - offsetX;
   let resultY = startPos.scrollTop - offsetY;
-  canvasWrapper.value?.scrollTo(resultX, resultY);
+  scroll.value.left = resultX;
+  scroll.value.top = resultY;
 };
 const handleMouseUp = (e: MouseEvent) => {
   dragging.value = false;
@@ -165,15 +144,28 @@ watch(
     immediate: true,
   }
 );
+watch(
+  () => scroll.value,
+  () => {
+    if (!canvasWrapper.value) return;
+    canvasWrapper.value.scrollTo({
+      left: scroll.value.left,
+      top: scroll.value.top,
+    });
+  },
+  {
+    deep: true,
+  }
+);
 // 生命周期
 onMounted(() => {
   if (!canvasWrapper.value) return;
   document.addEventListener("keydown", spaceDown);
   document.addEventListener("keyup", spaceUp);
-  // 初始居中
-  canvasWrapper.value.scrollLeft = size.value.width / 2 - window.innerWidth / 2;
-  canvasWrapper.value.scrollTop =
-    size.value.height / 2 - window.innerHeight / 2;
+  canvasWrapper.value.scrollTo({
+    left: scroll.value.left,
+    top: scroll.value.top,
+  });
 });
 onUnmounted(() => {
   document.removeEventListener("keydown", spaceDown);
@@ -182,21 +174,47 @@ onUnmounted(() => {
   document.removeEventListener("mouseup", handleMouseUp);
 });
 </script>
-
+<template>
+  <div
+    ref="canvasWrapper"
+    class="canvas-wrapper"
+    :class="{
+      'hidden-scrollbar': hiddenScroll,
+    }"
+    :style="{
+      cursor: cursor,
+    }"
+  >
+    <article
+      class="infinite-canvas"
+      ref="infiniteCanvas"
+      :style="{
+        width: size.width + 'px',
+        height: size.height + 'px',
+        transform: `scale(${scale})`,
+        pointerEvents: pointerEvents,
+      }"
+    >
+      <!--  transform: `scale(${scale})`, -->
+      <slot :canvas="infiniteCanvas" :size="size" name="default"></slot>
+    </article>
+  </div>
+</template>
 <style scoped lang="scss">
 .canvas-wrapper {
   overflow: scroll;
   box-sizing: border-box;
   --canvas-bg-color: 244, 245, 247;
   background-color: rgb(var(--canvas-bg-color));
+  position: relative;
   // 隐藏滚动条
   &::-webkit-scrollbar {
-    background: transparent;
+    // background: transparent;
     width: 8px;
     height: 8px;
   }
   &::-webkit-scrollbar-thumb {
-    background: rgb(var(--z-quiet));
+    background: #a7a7a7;
     border-radius: 8px;
   }
   &.hidden-scrollbar {
@@ -213,7 +231,7 @@ onUnmounted(() => {
     position: relative;
     min-width: 100%;
     min-height: 100%;
-    transition: transform 0.1s ease-out;
+    // transition: transform 0.1s ease-out;
     background-color: rgb(var(--canvas-bg-color));
   }
 }

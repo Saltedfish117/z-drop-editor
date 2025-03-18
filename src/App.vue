@@ -3,7 +3,7 @@ import ZDragEditor from "./components/ZDragEditor/ZDragEditor.vue";
 import { reactive } from "vue";
 import type { ZNode } from "./components/ZNode/types";
 
-let arr = Array.from({ length: 1 }, (_, k) => {
+let arr = Array.from({ length: 20 }, (_, k) => {
   return {
     id: (k + 1).toString(),
     component: "page",
@@ -18,6 +18,7 @@ let arr = Array.from({ length: 1 }, (_, k) => {
     },
     rotate: false,
     type: "page",
+    relativeCanvas: "canvas",
     children: [
       {
         id: (k + 1).toString() + `-kids`,
@@ -32,7 +33,7 @@ let arr = Array.from({ length: 1 }, (_, k) => {
           zIndex: 1,
           lock: false,
         },
-
+        relativeCanvas: (k + 1).toString(),
         type: "component",
       },
       {
@@ -50,6 +51,7 @@ let arr = Array.from({ length: 1 }, (_, k) => {
           zIndex: 1,
           lock: false,
         },
+        relativeCanvas: (k + 1).toString(),
         children: [
           {
             id: `group-k-1`,
@@ -66,6 +68,7 @@ let arr = Array.from({ length: 1 }, (_, k) => {
             },
             rotate: true,
             type: "component",
+            relativeCanvas: (k + 1).toString(),
           },
           {
             id: `group-k-2`,
@@ -82,6 +85,7 @@ let arr = Array.from({ length: 1 }, (_, k) => {
             },
             rotate: true,
             type: "component",
+            relativeCanvas: (k + 1).toString(),
           },
         ],
       },
@@ -89,7 +93,7 @@ let arr = Array.from({ length: 1 }, (_, k) => {
   };
 });
 const store = reactive({
-  nodes: arr as ZNode[],
+  nodes: arr as unknown as ZNode[],
   components: [
     {
       id: `-kids`,
@@ -105,6 +109,8 @@ const store = reactive({
         zIndex: 1,
         lock: false,
       },
+      relativeCanvas: "canvas",
+      rotate: false,
       type: "component",
     },
   ],
@@ -113,6 +119,10 @@ const store = reactive({
     height: window.innerHeight,
     scale: 0.8,
     drag: false,
+    scroll: {
+      top: 0,
+      left: 0,
+    },
   },
   moving: false,
   active: undefined,

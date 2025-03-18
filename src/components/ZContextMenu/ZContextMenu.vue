@@ -53,7 +53,6 @@ const parent = computed(() => {
     return menuRef.value.parentElement ? menuRef.value.parentElement : document;
 });
 onMounted(() => {
-  // console.log(parent.value);
   parent.value.addEventListener("contextmenu", handleContextMenu);
   document.addEventListener("click", handleClickOutside);
   document.addEventListener("scroll", closeMenu);

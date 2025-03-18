@@ -40,7 +40,6 @@ const lineColor = computed(() => {
     return props.color;
   }
 });
-console.log(lineColor.value);
 const createAdsorptions = (_nodes: ZNodes): ZAdsorptions => {
   // let parent = null;
   if (!node.value) return [];

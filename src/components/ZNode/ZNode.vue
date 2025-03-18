@@ -18,49 +18,30 @@ const style = computed<CSSProperties>(() => ({
 }));
 </script>
 <template>
-  <!-- <div> -->
-  <!-- <div> -->
-  <!-- <div>
-    <div :style="style" class="ZNode"></div>
-  </div> -->
   <component
     :style="style"
     v-bind="$attrs"
     :is="node.component"
     v-model="node"
-    class="ZNode"
+    class="z-node"
   ></component>
-
-  <!-- </div> -->
-  <!-- </div> -->
 </template>
 <style scoped lang="scss">
-//    class="ZNode-content"
-.ZNode {
+.z-node {
   box-sizing: border-box;
-  // position: absolute;
-  // top: 0;
-  // left: 0;
-  // &:hover {
-  //   background: linear-gradient(
-  //         to left,
-  //         rgb(var(--z-primary)),
-  //         rgb(var(--z-primary))
-  //       )
-  //       no-repeat,
-  //     linear-gradient(to bottom, rgb(var(--z-primary)), rgb(var(--z-primary)))
-  //       left top no-repeat,
-  //     linear-gradient(to right, rgb(var(--z-primary)), rgb(var(--z-primary)))
-  //       right bottom no-repeat,
-  //     linear-gradient(to bottom, rgb(var(--z-primary)), rgb(var(--z-primary)))
-  //       right top no-repeat;
-  //   background-size: 100% 3px, 3px 100%, 100% 3px, 3px 100%;
-  //   background-clip: border-box;
-  // }
-  // .ZNode-content {
-  //   width: 100%;
-  //   height: 100%;
-  //   box-sizing: border-box;
-  // }
+  &::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    right: 0;
+    z-index: -1;
+  }
+  &:hover {
+    &::after {
+      border: 3px solid rgb(var(--z-primary));
+    }
+  }
 }
 </style>

@@ -29,7 +29,7 @@ export interface ZDragProps {
   position: "absolute" | "fixed";
   scale: number;
   active: boolean;
-  rotate: boolean;
+  rotate?: boolean;
   container: HTMLElement;
 }
 export type Direction =
