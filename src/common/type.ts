@@ -12,3 +12,28 @@ export enum Color {
   danger = "#F56C6C",
   info = "#909399",
 }
+export interface ZAxis {
+  x: number;
+  y: number;
+}
+export interface ZLayout extends ZAxis {
+  width: number;
+  height: number;
+  rotate: number;
+  zIndex: number;
+  lock: boolean;
+}
+export interface ZDragNode {
+  id: string;
+  label?: string;
+  type: string;
+  component: string;
+  children?: ZDragNode[];
+  parentId?: string;
+  rotate?: boolean;
+  pageId?: string;
+  canvasId?: string;
+  relativeCanvas: "canvas" | string;
+  layout: ZLayout;
+}
+export type ZDragNodes = ZDragNode[];

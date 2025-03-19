@@ -9,7 +9,6 @@ import {
   withDefaults,
 } from "vue";
 import type {
-  Layout,
   ZDragProps,
   MoveStart,
   Offset,
@@ -21,6 +20,7 @@ import type {
   Moves,
 } from "./types";
 import { getCenterCoordinate, calculateRotateCoordinate } from "@/common/utils";
+import type { ZLayout } from "@/common/types";
 import type { CSSProperties } from "vue";
 import ZSvgIcon from "../ZSvgIcon/ZSvgIcon.vue";
 defineOptions({
@@ -37,22 +37,21 @@ const emits = defineEmits([
   "moving",
 ]);
 const scaleFactor = computed(() => 1 / props.scale);
-
 const moves = {
-  move: (offset: Offset, _layout: Layout, start: MoveStart): Layout => {
+  move: (offset: Offset, _layout: ZLayout, start: MoveStart): ZLayout => {
     const layout = { ..._layout };
-    const resultX = start.layoutX + offset.x;
-    const resultY = start.layoutY + offset.y;
+    const resultX = start.layout.x + offset.x;
+    const resultY = start.layout.y + offset.y;
     layout.x = Math.round(resultX);
     layout.y = Math.round(resultY);
     return layout;
   },
   rotate: (
     offset: Offset,
-    _layout: Layout,
+    _layout: ZLayout,
     _start: MoveStart,
     e?: MouseEvent
-  ): Layout => {
+  ): ZLayout => {
     const layout = { ..._layout };
     if (!e) return layout;
     // 处理零偏移量的边界情况
@@ -320,9 +319,9 @@ const resize: Resize = {
     return layout;
   },
 };
-const model = defineModel<Layout>({
+const model = defineModel<ZLayout>({
   type: Object,
-  default: (): Layout => {
+  default: (): ZLayout => {
     return {
       x: 0,
       y: 0,
@@ -357,8 +356,10 @@ const mousedown = (e: MouseEvent, direction: Direction | Moves) => {
   const start: MoveStart = {
     x: Number(e.clientX),
     y: Number(e.clientY),
-    layoutX: model.value.x,
-    layoutY: model.value.y,
+    layout: {
+      x: model.value.x,
+      y: model.value.y,
+    },
     width: model.value.width,
     height: model.value.height,
     rotate: model.value.rotate,
@@ -537,6 +538,12 @@ const createPoints = () => {
   });
   return points;
 };
+const lockChange = () => {
+  model.value = {
+    ...model.value,
+    lock: !model.value.lock,
+  };
+};
 const resizes = computed(createPoints);
 defineExpose({
   mousedown,
@@ -571,7 +578,7 @@ defineExpose({
       <template v-if="rotate">
         <template v-if="!$slots.rotate">
           <ZSvgIcon
-            @mousedown="mousedown($event, 'rotate')"
+            @mousedown.stop="mousedown($event, 'rotate')"
             class="rotate"
             color="primary"
             name="rotate"
@@ -583,8 +590,7 @@ defineExpose({
     </template>
     <template v-if="!$slots.lock">
       <ZSvgIcon
-        @mousedown.stop="model.lock = !model.lock"
-        @mousedown="mousedown($event, 'rotate')"
+        @mousedown.stop="lockChange"
         class="lock"
         color="primary"
         :name="model.lock ? 'lock-off' : 'lock-on'"
@@ -612,8 +618,8 @@ $resizes: (
     position: absolute;
     width: 8px;
     height: 8px;
-    background: rgba(var(--z-primary), 0.5);
-    border: 1px solid rgba(var(--z-primary), 0.5);
+    background: rgba(var(--z-primary), 1);
+    border: 1px solid rgba(var(--z-primary), 1);
     border-radius: 50%;
     z-index: 1;
     cursor: $res;
@@ -653,7 +659,7 @@ $resizes: (
     display: none;
   }
   &.active {
-    border: 1px dashed rgba(var(--z-primary), 0.5);
+    border: 1px solid rgba(var(--z-primary), 1);
     .resize-point {
       display: block;
     }

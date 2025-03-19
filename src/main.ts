@@ -1,5 +1,5 @@
 import { createApp } from "vue";
-import "./style.css";
+import "./var.css";
 import App from "./App.vue";
 import Group from "./components/ZGroup/ZGroup.vue";
 import Rectangle from "./components/components/Rectangle.vue";

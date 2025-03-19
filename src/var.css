@@ -27,13 +27,3 @@ html[data-theme="dark"]:root {
   --z-size-sm: 12px;
   --z-size-xs: 8px;
 }
-@keyframes z-ripple {
-  from {
-    transform: scale(0);
-    opacity: 1;
-  }
-  to {
-    transform: scale(2);
-    opacity: 0;
-  }
-}

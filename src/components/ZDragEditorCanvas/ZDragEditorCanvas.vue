@@ -11,12 +11,12 @@ import {
   withDefaults,
   computed,
 } from "vue";
-
+import * as d3 from "d3";
+// d3.zoom
 defineOptions({
   name: "ZDragEditorCanvas",
   directives: {},
 });
-
 const props = withDefaults(
   defineProps<{
     size: { width: number; height: number };
@@ -53,6 +53,10 @@ const size = defineModel<{
     };
   },
 });
+const scale = defineModel<number>("scale", {
+  type: Number,
+  required: true,
+});
 const scroll = defineModel<{
   top: number;
   left: number;
@@ -61,6 +65,18 @@ const scroll = defineModel<{
   required: true,
 });
 const startPos = reactive({ x: 0, y: 0, scrollLeft: 0, scrollTop: 0 });
+const modes = {
+  drag: {
+    use: () => {
+      // dom.setArr;
+    },
+    notUse: () => {},
+  },
+  select: {
+    use: () => {},
+    notUse: () => {},
+  },
+};
 // 拖拽处理
 const handleMouseDown = (e: MouseEvent) => {
   if (!canvasWrapper.value) return;
@@ -119,6 +135,29 @@ const spaceUp = (e: KeyboardEvent) => {
   // document.removeEventListener("mousedown", handleMouseDown);
   document.removeEventListener("mousemove", handleMouseMove);
   document.removeEventListener("mouseup", handleMouseUp);
+};
+const zoomOut = () => {
+  if (scale.value - 0.1 < 0.1) return;
+  scale.value = Number.parseFloat((scale.value - 0.1).toFixed(1));
+};
+const zoomIn = () => {
+  if (scale.value + 0.1 > 5) return;
+  scale.value = Number.parseFloat((scale.value + 0.1).toFixed(1));
+};
+const mousewheel = (e: WheelEvent) => {
+  // 判断是不是按下ctrl键
+  if (e.ctrlKey) {
+    // 取消浏览器默认的放大缩小网页行为
+    e.preventDefault();
+    // 判断是向上滚动还是向下滚动
+    if (e.deltaY > 0) {
+      // 缩小重写，业务代码
+      zoomOut();
+    } else {
+      // 放大重写，业务代码
+      zoomIn();
+    }
+  }
 };
 defineExpose({
   infiniteCanvas,
@@ -181,6 +220,7 @@ onUnmounted(() => {
     :class="{
       'hidden-scrollbar': hiddenScroll,
     }"
+    @mousewheel="mousewheel"
     :style="{
       cursor: cursor,
     }"
@@ -189,13 +229,12 @@ onUnmounted(() => {
       class="infinite-canvas"
       ref="infiniteCanvas"
       :style="{
-        width: size.width + 'px',
-        height: size.height + 'px',
+        width: `${size.width}px`,
+        height: `${size.height}px`,
         transform: `scale(${scale})`,
         pointerEvents: pointerEvents,
       }"
     >
-      <!--  transform: `scale(${scale})`, -->
       <slot :canvas="infiniteCanvas" :size="size" name="default"></slot>
     </article>
   </div>

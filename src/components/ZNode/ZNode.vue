@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import { defineOptions, computed } from "vue";
-import type { ZNode } from "./types";
+import type { ZDragNode } from "@/common/types";
 import type { CSSProperties } from "vue";
 defineOptions({
   name: "ZNode",
 });
-const node = defineModel<ZNode>({
+const node = defineModel<ZDragNode>({
   required: true,
 });
 const style = computed<CSSProperties>(() => ({

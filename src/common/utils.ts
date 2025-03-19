@@ -1,6 +1,5 @@
 import type { App, Plugin } from "vue";
-import type { Layout } from "../components/ZDrag/types";
-import type { ZNode as Node } from "../components/ZNode/types";
+import type { ZLayout, ZDragNode } from "@/common/type";
 /**
  * 为组件添加 install 方法的类型扩展
  */
@@ -45,7 +44,7 @@ export function cos(rotate: number) {
 function angleToRadian(angle: number) {
   return (angle * Math.PI) / 180;
 }
-export const rotateLayout = (_layout: Layout) => {
+export const rotateLayout = (_layout: ZLayout) => {
   const layout = { ..._layout };
   if (typeof layout.rotate === "number" && layout.rotate !== 0) {
     const { width, height, rotate } = layout;
@@ -60,7 +59,7 @@ export const rotateLayout = (_layout: Layout) => {
   }
   return layout;
 };
-export const calculateGroupLayout = (nodes: Node[]) => {
+export const calculateGroupLayout = (nodes: ZDragNode[]) => {
   const layouts = nodes.map((kid) => {
     return rotateLayout(kid.layout);
   });
@@ -270,3 +269,25 @@ export function deepClone(obj: any, hash = new WeakMap()) {
 
   return objCopy;
 }
+export const serializer = {
+  deserialize: <T>(str: string): T => {
+    let data = JSON.parse(str, (_, value) => {
+      if (typeof value === "string" && value.includes("-FUNCTION")) {
+        return new Function("return " + value.replace("-FUNCTION", ""))();
+      } else {
+        return value;
+      }
+    });
+    return data;
+  },
+  serialize: <T>(data: T): string => {
+    const stateStr = JSON.stringify(data, (_, value) => {
+      if (typeof value === "function") {
+        return value + "-FUNCTION";
+      } else {
+        return value;
+      }
+    });
+    return stateStr;
+  },
+};

@@ -8,7 +8,7 @@ import {
 } from "vue";
 import type { ZNodes } from "../ZDragEditor/types";
 import type { ZNode } from "../ZNode/types";
-import type { Layout } from "../ZDrag/types";
+import type { ZLayout } from "../ZDrag/types";
 import type { ZAdsorptions } from "./type";
 import { rotateLayout, getRotatedCorners } from "../../common/utils";
 // import * as d3 from "d3-quadtree";
@@ -49,7 +49,7 @@ const getDistance = (a: ZNode, b: ZNode) => {
 };
 
 // 辅助函数：获取元素中心点
-const getCenterPoint = (layout: Layout) => {
+const getCenterPoint = (layout: ZLayout) => {
   const corners = getRotatedCorners(layout);
   return {
     x: (corners[0].x + corners[2].x) / 2,

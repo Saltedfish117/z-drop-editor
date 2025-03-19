@@ -8,7 +8,7 @@ import {
 } from "vue";
 import type { ZNodes } from "../ZDragEditor/types";
 import type { ZNode } from "../ZNode/types";
-import type { Layout } from "../ZDrag/types";
+import type { ZLayout } from "../ZDrag/types";
 import type { ZAdsorptions, LineMap, ZAdsorption } from "./type";
 import { rotateLayout, once } from "../../common/utils";
 import { Color } from "@/common/type";
@@ -77,7 +77,7 @@ const createAdsorptions = (_nodes: ZNodes): ZAdsorptions => {
       pre.layout.y > cur.layout.y ? cur : pre,
   };
   const lineMap: LineMap = {
-    "top-left": (rect: Layout): ZAdsorption => {
+    "top-left": (rect: ZLayout): ZAdsorption => {
       const distance = Math.round(currentRect.x - (rect.x + rect.width));
       return {
         y: currentRect.y + "px",
@@ -93,7 +93,7 @@ const createAdsorptions = (_nodes: ZNodes): ZAdsorptions => {
         key: "top-left",
       };
     },
-    "top-right": (rect: Layout): ZAdsorption => {
+    "top-right": (rect: ZLayout): ZAdsorption => {
       const distance = Math.round(rect.x - (currentRect.x + currentRect.width));
       return {
         y: currentRect.y + "px",
@@ -109,7 +109,7 @@ const createAdsorptions = (_nodes: ZNodes): ZAdsorptions => {
         key: "top-right",
       };
     },
-    "bottom-left": (rect: Layout): ZAdsorption => {
+    "bottom-left": (rect: ZLayout): ZAdsorption => {
       const distance = Math.round(currentRect.x - (rect.x + rect.width));
       return {
         y: currentRect.y + currentRect.height + "px",
@@ -127,7 +127,7 @@ const createAdsorptions = (_nodes: ZNodes): ZAdsorptions => {
         key: "bottom-left",
       };
     },
-    "bottom-right": (rect: Layout): ZAdsorption => {
+    "bottom-right": (rect: ZLayout): ZAdsorption => {
       const distance = Math.round(rect.x - (currentRect.x + currentRect.width));
       return {
         y: currentRect.y + currentRect.height + "px",
@@ -143,7 +143,7 @@ const createAdsorptions = (_nodes: ZNodes): ZAdsorptions => {
         key: "bottom-right",
       };
     },
-    "left-top": (rect: Layout): ZAdsorption => {
+    "left-top": (rect: ZLayout): ZAdsorption => {
       const distance = Math.round(currentRect.y - (rect.y + rect.height));
       return {
         key: "left-top",
@@ -159,7 +159,7 @@ const createAdsorptions = (_nodes: ZNodes): ZAdsorptions => {
         },
       };
     },
-    "left-bottom": (rect: Layout): ZAdsorption => {
+    "left-bottom": (rect: ZLayout): ZAdsorption => {
       const distance = Math.round(
         rect.y - (currentRect.y + currentRect.height)
       );
@@ -177,7 +177,7 @@ const createAdsorptions = (_nodes: ZNodes): ZAdsorptions => {
         },
       };
     },
-    "right-top": (rect: Layout): ZAdsorption => {
+    "right-top": (rect: ZLayout): ZAdsorption => {
       const distance = Math.round(currentRect.y - (rect.y + rect.height));
       return {
         x: currentRect.x + currentRect.width + "px",
@@ -193,7 +193,7 @@ const createAdsorptions = (_nodes: ZNodes): ZAdsorptions => {
         key: "right-top",
       };
     },
-    "right-bottom": (rect: Layout): ZAdsorption => {
+    "right-bottom": (rect: ZLayout): ZAdsorption => {
       const distance = Math.round(
         rect.y - (currentRect.y + currentRect.height)
       );
@@ -214,7 +214,7 @@ const createAdsorptions = (_nodes: ZNodes): ZAdsorptions => {
   };
 
   const diffMap = {
-    top: once((rect: Layout) => {
+    top: once((rect: ZLayout) => {
       let diff = 0;
       if (
         Math.abs((diff = rect.y - currentRect.y)) <= props.diff ||
@@ -223,7 +223,7 @@ const createAdsorptions = (_nodes: ZNodes): ZAdsorptions => {
         node.value!.layout.y += Math.round(diff);
       }
     }),
-    bottom: once((rect: Layout) => {
+    bottom: once((rect: ZLayout) => {
       let diff = 0;
       if (
         Math.abs(
@@ -235,7 +235,7 @@ const createAdsorptions = (_nodes: ZNodes): ZAdsorptions => {
         node.value!.layout.y += Math.round(diff);
       }
     }),
-    left: once((rect: Layout) => {
+    left: once((rect: ZLayout) => {
       let diff = 0;
       if (
         Math.abs(
@@ -247,7 +247,7 @@ const createAdsorptions = (_nodes: ZNodes): ZAdsorptions => {
         node.value!.layout.x += Math.round(diff);
       }
     }),
-    right: once((rect: Layout) => {
+    right: once((rect: ZLayout) => {
       let diff = 0;
       if (
         Math.abs(

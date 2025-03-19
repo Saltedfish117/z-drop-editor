@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import ZDragEditor from "./components/ZDragEditor/ZDragEditor.vue";
 import { reactive } from "vue";
-import type { ZNode } from "./components/ZNode/types";
+import type { ZDragNodes } from "@/common/type";
 
-let arr = Array.from({ length: 20 }, (_, k) => {
+let arr = Array.from({ length: 1 }, (_, k) => {
   return {
     id: (k + 1).toString(),
     component: "page",
@@ -93,7 +93,7 @@ let arr = Array.from({ length: 20 }, (_, k) => {
   };
 });
 const store = reactive({
-  nodes: arr as unknown as ZNode[],
+  nodes: arr as unknown as ZDragNodes[],
   components: [
     {
       id: `-kids`,
@@ -110,7 +110,7 @@ const store = reactive({
         lock: false,
       },
       relativeCanvas: "canvas",
-      rotate: false,
+      rotate: true,
       type: "component",
     },
   ],

@@ -1,29 +1,12 @@
 import type { CSSProperties } from "vue";
-export interface Axis {
-  x: number;
-  y: number;
-}
-export interface Layout extends Axis {
-  width: number;
-  height: number;
-  rotate: number;
-  zIndex: number;
-  lock: boolean;
-}
-export interface DragNode {
-  layout: Layout;
-}
-export interface Offset {
-  x: number;
-  y: number;
-}
-export interface MoveStart extends Omit<Layout, "zIndex" | "lock"> {
-  layoutX: number;
-  layoutY: number;
+import type { ZAxis, ZLayout } from "@/common/types";
+export type Offset = ZAxis;
+export interface MoveStart extends Omit<ZLayout, "zIndex" | "lock"> {
+  layout: ZAxis;
   beforeAngle: number;
-  center: Axis;
-  symmetric: Axis;
-  point: Axis;
+  center: ZAxis;
+  symmetric: ZAxis;
+  point: ZAxis;
 }
 export interface ZDragProps {
   position: "absolute" | "fixed";
@@ -53,13 +36,10 @@ export type AngleToCursor = {
 }[];
 export type Moves = "move" | "rotate";
 export interface Option {
-  layout: Layout;
+  layout: ZLayout;
   start: MoveStart;
-  realTimeCoordinates: {
-    x: number;
-    y: number;
-  };
+  realTimeCoordinates: ZAxis;
 }
 export type Resize = {
-  [key in Direction]: (option: Option) => Layout;
+  [key in Direction]: (option: Option) => ZLayout;
 };

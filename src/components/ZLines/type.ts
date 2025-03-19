@@ -1,4 +1,4 @@
-import type { Layout } from "../ZDrag/types";
+import type { ZLayout } from "../ZDrag/types";
 export interface ZLinesProps {}
 // export enum {
 //     : string;
@@ -32,6 +32,6 @@ export interface ZAdsorption {
   // nodeId: string;
 }
 export type LineMap = {
-  [key in lineType]: (rect: Layout) => ZAdsorption;
+  [key in lineType]: (rect: ZLayout) => ZAdsorption;
 };
 export type ZAdsorptions = ZAdsorption[];

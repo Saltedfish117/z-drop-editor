@@ -26,32 +26,6 @@ const store = defineModel<ZDragEditorModel>("store", {
 const node = defineModel<Node>({
   required: true,
 });
-// const calculateGroupLayout = (nodes: Node[]) => {
-//   const layouts = nodes.map((kid) => {
-//     return rotateLayout(kid.layout);
-//   });
-//   const xs = layouts.map((kid) => kid.x);
-//   const ys = layouts.map((kid) => kid.y);
-//   const is = layouts.map((kid) => kid.zIndex);
-//   const mw = layouts.reduce((prev, curr) => {
-//     return prev.x + prev.width > curr.x + curr.width ? prev : curr;
-//   });
-//   const mh = layouts.reduce((prev, curr) => {
-//     return prev.y + prev.height > curr.y + curr.height ? prev : curr;
-//   });
-//   const x = Math.min(...xs);
-//   const y = Math.min(...ys);
-//   const w = mw.x + mw.width - x;
-//   const h = mh.y + mh.height - y;
-//   const z = Math.max(...is);
-//   return {
-//     x: x,
-//     y: y,
-//     width: w,
-//     height: h,
-//     zIndex: z,
-//   };
-// };
 node.value.layout = {
   ...node.value.layout,
   ...calculateGroupLayout(node.value.children!),

@@ -1,12 +1,10 @@
-import type { ZNode } from "../ZNode/types";
-
-export type ZNodes = ZNode[];
+import type { ZDragNode, ZDragNodes } from "@/common/type";
 export interface ZDragEditorProps {
-  nodes: ZNodes;
+  nodes: ZDragNodes;
 }
-export type ZNodeMap = Map<string, ZNode>;
+export type ZNodeMap = Map<string, ZDragNode>;
 export interface ZDragEditorModel {
-  nodes: ZNodes;
+  nodes: ZDragNodes;
   canvas: {
     width: number;
     height: number;
@@ -18,13 +16,24 @@ export interface ZDragEditorModel {
     };
   };
   moving: boolean;
-  active: ZNode | undefined;
-  components: ZNodes;
+  active: ZDragNode | undefined;
+  components: ZDragNodes;
+}
+export interface ZCanvasContextMenuItem {
+  label: string;
+  action: (active: ZDragNode | undefined, closeMenu: () => void) => void;
+  disabled: false;
+  icon: string;
+}
+export interface ZLinesConfig {
+  color: string;
+  diff: number;
+  interval: number;
 }
 export interface ZOption {
-  lines: Partial<{
-    color: string;
-    diff: number;
-    interval: number;
-  }>;
+  lines?: Partial<ZLinesConfig>;
+  canvasContextMenu?: {
+    items: ZCanvasContextMenuItem[];
+    clickClose: boolean;
+  };
 }
