@@ -119,23 +119,23 @@ watch(
       }
     };
     val.forEach((node) => recursive(node));
-    const length = val.length;
-    let maxW = Math.max(...val.map((i) => i.layout.width));
-    let maxH = Math.max(...val.map((i) => i.layout.height));
-    store.value.canvas.width = maxW * 10;
-    store.value.canvas.height = maxH * Math.round(length / 10);
-    let initStart = 50;
-    let startX = initStart;
-    let y = 50;
-    val.forEach((node, i) => {
-      if (i % 10 === 0) {
-        startX = initStart;
-        y += maxH + 50;
-      }
-      node.layout.x = startX + 50;
-      node.layout.y = y;
-      startX += node.layout.width + 50;
-    });
+    // const length = val.length;
+    // let maxW = Math.max(...val.map((i) => i.layout.width));
+    // let maxH = Math.max(...val.map((i) => i.layout.height));
+    // store.value.canvas.width = maxW * 10;
+    // store.value.canvas.height = maxH * Math.round(length / 10);
+    // let initStart = 50;
+    // let startX = initStart;
+    // let y = 50;
+    // val.forEach((node, i) => {
+    //   if (i % 10 === 0) {
+    //     startX = initStart;
+    //     y += maxH + 50;
+    //   }
+    //   node.layout.x = startX + 50;
+    //   node.layout.y = y;
+    //   startX += node.layout.width + 50;
+    // });
   },
   {
     immediate: true,

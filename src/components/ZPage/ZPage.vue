@@ -19,12 +19,13 @@ const emits = defineEmits<{
   (e: "moveEnd"): void;
   (e: "dblclick", node: Node, $event: MouseEvent): void;
 }>();
-const change = (node?: Node) => {
-  store.value.active = node;
-};
+// const change = (node?: Node) => {
+//   store.value.active = node;
+// };
 const pageRef = ref<HTMLElement | null>(null);
 </script>
 <template>
+  <!--  v-model:store="store" -->
   <article
     :data-type="page.type"
     :data-id="page.id"
@@ -38,7 +39,6 @@ const pageRef = ref<HTMLElement | null>(null);
       v-for="(node, index) in page.children"
       :key="node.id"
       v-bind="$attrs"
-      v-model:store="store"
       v-model="page.children[index]"
     ></ZNode>
   </article>
