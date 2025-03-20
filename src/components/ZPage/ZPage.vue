@@ -1,31 +1,27 @@
 <script setup lang="ts">
-import { defineOptions, ref, watch, computed } from "vue";
+import { defineOptions, ref, watch, computed, defineEmits } from "vue";
 import ZNode from "../ZNode/ZNode.vue";
+import type { ZDragNode } from "@/common/type";
 import ZLines from "../ZLines/ZLines.vue";
 import type { ZNode as Node } from "../ZNode/types";
-import type { ZDragEditorModel, ZOption, ZNodeMap } from "../ZDragEditor/types";
+import type { ZDragEditorModel, ZOption, ZNodeMap } from "../ZDragEditor/type";
 import ZDrag from "../ZDrag/ZDrag.vue";
 defineOptions({
   name: "ZPage",
 });
-defineProps<{
-  container: HTMLElement;
-  option: ZOption;
+const emits = defineEmits<{
+  (e: "select", node: ZDragNode): void;
 }>();
 const page = defineModel<Node>({
   required: true,
 });
-const emits = defineEmits<{
-  (e: "moveEnd"): void;
-  (e: "dblclick", node: Node, $event: MouseEvent): void;
-}>();
-// const change = (node?: Node) => {
-//   store.value.active = node;
-// };
 const pageRef = ref<HTMLElement | null>(null);
+const mousedown = (node: ZDragNode) => {
+  console.log("page set", node);
+  emits("select", node);
+};
 </script>
 <template>
-  <!--  v-model:store="store" -->
   <article
     :data-type="page.type"
     :data-id="page.id"
@@ -33,12 +29,14 @@ const pageRef = ref<HTMLElement | null>(null);
     v-bind="$attrs"
     ref="pageRef"
     class="ZPage"
+    @mousedown.stop="mousedown(page)"
   >
     <ZNode
       v-if="page.children"
       v-for="(node, index) in page.children"
       :key="node.id"
-      v-bind="$attrs"
+      @mousedown.stop="mousedown(node)"
+      @select="$emit('select', $event)"
       v-model="page.children[index]"
     ></ZNode>
   </article>

@@ -198,6 +198,36 @@ export const once = <T extends (...args: any[]) => any>(
   };
 };
 /**
+ * 深层合并对象
+ * @param target 目标对象
+ * @param source 默认值对象
+ * @returns 合并后的新对象
+ */
+export function deepMerge<T extends Record<string, any>>(
+  target: Partial<T>,
+  source: T,
+  seen = new WeakMap<object, boolean>()
+): T {
+  const result = { ...target }; // 创建目标对象的浅拷贝
+  if (seen.has(source)) {
+    return seen.get(source) as unknown as T;
+  }
+  for (const key in source) {
+    if (source.hasOwnProperty(key)) {
+      if (result[key] === undefined) {
+        result[key] = source[key];
+      } else if (
+        result[key] &&
+        typeof result[key] === "object" &&
+        !Array.isArray(target[key])
+      ) {
+        result[key] = deepMerge(result[key], source[key], seen);
+      }
+    }
+  }
+  return result as T;
+}
+/**
  * 深度克隆一个对象，支持处理多种数据类型，包括基本类型、Date、RegExp、Map、Set、数组和普通对象。
  * 使用 WeakMap 来缓存已克隆的对象，避免循环引用导致的无限递归。
  *

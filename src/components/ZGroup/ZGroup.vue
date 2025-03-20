@@ -2,9 +2,10 @@
 import { defineOptions, watch, nextTick, onUnmounted } from "vue";
 import type { WatchHandle } from "vue";
 import ZNode from "../ZNode/ZNode.vue";
-import type { ZNode as Node } from "../ZNode/types";
+// import type { ZNode as Node } from "../ZNode/types";
+import type { ZDragNode } from "@/common/type";
 import { rotateLayout, calculateGroupLayout } from "@/common/utils";
-import type { ZDragEditorModel } from "../ZDragEditor/types";
+import type { ZDragEditorModel } from "../ZDragEditor/type";
 defineOptions({
   name: "ZGroup",
 });
@@ -23,7 +24,7 @@ const store = defineModel<ZDragEditorModel>("store", {
     components: [],
   }),
 });
-const node = defineModel<Node>({
+const node = defineModel<ZDragNode>({
   required: true,
 });
 node.value.layout = {
@@ -32,12 +33,12 @@ node.value.layout = {
 };
 let flag = false;
 let start = { ...node.value.layout };
-let children: Node["layout"][] =
+let children: ZDragNode["layout"][] =
   node.value.children?.map((node) => {
     return { ...node.layout };
   }) || [];
 let stopWatch: WatchHandle | null = null;
-const updateChildren = (layout: Node["layout"]) => {
+const updateChildren = (layout: ZDragNode["layout"]) => {
   if (!node.value.children) return;
   node.value.children.forEach((kids, i) => {
     // 计算子元素位置比例

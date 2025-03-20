@@ -6,7 +6,7 @@ import {
   withDefaults,
   computed,
 } from "vue";
-import type { ZNodes } from "../ZDragEditor/types";
+import type { ZNodes } from "../ZDragEditor/type";
 import type { ZNode } from "../ZNode/types";
 import type { ZLayout } from "../ZDrag/types";
 import type { ZAdsorptions, LineMap, ZAdsorption } from "./type";

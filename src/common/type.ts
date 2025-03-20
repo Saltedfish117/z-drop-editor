@@ -1,3 +1,4 @@
+import type { CSSProperties } from "vue";
 export enum Size {
   xs = 12,
   sm = 16,
@@ -33,7 +34,22 @@ export interface ZDragNode {
   rotate?: boolean;
   pageId?: string;
   canvasId?: string;
-  relativeCanvas: "canvas" | string;
+  relative: "pageId" | "canvasId";
   layout: ZLayout;
 }
+export interface ZCanvas {
+  layout: {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+    scale: number;
+    pointerEvents?: CSSProperties["pointerEvents"];
+    cursor?: CSSProperties["cursor"];
+  };
+  mode: string;
+  modeLock: boolean;
+  nodes: ZDragNodes;
+}
+export type ZCanvasList = ZCanvas[];
 export type ZDragNodes = ZDragNode[];

@@ -11,6 +11,7 @@ import {
   computed,
   nextTick,
   onMounted,
+  defineProps,
 } from "vue";
 const ZDragEditorCanvas = defineAsyncComponent(
   () => import("../ZDragEditorCanvas/ZDragEditorCanvas.vue")
@@ -34,318 +35,396 @@ const ZSvgIcon = defineAsyncComponent(
 );
 const ZDrag = defineAsyncComponent(() => import("../ZDrag/ZDrag.vue"));
 const ZNode = defineAsyncComponent(() => import("../ZNode/ZNode.vue"));
-// const ZLines = defineAsyncComponent(() => import("../ZLines/ZLines.vue"));
 import { calculateMousePosition } from "@/common/utils";
-import type { ZLayout } from "@/common/types";
-import type { ZDragNode } from "@/common/type";
+import { createCanvas } from "@/common/create";
+import type {
+  ZDragNode,
+  ZDragNodes,
+  ZLayout,
+  ZCanvasList,
+  ZCanvas,
+} from "@/common/type";
 import type {
   ZDragEditorModel,
   ZNodeMap,
   ZOption,
   ZCanvasContextMenuItem,
-} from "./types";
+} from "./type";
 defineOptions({
   name: "ZDragEditor",
 });
-const store = defineModel<ZDragEditorModel>({
+defineProps<{
+  components: ZDragNodes;
+}>();
+const canvas = defineModel<ZCanvasList>("canvas", {
   required: true,
-  default: () => ({
-    nodes: [],
-    canvas: {
-      width: window.innerWidth,
-      height: window.innerHeight,
-      scale: 0.8,
-      drag: false,
-      scroll: {
-        left: 0,
-        top: 0,
-      },
-    },
-    active: undefined,
-    moving: false,
-    components: [],
-  }),
 });
-const props = withDefaults(
-  defineProps<{
-    option: Partial<ZOption>;
-  }>(),
-  {
-    option: () => ({}),
-  }
-);
-const withOption = computed(() =>
-  Object.assign(
-    {
-      lines: {
-        color: "primary",
-        diff: 3,
-        interval: 8,
-      },
-      canvasContextMenu: {
-        items: [
-          {
-            label: "重命名",
-            action: (node: ZDragNode) => console.log("重命名", node),
-            icon: "",
-          },
-          {
-            label: "复制",
-            action: (node: ZDragNode) => console.log("复制", node),
-          },
-          {
-            label: "删除",
-            action: (node: ZDragNode) => console.log("删除", node),
-            icon: "",
-            disabled: false,
-          },
-        ],
-        clickClose: true,
-      },
-    },
-    props.option
-  )
-);
-const canvasRef = ref<InstanceType<typeof ZDragEditorCanvas> | null>(null);
+if (canvas.value.length === 0) {
+  canvas.value.push(createCanvas("1-canvas"));
+}
+const selectCanvas = ref<ZCanvas>(canvas.value[0]);
+const selectNode = ref<ZDragNode | undefined>();
+const getSelectCanvas = () => {
+  return selectCanvas.value;
+};
+const setSelectCanvas = (canvas: ZCanvas) => {
+  selectCanvas.value = canvas;
+};
+const getSelectNode = () => {
+  return selectNode.value;
+};
+const setSelectNode = (node?: ZDragNode) => {
+  console.log("setSelectNode", node);
+  selectNode.value = node;
+};
 const nodeMap = reactive<ZNodeMap>(new Map());
-const prefixId = computed(() => Array.from(nodeMap.keys()).join("-"));
+// const prefixId = computed(() => Array.from(nodeMap.keys()).join("-"));
+const initNodeMap = (val: ZDragNodes, nodeMap: ZNodeMap) => {
+  const recursive = (node: ZDragNode, nodeMap: ZNodeMap) => {
+    nodeMap.set(node.id, node);
+    if (node.children?.length) {
+      node.children.forEach((child) => recursive(child, nodeMap));
+    }
+  };
+  val.forEach((node) => recursive(node, nodeMap));
+};
 watch(
-  () => store.value.nodes,
-  (val) => {
-    const recursive = (node: ZDragNode) => {
-      nodeMap.set(node.id, node);
-      if (node.children?.length) {
-        node.children.forEach((child) => recursive(child));
-      }
-    };
-    val.forEach((node) => recursive(node));
-    // const length = val.length;
-    // let maxW = Math.max(...val.map((i) => i.layout.width));
-    // let maxH = Math.max(...val.map((i) => i.layout.height));
-    // store.value.canvas.width = maxW * 10;
-    // store.value.canvas.height = maxH * Math.round(length / 10);
-    // let initStart = 50;
-    // let startX = initStart;
-    // let y = 50;
-    // val.forEach((node, i) => {
-    //   if (i % 10 === 0) {
-    //     startX = initStart;
-    //     y += maxH + 50;
-    //   }
-    //   node.layout.x = startX + 50;
-    //   node.layout.y = y;
-    //   startX += node.layout.width + 50;
-    // });
-  },
-  {
-    immediate: true,
-    once: true,
+  () => selectCanvas.value,
+  () => {
+    nodeMap.clear();
+    if (!selectCanvas.value) return;
+    initNodeMap(selectCanvas.value.nodes, nodeMap);
   }
 );
-const change = (node?: ZDragNode) => {
-  store.value.active = node;
+const arrow = () => {
+  selectCanvas.value.mode = "select";
 };
-onMounted(() => {});
-onUnmounted(() => {
-  nodeMap.clear();
-});
-const addPage = () => {};
-const addNode = () => {};
-const drop = (event: DragEvent) => {
-  event.preventDefault();
-  event.stopPropagation();
-  let dt = event.dataTransfer;
-  const str = dt?.getData("component");
-  if (!str) return false;
-  let com = JSON.parse(str) as ZDragNode;
-  com.id = prefixId.value + "-" + Math.round(Math.random() * 100 + 1);
-  const dom = event.target as HTMLElement;
-  const { type, id } = dom.dataset;
-  if (canvasRef.value && canvasRef.value.infiniteCanvas) {
-    const canvas = canvasRef.value.infiniteCanvas;
-    const { x, y } = calculateMousePosition(
-      event,
-      canvas,
-      store.value.canvas.scale
-    );
-    if (type === "page" && id) {
-      const parent = nodeMap.get(id);
-      if (parent) {
-        com.parentId = parent.id;
-        com.relativeCanvas = parent.id;
-        parent.children = parent.children || [];
-        com.layout.x = Math.round(x) - parent.layout.x - com.layout.width / 2;
-        com.layout.y = Math.round(y) - parent.layout.y - com.layout.height / 2;
-        parent.children.push(com);
-        return;
-      }
-    }
-    com.relativeCanvas = "canvas";
-    com.layout.x = Math.round(x) - com.layout.width / 2;
-    com.layout.y = Math.round(y) - com.layout.height / 2;
-    store.value.nodes.push(com);
-  }
+const drag = () => {
+  selectCanvas.value.mode = "drag";
 };
-const dragenter = (event: DragEvent) => {
-  event.preventDefault();
-};
-const dragover = (event: DragEvent) => {
-  event.preventDefault();
-};
-const itemDragstart = (event: DragEvent, com: ZDragNode) => {
-  let dt = event.dataTransfer;
-  dt?.setData("component", JSON.stringify(com));
-};
-const itemDragend = (event: DragEvent) => {
-  event.preventDefault();
-};
-const moveStart = () => {
-  store.value.moving = true;
-};
-const moveEnd = () => {
-  store.value.moving = false;
-  if (!store.value.active) return;
-  const node = store.value.active;
-  if (node.type === "page") return;
-  const { x, y, width, height } = store.value.active.layout;
-  if (!node.parentId) {
-    const nodes = store.value.nodes.filter(
-      (i) => i.id !== node.id && i.type === "page"
-    );
-    nodes.forEach((n) => {
-      const page = nodeMap.get(n.id);
-      if (!page) return;
-      const pageLo = page.layout;
-      if (
-        pageLo.x < x &&
-        pageLo.y < y &&
-        pageLo.x + pageLo.width > x + width &&
-        pageLo.y + pageLo.height > y + height
-      ) {
-        const children = page.children || [];
-        node.parentId = page.id;
-        node.relativeCanvas = page.id;
-        page.children = [...children, node];
-        const filterNode = store.value.nodes.filter((c) => {
-          return c.id !== node.id;
-        });
-        store.value.nodes = filterNode;
-        node.layout.x = x - pageLo.x;
-        node.layout.y = y - pageLo.y;
-        change(node);
-        nextTick(() => {});
-        return true;
-      } else return false;
-    });
-  } else {
-    const parent = nodeMap.get(node.parentId);
-    if (parent && parent.type === "page") {
-      const parentLo = parent.layout;
-      if (
-        (x < 0 && Math.abs(x) >= width) ||
-        (y < 0 && Math.abs(y) >= height) ||
-        x > parentLo.width ||
-        y > parentLo.height
-      ) {
-        let children = parent.children || [];
-        parent.children = children.filter((i) => i.id !== node.id);
-        node.parentId = undefined;
-        node.relativeCanvas = "canvas";
-        store.value.nodes.push(node);
-        node.layout.x = parentLo.x + node.layout.x;
-        node.layout.y = parentLo.y + node.layout.y;
-        change(node);
-        nextTick(() => {});
-      }
-    }
-  }
-};
-const dblclick = (parent: ZDragNode, event: MouseEvent) => {
-  if (!parent.children) return;
-  console.dir(parent);
-  let x = event.layerX;
-  let y = event.layerY;
-  if (parent.relativeCanvas !== "canvas") {
-    const canvas = nodeMap.get(parent.relativeCanvas);
-    if (!canvas) return;
-    x = x - canvas.layout.x;
-    y = y - canvas.layout.y;
-  } else if (parent.relativeCanvas === "canvas" && parent.type === "page") {
-    x = x - parent.layout.x;
-    y = y - parent.layout.y;
-  }
-  let start = 0;
-  let end = parent.children.length - 1;
-  let ns: ZDragNode[] = [];
-  while (start < end && end > start) {
-    let bs = [parent.children[start++], parent.children[end--]];
-    bs.forEach((cur) => {
-      if (
-        cur.layout.x <= x &&
-        cur.layout.x + cur.layout.width >= x &&
-        cur.layout.y <= y &&
-        cur.layout.y + cur.layout.height >= y
-      ) {
-        ns.push(cur);
-      }
-    });
-  }
-  if (ns.length) {
-    let index = 0;
-    ns.forEach((n, i) => {
-      if (!ns[i - 1]) return;
-      if (n.layout.zIndex > ns[i - 1].layout.zIndex) index = i;
-    });
-    change(ns[index]);
-  }
-};
-const layout = computed({
-  get() {
-    if (store.value.active?.relativeCanvas === "canvas")
-      return store.value.active?.layout;
-    else {
-      if (!nodeMap.has(store.value.active?.relativeCanvas as string))
-        return {} as ZLayout;
-      const canvas = nodeMap.get(store.value.active?.relativeCanvas as string);
-      if (!store.value.active) return {} as ZLayout;
-      const nodeLayout = store.value.active.layout;
-      if (!canvas) return {} as ZLayout;
-      return {
-        ...nodeLayout,
-        x: canvas.layout.x + nodeLayout.x,
-        y: canvas.layout.y + nodeLayout.y,
-      };
-    }
-  },
-  set(val) {
-    if (!store.value.active) return;
-    if (store.value.active.relativeCanvas === "canvas") {
-      console.log("update  layout > canvas", store.value.active.layout);
-      store.value.active.layout = val;
-    } else {
-      const canvas = nodeMap.get(store.value.active?.relativeCanvas as string);
-      if (!canvas) return;
-      console.log("update  layout > page", store.value.active.layout);
-      store.value.active.layout = {
-        ...val,
-        x: val.x - canvas.layout.x,
-        y: val.y - canvas.layout.y,
-      };
-    }
-    console.log("update layout", store.value.active.layout);
-  },
-});
-const contextMenuItemHandle = (
-  node: ZCanvasContextMenuItem,
-  closeMenu: () => void
-) => {
-  node.action(store.value.active, closeMenu);
-};
+// const store = defineModel<ZDragEditorModel>({
+//   required: true,
+//   default: () => ({
+//     nodes: [],
+//     canvas: {
+//       width: window.innerWidth,
+//       height: window.innerHeight,
+//       scale: 0.8,
+//       drag: false,
+//       scroll: {
+//         left: 0,
+//         top: 0,
+//       },
+//     },
+//     active: undefined,
+//     moving: false,
+//     components: [],
+//   }),
+// });
+// // const props = withDefaults(
+// //   defineProps<{
+// //     option: Partial<ZOption>;
+// //   }>(),
+// //   {
+// //     option: () => ({}),
+// //   }
+// // );
+// // const withOption = computed(() =>
+// //   Object.assign(
+// //     {
+// //       lines: {
+// //         color: "primary",
+// //         diff: 3,
+// //         interval: 8,
+// //       },
+// //       canvasContextMenu: {
+// //         items: [
+// //           {
+// //             label: "重命名",
+// //             action: (node: ZDragNode) => console.log("重命名", node),
+// //             icon: "",
+// //           },
+// //           {
+// //             label: "复制",
+// //             action: (node: ZDragNode) => console.log("复制", node),
+// //           },
+// //           {
+// //             label: "删除",
+// //             action: (node: ZDragNode) => console.log("删除", node),
+// //             icon: "",
+// //             disabled: false,
+// //           },
+// //         ],
+// //         clickClose: true,
+// //       },
+// //     },
+// //     props.option
+// //   )
+// // );
+// const canvasRef = ref<InstanceType<typeof ZDragEditorCanvas> | null>(null);
+// const nodeMap = reactive<ZNodeMap>(new Map());
+// const prefixId = computed(() => Array.from(nodeMap.keys()).join("-"));
+// const initNodeMap = (val: ZDragNodes, nodeMap: ZNodeMap) => {
+//   const recursive = (node: ZDragNode, nodeMap: ZNodeMap) => {
+//     nodeMap.set(node.id, node);
+//     if (node.children?.length) {
+//       node.children.forEach((child) => recursive(child, nodeMap));
+//     }
+//   };
+//   val.forEach((node) => recursive(node, nodeMap));
+// };
+// watch(
+//   () => selectCanvas.value,
+//   () => {
+//     nodeMap.clear();
+//     if (!selectCanvas.value) return;
+//     initNodeMap(selectCanvas.value.nodes, nodeMap);
+//   }
+// );
+// watch(
+//   () => store.value.nodes,
+//   (val) => {
+//     const recursive = (node: ZDragNode) => {
+//       nodeMap.set(node.id, node);
+//       if (node.children?.length) {
+//         node.children.forEach((child) => recursive(child));
+//       }
+//     };
+//     val.forEach((node) => recursive(node));
+//     // const length = val.length;
+//     // let maxW = Math.max(...val.map((i) => i.layout.width));
+//     // let maxH = Math.max(...val.map((i) => i.layout.height));
+//     // store.value.canvas.width = maxW * 10;
+//     // store.value.canvas.height = maxH * Math.round(length / 10);
+//     // let initStart = 50;
+//     // let startX = initStart;
+//     // let y = 50;
+//     // val.forEach((node, i) => {
+//     //   if (i % 10 === 0) {
+//     //     startX = initStart;
+//     //     y += maxH + 50;
+//     //   }
+//     //   node.layout.x = startX + 50;
+//     //   node.layout.y = y;
+//     //   startX += node.layout.width + 50;
+//     // });
+//   },
+//   {
+//     immediate: true,
+//     once: true,
+//   }
+// );
+// const change = (node?: ZDragNode) => {
+//   store.value.active = node;
+// };
+// onMounted(() => {});
+// onUnmounted(() => {
+//   nodeMap.clear();
+// });
+// const addPage = () => {};
+// const addNode = () => {};
+// const drop = (event: DragEvent) => {
+//   event.preventDefault();
+//   event.stopPropagation();
+//   let dt = event.dataTransfer;
+//   const str = dt?.getData("component");
+//   if (!str) return false;
+//   let com = JSON.parse(str) as ZDragNode;
+//   com.id = prefixId.value + "-" + Math.round(Math.random() * 100 + 1);
+//   const dom = event.target as HTMLElement;
+//   const { type, id } = dom.dataset;
+//   if (canvasRef.value && canvasRef.value.infiniteCanvas) {
+//     const canvas = canvasRef.value.infiniteCanvas;
+//     const { x, y } = calculateMousePosition(
+//       event,
+//       canvas,
+//       store.value.canvas.scale
+//     );
+//     if (type === "page" && id) {
+//       const parent = nodeMap.get(id);
+//       if (parent) {
+//         com.parentId = parent.id;
+//         com.relativeCanvas = parent.id;
+//         parent.children = parent.children || [];
+//         com.layout.x = Math.round(x) - parent.layout.x - com.layout.width / 2;
+//         com.layout.y = Math.round(y) - parent.layout.y - com.layout.height / 2;
+//         parent.children.push(com);
+//         return;
+//       }
+//     }
+//     com.relativeCanvas = "canvas";
+//     com.layout.x = Math.round(x) - com.layout.width / 2;
+//     com.layout.y = Math.round(y) - com.layout.height / 2;
+//     store.value.nodes.push(com);
+//   }
+// };
+// const dragenter = (event: DragEvent) => {
+//   event.preventDefault();
+// };
+// const dragover = (event: DragEvent) => {
+//   event.preventDefault();
+// };
+// const itemDragstart = (event: DragEvent, com: ZDragNode) => {
+//   let dt = event.dataTransfer;
+//   dt?.setData("component", JSON.stringify(com));
+// };
+// const itemDragend = (event: DragEvent) => {
+//   event.preventDefault();
+// };
+// const moveStart = () => {
+//   store.value.moving = true;
+// };
+// const moveEnd = () => {
+//   store.value.moving = false;
+//   if (!store.value.active) return;
+//   const node = store.value.active;
+//   if (node.type === "page") return;
+//   const { x, y, width, height } = store.value.active.layout;
+//   if (!node.parentId) {
+//     const nodes = store.value.nodes.filter(
+//       (i) => i.id !== node.id && i.type === "page"
+//     );
+//     nodes.forEach((n) => {
+//       const page = nodeMap.get(n.id);
+//       if (!page) return;
+//       const pageLo = page.layout;
+//       if (
+//         pageLo.x < x &&
+//         pageLo.y < y &&
+//         pageLo.x + pageLo.width > x + width &&
+//         pageLo.y + pageLo.height > y + height
+//       ) {
+//         const children = page.children || [];
+//         node.parentId = page.id;
+//         node.relativeCanvas = page.id;
+//         page.children = [...children, node];
+//         const filterNode = store.value.nodes.filter((c) => {
+//           return c.id !== node.id;
+//         });
+//         store.value.nodes = filterNode;
+//         node.layout.x = x - pageLo.x;
+//         node.layout.y = y - pageLo.y;
+//         change(node);
+//         nextTick(() => {});
+//         return true;
+//       } else return false;
+//     });
+//   } else {
+//     const parent = nodeMap.get(node.parentId);
+//     if (parent && parent.type === "page") {
+//       const parentLo = parent.layout;
+//       if (
+//         (x < 0 && Math.abs(x) >= width) ||
+//         (y < 0 && Math.abs(y) >= height) ||
+//         x > parentLo.width ||
+//         y > parentLo.height
+//       ) {
+//         let children = parent.children || [];
+//         parent.children = children.filter((i) => i.id !== node.id);
+//         node.parentId = undefined;
+//         node.relativeCanvas = "canvas";
+//         store.value.nodes.push(node);
+//         node.layout.x = parentLo.x + node.layout.x;
+//         node.layout.y = parentLo.y + node.layout.y;
+//         change(node);
+//         nextTick(() => {});
+//       }
+//     }
+//   }
+// };
+// const dblclick = (parent: ZDragNode, event: MouseEvent) => {
+//   if (!parent.children) return;
+//   console.dir(parent);
+//   let x = event.layerX;
+//   let y = event.layerY;
+//   if (parent.relativeCanvas !== "canvas") {
+//     const canvas = nodeMap.get(parent.relativeCanvas);
+//     if (!canvas) return;
+//     x = x - canvas.layout.x;
+//     y = y - canvas.layout.y;
+//   } else if (parent.relativeCanvas === "canvas" && parent.type === "page") {
+//     x = x - parent.layout.x;
+//     y = y - parent.layout.y;
+//   }
+//   let start = 0;
+//   let end = parent.children.length - 1;
+//   let ns: ZDragNode[] = [];
+//   while (start < end && end > start) {
+//     let bs = [parent.children[start++], parent.children[end--]];
+//     bs.forEach((cur) => {
+//       if (
+//         cur.layout.x <= x &&
+//         cur.layout.x + cur.layout.width >= x &&
+//         cur.layout.y <= y &&
+//         cur.layout.y + cur.layout.height >= y
+//       ) {
+//         ns.push(cur);
+//       }
+//     });
+//   }
+//   if (ns.length) {
+//     let index = 0;
+//     ns.forEach((n, i) => {
+//       if (!ns[i - 1]) return;
+//       if (n.layout.zIndex > ns[i - 1].layout.zIndex) index = i;
+//     });
+//     change(ns[index]);
+//   }
+// };
+// const layout = computed({
+//   get() {
+//     if (store.value.active?.relativeCanvas === "canvas")
+//       return store.value.active?.layout;
+//     else {
+//       if (!nodeMap.has(store.value.active?.relativeCanvas as string))
+//         return {} as ZLayout;
+//       const canvas = nodeMap.get(store.value.active?.relativeCanvas as string);
+//       if (!store.value.active) return {} as ZLayout;
+//       const nodeLayout = store.value.active.layout;
+//       if (!canvas) return {} as ZLayout;
+//       return {
+//         ...nodeLayout,
+//         x: canvas.layout.x + nodeLayout.x,
+//         y: canvas.layout.y + nodeLayout.y,
+//       };
+//     }
+//   },
+//   set(val) {
+//     if (!store.value.active) return;
+//     if (store.value.active.relativeCanvas === "canvas") {
+//       console.log("update  layout > canvas", store.value.active.layout);
+//       store.value.active.layout = val;
+//     } else {
+//       const canvas = nodeMap.get(store.value.active?.relativeCanvas as string);
+//       if (!canvas) return;
+//       console.log("update  layout > page", store.value.active.layout);
+//       store.value.active.layout = {
+//         ...val,
+//         x: val.x - canvas.layout.x,
+//         y: val.y - canvas.layout.y,
+//       };
+//     }
+//     console.log("update layout", store.value.active.layout);
+//   },
+// });
+// const contextMenuItemHandle = (
+//   node: ZCanvasContextMenuItem,
+//   closeMenu: () => void
+// ) => {
+//   node.action(store.value.active, closeMenu);
+// };
+// const canvasModel = ref({
+//   width: 1000,
+//   height: 1000,
+//   scale: 1,
+//   x: 0,
+//   y: 0,
+// });
 </script>
 <template>
   <article tabindex="0" class="ZDragEditor">
     <template v-if="!$slots.toolbar">
-      <ZToolbar class="toolbar" v-model:store="store">
+      <ZToolbar class="toolbar">
         <template #left="scope">
           <slot v-if="$slots['toolbar-left']" name="left" v-bind="scope"></slot>
           <template v-else>
@@ -361,18 +440,20 @@ const contextMenuItemHandle = (
           <template v-else>
             <div class="z-toolbar-center-btns">
               <ZBtn
-                @click="scope.store.canvas.drag = !scope.store.canvas.drag"
+                @click="arrow"
                 :color="
-                  !scope.store.canvas.drag ? 'text-primary' : 'text-default'
+                  selectCanvas.mode === 'select'
+                    ? 'text-primary'
+                    : 'text-default'
                 "
                 :padding="false"
               >
                 <ZSvgIcon size="md" name="cursor"></ZSvgIcon>
               </ZBtn>
               <ZBtn
-                @click="scope.store.canvas.drag = !scope.store.canvas.drag"
+                @click="drag"
                 :color="
-                  scope.store.canvas.drag ? 'text-primary' : 'text-default'
+                  selectCanvas.mode === 'drag' ? 'text-primary' : 'text-default'
                 "
                 :padding="false"
               >
@@ -389,22 +470,22 @@ const contextMenuItemHandle = (
           ></slot>
           <template v-else>
             <ZScaleController
-              v-model="scope.store.canvas.scale"
+              v-model="selectCanvas.layout.scale"
             ></ZScaleController>
           </template>
         </template>
       </ZToolbar>
     </template>
-    <slot name="toolbar" :store="store"></slot>
+    <slot name="toolbar"></slot>
     <ZSplitter v-if="!$slots.default" class="z-splitter">
       <template #left>
         <div v-if="!$slots.left" class="z-left-content">
           <ul class="drag-menu">
+            <!--    @dragstart="itemDragstart($event, com)"
+              @dragend="itemDragend" -->
             <li
-              @dragstart="itemDragstart($event, com)"
-              @dragend="itemDragend"
               draggable="true"
-              v-for="(com, i) in store.components"
+              v-for="(com, i) in components"
               :tabindex="-i"
               :key="com.id"
               class="drag-menu-item"
@@ -413,11 +494,11 @@ const contextMenuItemHandle = (
             </li>
           </ul>
         </div>
-        <slot name="left" :store="store"></slot>
+        <slot name="left"></slot>
       </template>
       <template #center>
         <div v-if="!$slots.center" class="z-main-content">
-          <ContextMenu
+          <!-- <ContextMenu
             :click-close="withOption.canvasContextMenu?.clickClose ?? true"
           >
             <template #default="{ closeMenu }">
@@ -446,21 +527,37 @@ const contextMenuItemHandle = (
                 :closeMenu="closeMenu"
               ></slot>
             </template>
-          </ContextMenu>
+          </ContextMenu> -->
           <ZDragEditorCanvas
-            v-model:scale="store.canvas.scale"
-            v-model:size="store.canvas"
-            :hidden-scroll="false"
-            @mousedown="change()"
-            v-model:scroll="store.canvas.scroll"
-            class="z-canvas"
-            ref="canvasRef"
-            :drag="store.canvas.drag"
-            @drop="drop"
-            @dragenter="dragenter"
-            @dragover="dragover"
+            v-if="selectCanvas"
+            v-model="selectCanvas.layout"
+            :nodes="selectCanvas.nodes"
+            v-model:mode="selectCanvas.mode"
           >
             <template #default="{ canvas }">
+              <!-- <div style="position: absolute; top: 0; left: 0">
+                <ZDrag
+                  v-if="store.active"
+                  v-model="layout"
+                  @dblclick="dblclick(store.active, $event)"
+                  @before-move="moveStart"
+                  @after-move="moveEnd"
+                  position="absolute"
+                  :container="(canvas as HTMLElement)"
+                  :scale="store.canvas.scale"
+                  :active="Boolean(store.active)"
+                  :rotate="store.active.rotate"
+                >
+                </ZDrag>
+              </div> -->
+              <ZNode
+                v-for="(node, index) in selectCanvas.nodes"
+                :key="node.id"
+                v-model="selectCanvas.nodes[index]"
+                @select="setSelectNode"
+              ></ZNode>
+            </template>
+            <!-- <template #default="{ canvas }">
               <div style="position: absolute; top: 0; left: 0">
                 <ZDrag
                   v-if="store.active"
@@ -487,14 +584,14 @@ const contextMenuItemHandle = (
                 @moveEnd="moveEnd"
                 v-model:nodeMap="nodeMap"
               ></ZNode>
-            </template>
+            </template> -->
           </ZDragEditorCanvas>
         </div>
-        <slot name="center" :store="store"></slot>
+        <slot name="center"></slot>
       </template>
       <template #right>
         <div v-if="!$slots.right" class="z-right-content">
-          <div v-if="store.active">
+          <!-- <div v-if="store.active">
             <div class="row">
               <ZTextField
                 class="col"
@@ -534,9 +631,9 @@ const contextMenuItemHandle = (
                 required
               />
             </div>
-          </div>
+          </div> -->
         </div>
-        <slot name="right" :store="store"></slot>
+        <slot name="right"></slot>
       </template>
     </ZSplitter>
     <slot name="default"></slot>

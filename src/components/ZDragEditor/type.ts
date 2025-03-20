@@ -1,4 +1,5 @@
 import type { ZDragNode, ZDragNodes } from "@/common/type";
+
 export interface ZDragEditorProps {
   nodes: ZDragNodes;
 }
@@ -19,6 +20,7 @@ export interface ZDragEditorModel {
   active: ZDragNode | undefined;
   components: ZDragNodes;
 }
+
 export interface ZCanvasContextMenuItem {
   label: string;
   action: (active: ZDragNode | undefined, closeMenu: () => void) => void;

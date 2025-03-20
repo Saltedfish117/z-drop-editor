@@ -1,54 +1,46 @@
 <script setup lang="ts">
-import { defineOptions, defineModel } from "vue";
-import type { ZDragEditorModel } from "../ZDragEditor/types";
+import { defineOptions } from "vue";
 defineOptions({
   name: "ZToolbar",
 });
-const store = defineModel<ZDragEditorModel>("store", { required: true });
 </script>
 <template>
-  <header class="ZToolbar">
-    <div class="ZToolbar-item ZToolbar-left">
-      <template v-if="!$slots['left']"> </template>
-      <slot :store="store" name="left"></slot>
+  <header class="z-toolbar">
+    <div class="z-toolbar-item z-toolbar-left">
+      <slot name="left"></slot>
     </div>
-    <div class="ZToolbar-item ZToolbar-center">
-      <template v-if="!$slots['center']"> </template>
-      <slot :store="store" name="center"></slot>
+    <div class="z-toolbar-item z-toolbar-center">
+      <slot name="center"></slot>
     </div>
-    <div class="ZToolbar-item ZToolbar-right">
-      <template v-if="!$slots['right']"> </template>
-      <slot :store="store" name="right"></slot>
+    <div class="z-toolbar-item z-toolbar-right">
+      <slot name="right"></slot>
     </div>
   </header>
 </template>
 <style scoped lang="scss">
-.ZToolbar {
-  position: relative;
+.z-toolbar {
   height: 50px;
   min-height: 50px;
-  // max-height: 120px;
   width: 100%;
   background-color: rgba(255, 255, 255, 1);
   box-shadow: 1px 1px 5px rgba(204, 197, 197, 0.5);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  z-index: 2;
-
-  & > .ZToolbar-item {
+  z-index: 999;
+  & > .z-toolbar-item {
     flex: 1;
     height: 100%;
     display: flex;
     align-items: center;
   }
-  .ZToolbar-left {
+  .z-toolbar-left {
     justify-content: flex-start;
   }
-  .ZToolbar-center {
+  .z-toolbar-center {
     justify-content: center;
   }
-  .ZToolbar-right {
+  .z-toolbar-right {
     justify-content: flex-end;
   }
 }
