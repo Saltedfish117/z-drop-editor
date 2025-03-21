@@ -1,5 +1,13 @@
 import type { App, Plugin } from "vue";
 import type { ZLayout, ZDragNode } from "@/common/type";
+export const getId = () => {
+  return (
+    "id-" +
+    new Date().getTime().toString(36) +
+    "-" +
+    Math.random().toString(36).substring(2, 9)
+  );
+};
 /**
  * 为组件添加 install 方法的类型扩展
  */
@@ -130,13 +138,13 @@ export const calculateRotateCoordinate = (
   return {
     x: Math.round(
       (realTimeCoordinates.x - centerCoordinate.x) * Math.cos(rotate) -
-        (realTimeCoordinates.y - centerCoordinate.y) * Math.sin(rotate) +
-        centerCoordinate.x
+      (realTimeCoordinates.y - centerCoordinate.y) * Math.sin(rotate) +
+      centerCoordinate.x
     ),
     y: Math.round(
       (realTimeCoordinates.x - centerCoordinate.x) * Math.sin(rotate) +
-        (realTimeCoordinates.y - centerCoordinate.y) * Math.cos(rotate) +
-        centerCoordinate.y
+      (realTimeCoordinates.y - centerCoordinate.y) * Math.cos(rotate) +
+      centerCoordinate.y
     ),
   };
 };
