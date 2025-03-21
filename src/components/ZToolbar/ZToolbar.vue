@@ -22,8 +22,10 @@ defineOptions({
   height: 50px;
   min-height: 50px;
   width: 100%;
-  background-color: rgba(255, 255, 255, 1);
-  box-shadow: 1px 1px 5px rgba(204, 197, 197, 0.5);
+  background-color: rgba(var(--z-page), 1);
+  box-shadow: 1px 1px 5px rgba(var(--z-quiet), 1);
+  border-bottom: 1px solid rgba(var(--z-quiet), 1);
+  // box-shadow: 1px 1px 5px rgba(var(--z-quiet), 1);
   display: flex;
   align-items: center;
   justify-content: space-between;

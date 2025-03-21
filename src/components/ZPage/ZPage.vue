@@ -9,27 +9,49 @@ import ZDrag from "../ZDrag/ZDrag.vue";
 defineOptions({
   name: "ZPage",
 });
+const pageRef = ref<HTMLElement | null>(null);
 const emits = defineEmits<{
   (e: "select", node: ZDragNode): void;
+  (
+    e: "drop",
+    event: DragEvent,
+    data: {
+      containerId: string;
+      container: HTMLElement;
+    }
+  ): void;
 }>();
 const page = defineModel<Node>({
   required: true,
 });
-const pageRef = ref<HTMLElement | null>(null);
+
 const mousedown = (node: ZDragNode) => {
-  console.log("page set", node);
+  // console.log("page set", node);
   emits("select", node);
+};
+const dragover = (e: DragEvent) => {
+  e.preventDefault();
+  e.stopPropagation();
+};
+const drop = (e: DragEvent) => {
+  e.preventDefault();
+  e.stopPropagation();
+  emits("drop", e, {
+    containerId: page.value.id,
+    container: pageRef.value as HTMLElement,
+  });
 };
 </script>
 <template>
   <article
     :data-type="page.type"
-    :data-id="page.id"
+    :data-pageId="page.id"
     :id="page.id"
     v-bind="$attrs"
     ref="pageRef"
+    @drop="drop"
+    @dragover="dragover"
     class="ZPage"
-    @mousedown.stop="mousedown(page)"
   >
     <ZNode
       v-if="page.children"

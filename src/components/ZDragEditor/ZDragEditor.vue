@@ -13,10 +13,15 @@ import {
   onMounted,
   defineProps,
 } from "vue";
+import { quadtree, text } from "d3";
 const ZDragEditorCanvas = defineAsyncComponent(
   () => import("../ZDragEditorCanvas/ZDragEditorCanvas.vue")
 );
 const ZToolbar = defineAsyncComponent(() => import("../ZToolbar/ZToolbar.vue"));
+const ZMaterialList = defineAsyncComponent(
+  () => import("../ZMaterialList/ZMaterialList.vue")
+);
+const ZDesign = defineAsyncComponent(() => import("../ZDesign/ZDesign.vue"));
 const ZTextField = defineAsyncComponent(
   () => import("../ZTextField/ZTextField.vue")
 );
@@ -35,7 +40,7 @@ const ZSvgIcon = defineAsyncComponent(
 );
 const ZDrag = defineAsyncComponent(() => import("../ZDrag/ZDrag.vue"));
 const ZNode = defineAsyncComponent(() => import("../ZNode/ZNode.vue"));
-import { calculateMousePosition } from "@/common/utils";
+import { calculateMousedownPosition, serializer } from "@/common/utils";
 import { createCanvas } from "@/common/create";
 import type {
   ZDragNode,
@@ -43,27 +48,137 @@ import type {
   ZLayout,
   ZCanvasList,
   ZCanvas,
+  ZMap,
 } from "@/common/type";
-import type {
-  ZDragEditorModel,
-  ZNodeMap,
-  ZOption,
-  ZCanvasContextMenuItem,
-} from "./type";
+import type { ZCanvasContextMenuItem } from "./type";
 defineOptions({
   name: "ZDragEditor",
 });
 defineProps<{
   components: ZDragNodes;
 }>();
+const menus = ref([
+  {
+    icon: "design",
+    text: "设计",
+    name: "design",
+  },
+  {
+    icon: "material",
+    text: "素材",
+    name: "material",
+  },
+]);
+const selectMenu = ref("design");
 const canvas = defineModel<ZCanvasList>("canvas", {
   required: true,
 });
 if (canvas.value.length === 0) {
   canvas.value.push(createCanvas("1-canvas"));
 }
+const editorCanvasRef = ref<InstanceType<typeof ZDragEditorCanvas> | null>(
+  null
+);
 const selectCanvas = ref<ZCanvas>(canvas.value[0]);
 const selectNode = ref<ZDragNode | undefined>();
+const treeMap = reactive<ZMap>(new Map());
+const hijackNodeAxis = computed({
+  get() {
+    if (!selectNode.value) return;
+
+    if (selectNode.value && selectNode.value.relative) {
+      const relative = selectNode.value.relative;
+      const containerId = selectNode.value[relative];
+
+      if (!containerId) throw new Error("relative container is not exist");
+      console.log(treeMap.has(containerId));
+      if (
+        treeMap.has(containerId) &&
+        treeMap.get(containerId)!.type !== "canvas"
+      ) {
+        const container = treeMap.get(containerId)!;
+        console.log(container);
+        const hijack = { ...selectNode.value.layout };
+        hijack.x = container.layout.x + hijack.x;
+        hijack.y = container.layout.y + hijack.y;
+        return hijack;
+      } else {
+        return selectNode.value.layout;
+      }
+    }
+  },
+  set(value: ZLayout) {
+    if (!selectNode.value) return;
+    if (selectNode.value && selectNode.value.relative) {
+      const relative = selectNode.value.relative;
+      const containerId = selectNode.value[relative];
+      if (!containerId) throw new Error("relative container is not exist");
+      if (
+        treeMap.has(containerId) &&
+        treeMap.get(containerId)?.type !== "canvas"
+      ) {
+        const container = treeMap.get(containerId)!;
+        selectNode.value.layout = {
+          ...value,
+          x: value.x - container.layout.x,
+          y: value.y - container.layout.y,
+        };
+      } else {
+        selectNode.value.layout = {
+          ...value,
+        };
+      }
+    }
+  },
+});
+// watch(
+//   () => selectCanvas.value,
+//   () => {
+//     treeMap.clear();
+//     initTreeMap(selectCanvas.value.children, treeMap);
+//   }
+// );
+// const proxyNodeLayout = computed(() => {
+//   if (!selectNode.value) return;
+//   return new Proxy<ZLayout>(selectNode.value.layout, {
+//     get(target, key: keyof ZLayout) {
+//       return target[key];
+//     },
+//     set(target, key: keyof ZLayout, value: number) {
+//       if (selectNode.value && selectNode.value.relative) {
+//         const relative = selectNode.value.relative;
+//         const containerId = selectNode.value[relative];
+//         if (!containerId) throw new Error("relative container is not exist");
+//         if (
+//           treeMap.has(containerId) &&
+//           treeMap.get(containerId)?.type !== "canvas"
+//         ) {
+//           const container = treeMap.get(containerId);
+//           switch (key) {
+//             case "x":
+//               break;
+//             case "y":
+//               break;
+//             default:
+//               break;
+//           }
+//         } else {
+//           (target as ZLayout)[key] = value;
+//         }
+//       }
+//     },
+//   });
+// });
+const initTreeMap = (val: ZDragNodes | ZCanvasList, nodeMap: ZMap) => {
+  const recursive = (node: ZDragNode | ZCanvas, nodeMap: ZMap) => {
+    nodeMap.set(node.id, node);
+    if (node.children?.length) {
+      node.children.forEach((child) => recursive(child, nodeMap));
+    }
+  };
+  val.forEach((node) => recursive(node, nodeMap));
+};
+initTreeMap(canvas.value, treeMap);
 const getSelectCanvas = () => {
   return selectCanvas.value;
 };
@@ -73,35 +188,170 @@ const setSelectCanvas = (canvas: ZCanvas) => {
 const getSelectNode = () => {
   return selectNode.value;
 };
+const getId = () => {
+  return (
+    "id-" +
+    new Date().getTime().toString(36) +
+    "-" +
+    Math.random().toString(36).substring(2, 9)
+  );
+};
+const addNode = (
+  event: { clientX: number; clientY: number },
+  data: {
+    containerId: string;
+    container: HTMLElement;
+    node: ZDragNode;
+  }
+) => {
+  const { x, y } = calculateMousedownPosition(
+    event,
+    data.container,
+    selectCanvas.value.layout.scale
+  );
+  const container = treeMap.get(data.containerId);
+  console.log("drop", container);
+  if (!container) return;
+  const node = { ...data.node };
+  node.id = getId();
+  const addMode = {
+    canvas: () => {
+      node.relative = "canvasId";
+      node.canvasId = container.id;
+      node.layout = {
+        ...node.layout,
+        x,
+        y,
+      };
+      node.parentId = container.id;
+      const children = container.children || [];
+      children.push(node);
+      container.children = children;
+    },
+    page: () => {
+      node.relative = "pageId";
+      node.canvasId = selectCanvas.value.id;
+      node.pageId = container.id;
+      node.layout = {
+        ...node.layout,
+        x: x,
+        y: y,
+      };
+      node.parentId = container.id;
+      const children = container.children || [];
+      children.push(node);
+      container.children = children;
+    },
+  };
+  addMode[container.type as keyof typeof addMode]();
+  treeMap.set(node.id, node);
+};
+const beforeMove = (event: MouseEvent) => {};
+const afterMove = (event: MouseEvent) => {
+  if (!selectNode.value) return;
+  const node = selectNode.value;
+  if (node.type === "page") return;
+  const { x, y, width, height } = node.layout;
+  const moveEndMode = {
+    pageId: () => {
+      if (!node.canvasId) throw new Error("canvasId is not exist");
+      const canvas = treeMap.get(node.canvasId)!;
+      if (!node.pageId) throw new Error("canvasId is not exist");
+      const page = treeMap.get(node.pageId)!;
+      if (
+        (x < 0 && Math.abs(x) >= width) ||
+        (y < 0 && Math.abs(y) >= height) ||
+        x > page.layout.width ||
+        y > page.layout.height
+      ) {
+        node.relative = "canvasId";
+        delete node.pageId;
+        node.parentId = canvas.id;
+        node.layout = {
+          ...node.layout,
+          x: x + page.layout.x,
+          y: y + page.layout.y,
+        };
+        let pageChildren = page.children ?? [];
+        pageChildren = pageChildren.filter((n) => n.id !== node.id);
+        page.children = pageChildren;
+        canvas.children?.push(node);
+      }
+    },
+    canvasId: () => {
+      if (!node.canvasId) throw new Error("canvasId is not exist");
+      const canvas = treeMap.get(node.canvasId)!;
+      const pages = canvas!.children!.filter((n) => n.type === "page");
+      if (!pages.length) return;
+      const tree = quadtree()
+        .x((p) => p.layout.x)
+        .y((p) => p.layout.y)
+        .addAll(pages);
+      const page = tree.find(x, y);
+      if (!page) return;
+      if (
+        x > page.layout.x &&
+        x + width < page.layout.x + page.layout.width &&
+        y > page.layout.y &&
+        y + height < page.layout.y + page.layout.height
+      ) {
+        console.log("move to page", page);
+        node.pageId = page.id;
+        node.relative = "pageId";
+        let canvasChildren = canvas.children ?? [];
+        canvasChildren = canvasChildren.filter((n) => n.id !== node.id);
+        canvas.children = canvasChildren;
+        node.layout = {
+          ...node.layout,
+          x: x - page.layout.x,
+          y: y - page.layout.y,
+        };
+        page.children.push(node);
+      }
+      // console.log(tree.find(x, y));
+    },
+  };
+  moveEndMode[node.relative as keyof typeof moveEndMode]();
+};
+const moving = (event: MouseEvent) => {};
+const canvasDragover = (event: DragEvent) => {
+  event.preventDefault();
+  event.stopPropagation();
+};
+const drop = (
+  event: DragEvent,
+  value?: {
+    containerId: string;
+    container: HTMLElement;
+  }
+) => {
+  if (!event || !event.dataTransfer) return;
+
+  event.preventDefault();
+  event.stopPropagation();
+  const dt = event.dataTransfer;
+  const node = serializer.deserialize<ZDragNode>(dt.getData("json"));
+  const newValue = value ?? {
+    containerId: selectCanvas.value.id,
+    container: editorCanvasRef.value?.infiniteCanvas as HTMLElement,
+  };
+
+  const data = { ...newValue, node };
+  addNode(event, data);
+};
 const setSelectNode = (node?: ZDragNode) => {
-  console.log("setSelectNode", node);
   selectNode.value = node;
 };
-const nodeMap = reactive<ZNodeMap>(new Map());
-// const prefixId = computed(() => Array.from(nodeMap.keys()).join("-"));
-const initNodeMap = (val: ZDragNodes, nodeMap: ZNodeMap) => {
-  const recursive = (node: ZDragNode, nodeMap: ZNodeMap) => {
-    nodeMap.set(node.id, node);
-    if (node.children?.length) {
-      node.children.forEach((child) => recursive(child, nodeMap));
-    }
-  };
-  val.forEach((node) => recursive(node, nodeMap));
-};
-watch(
-  () => selectCanvas.value,
-  () => {
-    nodeMap.clear();
-    if (!selectCanvas.value) return;
-    initNodeMap(selectCanvas.value.nodes, nodeMap);
-  }
-);
 const arrow = () => {
   selectCanvas.value.mode = "select";
 };
 const drag = () => {
   selectCanvas.value.mode = "drag";
 };
+onMounted(() => {});
+onUnmounted(() => {
+  treeMap.clear();
+});
 // const store = defineModel<ZDragEditorModel>({
 //   required: true,
 //   default: () => ({
@@ -235,7 +485,7 @@ const drag = () => {
 //   const { type, id } = dom.dataset;
 //   if (canvasRef.value && canvasRef.value.infiniteCanvas) {
 //     const canvas = canvasRef.value.infiniteCanvas;
-//     const { x, y } = calculateMousePosition(
+//     const { x, y } = calculateMousedownPosition(
 //       event,
 //       canvas,
 //       store.value.canvas.scale
@@ -477,28 +727,41 @@ const drag = () => {
       </ZToolbar>
     </template>
     <slot name="toolbar"></slot>
-    <ZSplitter v-if="!$slots.default" class="z-splitter">
-      <template #left>
-        <div v-if="!$slots.left" class="z-left-content">
-          <ul class="drag-menu">
-            <!--    @dragstart="itemDragstart($event, com)"
-              @dragend="itemDragend" -->
-            <li
-              draggable="true"
-              v-for="(com, i) in components"
-              :tabindex="-i"
-              :key="com.id"
-              class="drag-menu-item"
-            >
-              {{ com.label }}
-            </li>
-          </ul>
-        </div>
-        <slot name="left"></slot>
-      </template>
-      <template #center>
-        <div v-if="!$slots.center" class="z-main-content">
-          <!-- <ContextMenu
+    <div v-if="!$slots.default" class="z-editor-content">
+      <ul class="z-editor-menu">
+        <li
+          v-for="item in menus"
+          :key="item.name"
+          class="z-editor-menu-item"
+          :class="{
+            active: selectMenu === item.name,
+          }"
+          @click="selectMenu = item.name"
+        >
+          <ZSvgIcon :size="24" class="icon" :name="item.icon"></ZSvgIcon>
+          <span class="text">{{ item.text }}</span>
+        </li>
+      </ul>
+      <ZSplitter class="z-splitter">
+        <template #left>
+          <div v-if="!$slots.left" class="z-left-content">
+            <ZMaterialList
+              :components="components"
+              v-show="selectMenu === 'material'"
+            ></ZMaterialList>
+            <ZDesign
+              v-model:canvas="canvas"
+              v-model:treeMap="treeMap"
+              v-model:selectCanvas="selectCanvas"
+              v-model:selectNode="selectNode"
+              v-show="selectMenu === 'design'"
+            ></ZDesign>
+          </div>
+          <slot name="left"></slot>
+        </template>
+        <template #center>
+          <div v-if="!$slots.center" class="z-main-content">
+            <!-- <ContextMenu
             :click-close="withOption.canvasContextMenu?.clickClose ?? true"
           >
             <template #default="{ closeMenu }">
@@ -528,36 +791,44 @@ const drag = () => {
               ></slot>
             </template>
           </ContextMenu> -->
-          <ZDragEditorCanvas
-            v-if="selectCanvas"
-            v-model="selectCanvas.layout"
-            :nodes="selectCanvas.nodes"
-            v-model:mode="selectCanvas.mode"
-          >
-            <template #default="{ canvas }">
-              <!-- <div style="position: absolute; top: 0; left: 0">
-                <ZDrag
-                  v-if="store.active"
-                  v-model="layout"
-                  @dblclick="dblclick(store.active, $event)"
-                  @before-move="moveStart"
-                  @after-move="moveEnd"
-                  position="absolute"
-                  :container="(canvas as HTMLElement)"
-                  :scale="store.canvas.scale"
-                  :active="Boolean(store.active)"
-                  :rotate="store.active.rotate"
-                >
-                </ZDrag>
-              </div> -->
-              <ZNode
-                v-for="(node, index) in selectCanvas.nodes"
-                :key="node.id"
-                v-model="selectCanvas.nodes[index]"
-                @select="setSelectNode"
-              ></ZNode>
-            </template>
-            <!-- <template #default="{ canvas }">
+            <ZDragEditorCanvas
+              v-if="selectCanvas"
+              v-model="selectCanvas.layout"
+              :nodes="selectCanvas.children"
+              v-model:mode="selectCanvas.mode"
+              ref="editorCanvasRef"
+              @dragover="canvasDragover"
+              @drop="drop"
+              @mousedown.stop="setSelectNode()"
+            >
+              <template #default="{ canvas }">
+                <div style="position: absolute; top: 0; left: 0">
+                  <!--    @before-move="moveStart"
+                  @after-move="moveEnd"  @dblclick="dblclick(store.active, $event)" -->
+                  <ZDrag
+                    v-if="selectNode"
+                    v-model="hijackNodeAxis"
+                    position="absolute"
+                    @before-move="beforeMove"
+                    @after-move="afterMove"
+                    @moving="moving"
+                    :container="(canvas as HTMLElement)"
+                    :scale="selectCanvas.layout.scale"
+                    :active="Boolean(selectNode)"
+                    :rotate="selectNode.rotate"
+                  >
+                  </ZDrag>
+                </div>
+                <ZNode
+                  v-for="(node, index) in selectCanvas.children"
+                  :key="node.id"
+                  v-model="selectCanvas.children[index]"
+                  @select="setSelectNode"
+                  @mousedown.stop="setSelectNode(selectCanvas.children[index])"
+                  @drop="drop"
+                ></ZNode>
+              </template>
+              <!-- <template #default="{ canvas }">
               <div style="position: absolute; top: 0; left: 0">
                 <ZDrag
                   v-if="store.active"
@@ -585,57 +856,59 @@ const drag = () => {
                 v-model:nodeMap="nodeMap"
               ></ZNode>
             </template> -->
-          </ZDragEditorCanvas>
-        </div>
-        <slot name="center"></slot>
-      </template>
-      <template #right>
-        <div v-if="!$slots.right" class="z-right-content">
-          <!-- <div v-if="store.active">
-            <div class="row">
-              <ZTextField
-                class="col"
-                :model-value="store.active.layout.x"
-                label="X"
-                placeholder="x轴坐标"
-                required
-              />
-              <ZTextField
-                class="col"
-                :model-value="store.active.layout.y"
-                label="Y"
-                placeholder="Y轴坐标"
-                required
-              />
-              <ZTextField
-                class="col"
-                :model-value="store.active.layout.rotate"
-                label="°"
-                placeholder="Y轴坐标"
-                required
-              />
+            </ZDragEditorCanvas>
+          </div>
+          <slot name="center"></slot>
+        </template>
+        <template #right>
+          <div v-if="!$slots.right" class="z-right-content">
+            <div v-if="selectNode">
+              <div class="row">
+                <ZTextField
+                  class="col"
+                  :model-value="selectNode.layout.x"
+                  label="X"
+                  placeholder="x轴坐标"
+                  required
+                />
+                <ZTextField
+                  class="col"
+                  :model-value="selectNode.layout.y"
+                  label="Y"
+                  placeholder="Y轴坐标"
+                  required
+                />
+                <ZTextField
+                  class="col"
+                  :model-value="selectNode.layout.rotate"
+                  label="°"
+                  placeholder="Y轴坐标"
+                  required
+                />
+              </div>
+              <div class="row">
+                <ZTextField
+                  class="col"
+                  :model-value="selectNode.layout.width"
+                  label="宽"
+                  placeholder="x轴坐标"
+                  required
+                />
+                <ZTextField
+                  class="col"
+                  :model-value="selectNode.layout.height"
+                  label="高"
+                  placeholder="Y轴坐标"
+                  required
+                />
+              </div>
             </div>
-            <div class="row">
-              <ZTextField
-                class="col"
-                :model-value="store.active.layout.width"
-                label="宽"
-                placeholder="x轴坐标"
-                required
-              />
-              <ZTextField
-                class="col"
-                :model-value="store.active.layout.height"
-                label="高"
-                placeholder="Y轴坐标"
-                required
-              />
-            </div>
-          </div> -->
-        </div>
-        <slot name="right"></slot>
-      </template>
-    </ZSplitter>
+          </div>
+          <slot name="right"></slot>
+        </template>
+      </ZSplitter>
+    </div>
+
     <slot name="default"></slot>
   </article>
 </template>
@@ -643,8 +916,68 @@ const drag = () => {
 .ZDragEditor {
   overflow: hidden;
   box-sizing: border-box;
-  .z-splitter {
+  .z-editor-content {
     height: calc(100% - 50px);
+    display: flex;
+    .z-editor-menu {
+      width: 50px;
+      height: 100%;
+      max-height: 100%;
+      list-style: none;
+      padding: 0;
+      padding-top: 8px;
+      padding-right: 4px;
+      margin: 0;
+      border-right: 1px solid rgba(var(--z-quiet));
+      box-sizing: border-box;
+
+      .z-editor-menu-item {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+        color: var(--z-text);
+        margin-bottom: 8px;
+        padding: 4px 0;
+        position: relative;
+        .icon {
+          z-index: 1;
+        }
+        .text {
+          font-size: var(--z-font-sm);
+          z-index: 1;
+        }
+        cursor: pointer;
+        &::before {
+          content: "";
+          width: 100%;
+          height: 100%;
+          position: absolute;
+          left: 0;
+          background-color: rgba(var(--z-primary), 0.95);
+          border-radius: 0 8px 8px 0;
+          transition: transform 0.2s ease-in-out;
+          box-shadow: 0px 6px 20px -4px rgba(64, 87, 109, 0.3),
+            0px 0px 0px 1px rgba(64, 87, 109, 0.04);
+          // 0px 0px 0px 1px rgba(64, 87, 109, 0.04),
+          // rgba(64, 87, 109, 0.3)
+          // transition: width 0.2s ease-in-out, height 0.2s ease-in-out;
+          transform: scaleX(0);
+          transform-origin: left;
+        }
+        &.active {
+          &::before {
+            transform: scaleX(1);
+          }
+          // background-color: rgb(var(--z-primary));
+          color: rgb(var(--z-text-light));
+        }
+      }
+    }
+    .z-splitter {
+      width: calc(100% - 50px);
+    }
   }
   .z-canvas {
     width: 100%;
@@ -666,7 +999,9 @@ const drag = () => {
     }
   }
   .z-left-content {
-    padding: 8px 16px;
+    // padding: 8px 16px;
+    height: 100%;
+    width: 100%;
   }
   .z-main-content {
     width: 100%;
@@ -674,34 +1009,9 @@ const drag = () => {
     overflow: hidden;
   }
   .z-right-content {
-    padding: 8px 16px;
-  }
-}
-.drag-menu {
-  margin: 0;
-  list-style: none;
-  padding: 4px 8px;
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-  .drag-menu-item {
-    min-width: 50px;
-    width: 70px;
-    min-height: 50px;
-    height: 70px;
-    border: 1px solid rgb(var(--z-quiet));
-    border-radius: 8px;
-    background-color: rgba(var(--z-quiet), 0.3);
-    transition: all 0.1s ease;
-    &:hover {
-      cursor: grab;
-      background-color: rgba(var(--z-quiet), 0.6);
-    }
-    &:active {
-      cursor: grabbing;
-      background-color: rgba(var(--z-quiet), 1);
-      user-select: none;
-    }
+    // padding: 8px 16px;
+    height: 100%;
+    width: 100%;
   }
 }
 .z-canvas-context-menu {

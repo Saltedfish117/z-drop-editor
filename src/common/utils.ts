@@ -85,7 +85,7 @@ export const calculateGroupLayout = (nodes: ZDragNode[]) => {
     zIndex: z,
   };
 };
-export const calculateMousePosition = (
+export const calculateMousedownPosition = (
   axis: {
     clientX: number;
     clientY: number;
@@ -197,6 +197,9 @@ export const once = <T extends (...args: any[]) => any>(
     }
   };
 };
+const isObject = (value: any) => {
+  return Object.prototype.toString.call(value) === "[object Object]";
+};
 /**
  * 深层合并对象
  * @param target 目标对象
@@ -205,23 +208,15 @@ export const once = <T extends (...args: any[]) => any>(
  */
 export function deepMerge<T extends Record<string, any>>(
   target: Partial<T>,
-  source: T,
-  seen = new WeakMap<object, boolean>()
+  source: T
 ): T {
   const result = { ...target }; // 创建目标对象的浅拷贝
-  if (seen.has(source)) {
-    return seen.get(source) as unknown as T;
-  }
   for (const key in source) {
-    if (source.hasOwnProperty(key)) {
+    if (Object.prototype.hasOwnProperty.call(source, key)) {
       if (result[key] === undefined) {
         result[key] = source[key];
-      } else if (
-        result[key] &&
-        typeof result[key] === "object" &&
-        !Array.isArray(target[key])
-      ) {
-        result[key] = deepMerge(result[key], source[key], seen);
+      } else if (isObject(result[key])) {
+        result[key] = deepMerge(result[key], source[key]);
       }
     }
   }

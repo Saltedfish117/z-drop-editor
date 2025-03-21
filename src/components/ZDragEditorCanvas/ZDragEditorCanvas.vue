@@ -11,6 +11,7 @@ import {
   watch,
   defineProps,
   onUnmounted,
+  defineExpose,
 } from "vue";
 import * as d3 from "d3";
 defineOptions({
@@ -29,6 +30,7 @@ const props = withDefaults(
 const instance = getCurrentInstance()?.proxy as ComponentPublicInstance;
 const wrapper = ref<HTMLElement | null>(null);
 const infiniteCanvas = ref<HTMLElement | null>(null);
+defineExpose({ wrapper, infiniteCanvas });
 const model = defineModel<{
   x: number;
   y: number;
@@ -286,7 +288,12 @@ onUnmounted(() => {
     id="z-canvas-wrapper"
     class="canvas-wrapper"
   >
-    <article :style="style" class="infinite-canvas" ref="infiniteCanvas">
+    <article
+      :style="style"
+      id="z-infinite-canvas"
+      class="infinite-canvas"
+      ref="infiniteCanvas"
+    >
       <slot :canvas="infiniteCanvas"></slot>
     </article>
   </div>
@@ -297,6 +304,8 @@ onUnmounted(() => {
   background-color: rgb(244, 245, 247);
   position: relative;
   max-width: 100%;
+  width: 100%;
+  height: 100%;
   max-height: 100%;
   // 隐藏滚动条
   &::-webkit-scrollbar {
@@ -323,6 +332,7 @@ onUnmounted(() => {
     min-width: 100%;
     min-height: 100%;
     background-color: rgb(var(--canvas-bg-color));
+    // border: 1px solid;
   }
 }
 </style>

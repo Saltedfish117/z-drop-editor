@@ -76,7 +76,6 @@ const handleMouseDown = (e: MouseEvent, direction: "left" | "right") => {
     >
       <div class="content"><slot :width="leftWidth" name="left"></slot></div>
     </div>
-
     <div
       class="splitter-bar"
       @mousedown="handleMouseDown($event, 'left')"
@@ -110,7 +109,13 @@ const handleMouseDown = (e: MouseEvent, direction: "left" | "right") => {
   .left-pane,
   .right-pane {
     background: rgb(var(--z-page));
-    overflow: auto;
+    // overflow: auto;
+    height: 100%;
+    width: 100%;
+    .content {
+      height: 100%;
+      width: 100%;
+    }
   }
   .center-pane {
     flex: 1;
@@ -128,6 +133,7 @@ const handleMouseDown = (e: MouseEvent, direction: "left" | "right") => {
       background: rgba(var(--z-primary), 0.6);
     }
   }
+
   .left-pane.out {
     transition: width 0.3s;
     .content {

@@ -53,6 +53,16 @@ watch(
           const domParser = new DOMParser();
           let svgDoc = domParser.parseFromString(svg, "image/svg+xml");
           let svgDom = svgDoc.getElementsByTagName("svg")[0];
+          const paths = svgDom.getElementsByTagName("path");
+          const rect = svgDom.getElementsByTagName("rect");
+          for (let i = 0; i < paths.length; i++) {
+            const path = paths[i];
+            path.setAttribute("fill", "currentColor");
+          }
+          for (let i = 0; i < rect.length; i++) {
+            const path = rect[i];
+            path.setAttribute("fill", "currentColor");
+          }
           svgDom.setAttribute("width", "100%");
           svgDom.setAttribute("height", "100%");
           svgDom.setAttribute("fill", "currentColor");

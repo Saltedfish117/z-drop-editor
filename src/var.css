@@ -14,7 +14,8 @@ html[data-theme="dark"]:root {
   --z-text: 29, 29, 29;
   --z-text-light: 245, 245, 245;
   --z-scrollbar: 139, 139, 139;
-  --z-quiet: 238, 238, 240;
+  --z-quiet: 240, 241, 245;
+  /* --z-quiet: 238, 238, 240; */
   --z-page: 255, 255, 255;
   --z-font-xl: 20px;
   --z-font-lg: 18px;

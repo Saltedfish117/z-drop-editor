@@ -1,9 +1,9 @@
-import type { ZDragNode, ZDragNodes } from "@/common/type";
+import type { ZDragNode, ZDragNodes, ZCanvas } from "@/common/type";
 
 export interface ZDragEditorProps {
   nodes: ZDragNodes;
 }
-export type ZNodeMap = Map<string, ZDragNode>;
+
 export interface ZDragEditorModel {
   nodes: ZDragNodes;
   canvas: {

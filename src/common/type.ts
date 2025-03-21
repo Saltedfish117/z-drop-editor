@@ -1,4 +1,7 @@
 import type { CSSProperties } from "vue";
+export type WithRequiredProperty<Type, Key extends keyof Type> = Type & {
+  [Property in Key]-?: Type[Property];
+};
 export enum Size {
   xs = 12,
   sm = 16,
@@ -24,7 +27,7 @@ export interface ZLayout extends ZAxis {
   zIndex: number;
   lock: boolean;
 }
-export interface ZDragNode {
+export interface ZDragNodeBase {
   id: string;
   label?: string;
   type: string;
@@ -32,11 +35,19 @@ export interface ZDragNode {
   children?: ZDragNode[];
   parentId?: string;
   rotate?: boolean;
+}
+export interface ZDragNodeRelative {
   pageId?: string;
   canvasId?: string;
-  relative: "pageId" | "canvasId";
+  relative: "pageId" | "canvasId" | "parentId";
+}
+export interface ZDragNode extends ZDragNodeBase, ZDragNodeRelative {
   layout: ZLayout;
 }
+export interface CreateNode extends ZDragNodeBase, ZDragNodeRelative {
+  layout?: Partial<ZLayout>;
+}
+export type ZDragNodes = ZDragNode[];
 export interface ZCanvas {
   layout: {
     x: number;
@@ -49,7 +60,10 @@ export interface ZCanvas {
   };
   mode: string;
   modeLock: boolean;
-  nodes: ZDragNodes;
+  children: ZDragNodes;
+  id: string;
+  readonly type: string;
+  label?: string;
 }
 export type ZCanvasList = ZCanvas[];
-export type ZDragNodes = ZDragNode[];
+export type ZMap = Map<string, ZDragNode | ZCanvas>;

@@ -9,43 +9,45 @@ import { createCanvas, createNode } from "@/common/create";
 //   },
 // });
 // console.log(canvas.value);
+let pageX = 0;
 const initArr = Array.from({ length: 1 }, (_, c) => {
   const canvasId = `${c}-canvas`;
   return createCanvas(canvasId, {
-    nodes: Array.from({ length: 1 }, (_, p) => {
+    children: Array.from({ length: 1 }, (_, p) => {
       const pageId = `${p}-page`;
-      return createNode(
-        {
-          id: pageId,
-          relative: "canvasId",
-          canvasId,
-          component: "page",
-          label: "page",
+      let nodeX = 0;
+      const page = createNode({
+        id: pageId,
+        relative: "canvasId",
+        canvasId,
+        component: "page",
+        label: "page",
+        type: "page",
+        layout: {
+          width: 794,
+          height: 1123,
+          x: pageX,
         },
-        {
-          type: "page",
-          layout: {
-            width: 794,
-            height: 1123,
-          },
-          children: Array.from({ length: 1 }, (_, n) => {
-            const nodeId = `${n}-node`;
-            return createNode(
-              {
-                id: nodeId,
-                relative: "pageId",
-                component: "rectangle",
-                label: "node",
-                canvasId,
-              },
-              {
-                pageId,
-                type: "component",
-              }
-            );
-          }) as ZDragNodes,
-        }
-      );
+        children: Array.from({ length: 3 }, (_, n) => {
+          const nodeId = `${n}-node`;
+          const node = createNode({
+            id: nodeId,
+            relative: "pageId",
+            component: "rectangle",
+            label: "node",
+            canvasId,
+            pageId,
+            type: "component",
+            layout: {
+              x: nodeX,
+            },
+          });
+          nodeX += 210;
+          return node;
+        }) as ZDragNodes,
+      });
+      pageX += page.layout.width + 50;
+      return page;
     }),
   });
 }) as ZCanvasList;
@@ -53,7 +55,7 @@ const canvasList = ref(initArr);
 const components = [
   {
     id: `-kids`,
-    component: "Rectangle",
+    component: "rectangle",
     label: "矩形",
     parentId: "",
     layout: {
@@ -65,7 +67,6 @@ const components = [
       zIndex: 1,
       lock: false,
     },
-    relativeCanvas: "canvas",
     rotate: true,
     type: "component",
   },

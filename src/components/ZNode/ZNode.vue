@@ -40,7 +40,7 @@ const style = computed<CSSProperties>(() => ({
   }
   &:hover {
     &::after {
-      border: 3px solid rgb(var(--z-primary));
+      border: 1px solid rgb(var(--z-primary));
     }
   }
 }
