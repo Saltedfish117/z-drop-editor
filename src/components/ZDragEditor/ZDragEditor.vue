@@ -180,7 +180,18 @@ const initTreeMap = (val: ZDragNodes | ZCanvasList, nodeMap: ZMap) => {
 	};
 	val.forEach((node) => recursive(node, nodeMap));
 };
-initTreeMap(canvas.value, treeMap);
+initTreeMap(selectCanvas.value.children, treeMap);
+treeMap.set(selectCanvas.value.id, selectCanvas.value);
+watch(
+	() => selectCanvas.value,
+	(val) => {
+		if (val) {
+			treeMap.clear();
+			initTreeMap(selectCanvas.value.children, treeMap);
+			treeMap.set(selectCanvas.value.id, selectCanvas.value);
+		}
+	}
+);
 const getSelectCanvas = () => {
 	return selectCanvas.value;
 };
@@ -275,7 +286,7 @@ const afterMove = (event: MouseEvent) => {
 		},
 		canvasId: () => {
 			if (!node.canvasId) throw new Error("canvasId is not exist");
-			const canvas = treeMap.get(node.canvasId)!;
+			const canvas = selectCanvas.value!;
 			const pages = canvas!.children!.filter((n) => n.type === "page");
 			if (!pages.length) return;
 			const tree = quadtree()

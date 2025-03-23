@@ -7,9 +7,12 @@ import {
 	onMounted,
 	watch,
 	onUnmounted,
+	nextTick,
 } from "vue";
 import ZBtn from "../ZBtn/ZBtn.vue";
 import ZSvgIcon from "../ZSvgIcon/ZSvgIcon.vue";
+import { createCanvas } from "@/common/create";
+import { getId } from "@/common/utils";
 import type { ZCanvasList, ZCanvas, ZDragNode, ZMap } from "@/common/type";
 defineOptions({
 	name: "ZDesign",
@@ -67,6 +70,21 @@ const clearObserver = () => {
 	observe.value.disconnect();
 	observe.value = null;
 };
+const addCanvas = () => {
+	canvas.value.push(createCanvas("canvas-" + getId()));
+};
+const removeCanvas = (id: string) => {
+	if (canvas.value.length === 1) return;
+	let newCanvasList = canvas.value.filter((i) => i.id !== id);
+	// console.log(newCanvasList);
+	canvas.value = newCanvasList;
+	// console.log(id === selectCanvas.value.id, canvas.value);
+	nextTick(() => {
+		if (id === selectCanvas.value.id) {
+			selectCanvas.value = canvas.value[0];
+		}
+	});
+};
 onUnmounted(() => {
 	clearObserver();
 });
@@ -109,21 +127,26 @@ onMounted(() => {
 				</div>
 			</div>
 			<ul class="canvas-list">
-				<ZBtn
-					class="canvas-list-item"
-					v-for="item in canvas"
+				<li
+					class="z-canvas-list-item"
+					v-for="(item, i) in canvas"
 					:key="item.id"
 					@click="select(item)"
-					:color="
-						selectCanvas?.id === item.id
-							? 'primary'
-							: 'text-default'
-					"
+					:class="{
+						active: selectCanvas?.id === item.id,
+					}"
 				>
 					<span>
 						{{ item.label }}
 					</span>
-				</ZBtn>
+					<ZBtn
+						v-if="canvas.length !== 1"
+						@click.stop="removeCanvas(item.id)"
+						color="text-danger"
+						:padding="false"
+						>删除</ZBtn
+					>
+				</li>
 			</ul>
 		</div>
 		<div class="line"></div>
@@ -186,9 +209,10 @@ onMounted(() => {
 			list-style: none;
 			padding: 8px 4px;
 			margin: 0;
-			.canvas-list-item {
+			.z-canvas-list-item {
 				padding: 4px 4px;
-				width: 100%;
+				border-radius: 4px;
+				height: 25px;
 				display: flex;
 				align-items: center;
 				justify-content: space-between;
@@ -196,6 +220,18 @@ onMounted(() => {
 				margin-bottom: 4px;
 				box-shadow: 0px 3px 6px rgba(64, 87, 109, 0.1);
 				border: 1px solid rgb(var(--z-quiet));
+				background: linear-gradient(
+						to right,
+						rgb(var(--z-primary)),
+						rgb(var(--z-primary))
+					)
+					no-repeat right bottom;
+				background-size: 0 1px;
+				transition: background-size 1s;
+				&.active {
+					background-position: left bottom;
+					background-size: 100% 1px;
+				}
 			}
 		}
 	}
