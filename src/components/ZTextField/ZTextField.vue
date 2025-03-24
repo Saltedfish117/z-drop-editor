@@ -2,7 +2,6 @@
 import { ref, computed, defineModel } from "vue";
 import type { ZTextFieldProps } from "./type";
 defineOptions({ name: "ZTextField" });
-
 withDefaults(defineProps<ZTextFieldProps>(), {
   label: "",
   placeholder: "",
@@ -26,7 +25,6 @@ const handleFocus = (event: Event) => {
   isFocused.value = true;
 };
 </script>
-
 <template>
   <div class="ZTextField" :class="{ 'is-disabled': disabled }">
     <div class="text-field-container">
@@ -49,10 +47,8 @@ const handleFocus = (event: Event) => {
       >
         {{ label }}
       </label>
-
       <div class="underline" :class="{ 'underline-active': isFocused }"></div>
     </div>
-
     <transition name="fade">
       <div v-if="error" class="error-message">
         {{ error }}
