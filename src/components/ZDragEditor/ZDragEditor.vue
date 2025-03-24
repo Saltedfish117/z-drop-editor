@@ -796,21 +796,20 @@ onUnmounted(() => {
             <div v-if="selectNode">
               <div class="row">
                 <ZTextField
-                  class="col"
+                  disabled
                   :model-value="selectNode.layout.x"
-                  label="X"
                   placeholder="x轴坐标"
-                  required
-                />
+                >
+                  <template #prefix>X</template>
+                </ZTextField>
                 <ZTextField
-                  class="col"
                   :model-value="selectNode.layout.y"
                   label="Y"
                   placeholder="Y轴坐标"
-                  required
-                />
+                >
+                  <template #prefix>Y</template>
+                </ZTextField>
                 <ZTextField
-                  class="col"
                   :model-value="selectNode.layout.rotate"
                   label="°"
                   placeholder="Y轴坐标"
@@ -835,7 +834,14 @@ onUnmounted(() => {
               </div>
             </div>
           </div>
-          <slot name="right"></slot>
+          <slot
+            :canvas="canvas"
+            :treeMap="treeMap"
+            :selectCanvas="selectCanvas"
+            :selectNode="selectNode"
+            :components="components"
+            name="right"
+          ></slot>
         </template>
       </ZSplitter>
     </div>

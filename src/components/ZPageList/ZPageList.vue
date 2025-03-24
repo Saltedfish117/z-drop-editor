@@ -47,7 +47,6 @@ const removePage = (_: Item, i: number) => {
 <style scoped lang="scss">
 .z-page-list {
   list-style: none;
-  // background-color: rgba(var(--z-quiet), 0.3);
   position: relative;
   padding: 4px 8px;
   margin: 0;
@@ -60,10 +59,8 @@ const removePage = (_: Item, i: number) => {
     border-radius: 4px;
     font-size: var(--z-font-sm);
     min-height: 20px;
-    // border: 1px solid transparent;
-    border: 1px solid rgb(var(--z-quiet));
+    box-shadow: 0 3px 6px rgba(var(--z-quiet), 0.6);
     &.active {
-      // border: 1px solid rgb(var(--z-quiet));
       background: rgba(var(--z-quiet), 0.3);
     }
   }
