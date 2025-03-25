@@ -1,5 +1,5 @@
 export interface ZTextFieldProps {
-  modelValue: string;
+  modelValue?: string | number;
   placeholder?: string;
   disabled?: boolean;
   prefixIcon?: string;

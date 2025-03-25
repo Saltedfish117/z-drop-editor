@@ -30,12 +30,7 @@ const props = withDefaults(defineProps<ZDragProps>(), {
   position: "absolute",
   rotate: true,
 });
-const emits = defineEmits([
-  "update:model",
-  "before-move",
-  "after-move",
-  "moving",
-]);
+const emits = defineEmits(["update:model", "before-move", "after-move", "moving"]);
 const scaleFactor = computed(() => 1 / props.scale);
 const moves = {
   move: (offset: Offset, _layout: ZLayout, start: MoveStart): ZLayout => {
@@ -72,10 +67,7 @@ const resize: Resize = {
       realTimeCoordinates,
       start: { symmetric },
     } = option;
-    const centerCoordinate = getCenterCoordinate(
-      realTimeCoordinates,
-      symmetric
-    );
+    const centerCoordinate = getCenterCoordinate(realTimeCoordinates, symmetric);
     const currentPoint = calculateRotateCoordinate(
       realTimeCoordinates,
       centerCoordinate,
@@ -102,10 +94,7 @@ const resize: Resize = {
       realTimeCoordinates,
       start: { symmetric },
     } = option;
-    const centerCoordinate = getCenterCoordinate(
-      realTimeCoordinates,
-      symmetric
-    );
+    const centerCoordinate = getCenterCoordinate(realTimeCoordinates, symmetric);
     const currentPoint = calculateRotateCoordinate(
       realTimeCoordinates,
       centerCoordinate,
@@ -165,10 +154,7 @@ const resize: Resize = {
       realTimeCoordinates,
       start: { symmetric },
     } = option;
-    const centerCoordinate = getCenterCoordinate(
-      realTimeCoordinates,
-      symmetric
-    );
+    const centerCoordinate = getCenterCoordinate(realTimeCoordinates, symmetric);
     const currentPoint = calculateRotateCoordinate(
       symmetric,
       centerCoordinate,
@@ -195,10 +181,7 @@ const resize: Resize = {
       realTimeCoordinates,
       start: { symmetric },
     } = option;
-    const centerCoordinate = getCenterCoordinate(
-      realTimeCoordinates,
-      symmetric
-    );
+    const centerCoordinate = getCenterCoordinate(realTimeCoordinates, symmetric);
     const currentPoint = calculateRotateCoordinate(
       symmetric,
       centerCoordinate,
@@ -416,17 +399,19 @@ const mousedown = (e: MouseEvent, direction: Direction | Moves) => {
   window.addEventListener("mouseleave", up);
 };
 
-const style = computed((): CSSProperties => {
-  return {
-    position: props.position,
-    left: 0,
-    top: 0,
-    transform: `translate(${model.value.x}px, ${model.value.y}px) rotate(${model.value.rotate}deg) translate3d(0,0,0)`,
-    zIndex: model.value.zIndex + 1,
-    width: model.value.width + "px",
-    height: model.value.height + "px",
-  };
-});
+const style = computed(
+  (): CSSProperties => {
+    return {
+      position: props.position,
+      left: 0,
+      top: 0,
+      transform: `translate(${model.value.x}px, ${model.value.y}px) rotate(${model.value.rotate}deg) translate3d(0,0,0)`,
+      zIndex: model.value.zIndex + 1,
+      width: model.value.width + "px",
+      height: model.value.height + "px",
+    };
+  }
+);
 const points: Points = [
   {
     direction: "n-resize",
@@ -518,9 +503,7 @@ const createPoints = () => {
   const rotate = (model.value.rotate + 360) % 360;
   points.forEach((point) => {
     const angle =
-      (initialAngle[
-        point.direction.split("-")[0] as keyof typeof initialAngle
-      ] +
+      (initialAngle[point.direction.split("-")[0] as keyof typeof initialAngle] +
         rotate) %
       360;
     return angle < 23 || angle >= 338

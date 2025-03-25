@@ -1,33 +1,27 @@
 <script lang="ts">
 import { defineComponent, computed, h, getCurrentInstance } from "vue";
 import type { PropType } from "vue";
-// import {getId} from ''
-interface TreeNode {
-  id: string;
-  label: string;
-  children?: TreeNode[];
-  isExpanded?: boolean;
-  isSelected?: boolean;
-}
+import type { ZTreeNode } from "./type";
+import ZSvgIcon from "../ZSvgIcon/ZSvgIcon.vue";
 export default defineComponent({
   name: "ZTree",
   props: {
     nodes: {
-      type: Array as PropType<TreeNode[]>,
+      type: Array as PropType<ZTreeNode[]>,
       required: true,
     },
     select: {
-      type: Object as PropType<TreeNode>,
+      type: Object as PropType<ZTreeNode>,
     },
   },
   emits: ["update:select"],
   setup(props, ctx) {
-    const scopedId = getCurrentInstance()!.type.__scopeId;
-    const setSelect = (item: TreeNode) => {
-      console.log(item);
+    const scopedId = (getCurrentInstance()!.type as { __scopeId: string }).__scopeId;
+    const setSelect = (item: ZTreeNode) => {
+      // console.log(item);
       ctx.emit("update:select", item);
     };
-    const renderNode = (node: TreeNode) => {
+    const renderNode = (node: ZTreeNode) => {
       if (node.children && node.children.length) {
         return h(
           "div",
@@ -48,32 +42,59 @@ export default defineComponent({
                       "z-tree-item": true,
                       active: node.id === props.select?.id,
                     },
-                    onClick: () => {
-                      console.log("click");
-                      setSelect(node);
-                    },
+
                     [scopedId]: true,
                   },
                   {
                     default: () => {
-                      return node.label;
+                      return [
+                        h(ZSvgIcon, {
+                          name: node.isExpanded ? "xiangxia-xian" : "xiangyou-xian",
+                          size: "sm",
+                          onClick: () => {
+                            node.isExpanded = !node.isExpanded;
+                          },
+                        }),
+                        h(
+                          "div",
+                          {
+                            onClick: () => {
+                              setSelect(node);
+                            },
+                            class: "text",
+                          },
+                          node.label
+                        ),
+                        h(
+                          "div",
+                          {
+                            class: "icons",
+                            [scopedId]: true,
+                          },
+                          {
+                            default: () => [],
+                          }
+                        ),
+                      ];
                     },
                   }
                 ),
-                h(
-                  "div",
-                  {
-                    class: {
-                      "z-tree-group-content": true,
-                    },
-                    [scopedId]: true,
-                  },
-                  {
-                    default: () => {
-                      return node.children.map((item) => renderNode(item));
-                    },
-                  }
-                ),
+                node.isExpanded
+                  ? h(
+                      "div",
+                      {
+                        class: {
+                          "z-tree-group-content": true,
+                        },
+                        [scopedId]: true,
+                      },
+                      {
+                        default: () => {
+                          return node.children!.map((item) => renderNode(item));
+                        },
+                      }
+                    )
+                  : undefined,
               ];
             },
           }
@@ -91,7 +112,35 @@ export default defineComponent({
           },
           {
             default: () => {
-              return node.label;
+              return [
+                // h(ZSvgIcon, {
+                //   name: node.isExpanded ? "xiangxia-xian" : "xiangyou-xian",
+                //   size: "sm",
+                //   onClick: () => {
+                //     node.isExpanded = !node.isExpanded;
+                //   },
+                // }),
+                h(
+                  "div",
+                  {
+                    onClick: () => {
+                      setSelect(node);
+                    },
+                    class: "text",
+                  },
+                  node.label
+                ),
+                h(
+                  "div",
+                  {
+                    class: "icons",
+                    [scopedId]: true,
+                  },
+                  {
+                    default: () => [],
+                  }
+                ),
+              ];
             },
           }
         );
@@ -123,17 +172,26 @@ export default defineComponent({
 <style scoped lang="scss">
 .z-tree {
   padding: 4px 8px;
+  font-size: var(--z-font-sm);
   .z-tree-item {
     display: flex;
     align-items: center;
     cursor: pointer;
     padding: 4px 8px;
     border-radius: 4px;
+    gap: 4px;
+    user-select: none;
     &.active {
       background: rgba(var(--z-quiet), 0.6);
     }
     &:hover {
       background: rgba(var(--z-quiet), 0.3);
+    }
+    .icons {
+      align-self: flex-end;
+    }
+    .text {
+      flex: 1;
     }
   }
   .z-tree-group {
@@ -144,9 +202,7 @@ export default defineComponent({
     }
   }
   .z-tree-group-content {
-    & > .z-tree-item {
-      padding-left: 20px;
-    }
+    padding-left: 20px;
   }
 }
 </style>

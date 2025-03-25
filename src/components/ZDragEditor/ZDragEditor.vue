@@ -1,3 +1,15 @@
+<script lang="ts">
+const ZDesign = defineAsyncComponent(() => import("../ZDesign/ZDesign.vue"));
+const ZMaterialList = defineAsyncComponent(
+  () => import("../ZMaterialList/ZMaterialList.vue")
+);
+export default {
+  components: {
+    ZDesign,
+    ZMaterialList,
+  },
+};
+</script>
 <script setup lang="ts">
 import {
   defineOptions,
@@ -9,19 +21,27 @@ import {
   ref,
   withDefaults,
   computed,
-  nextTick,
   onMounted,
   defineProps,
 } from "vue";
-import { quadtree, text } from "d3";
+import { quadtree } from "d3";
+import { calculateMousedownPosition, serializer, getId } from "@/common/utils";
+import { createCanvas } from "@/common/create";
+import type {
+  ZDragNode,
+  ZDragNodes,
+  ZLayout,
+  ZCanvasList,
+  ZCanvas,
+  ZMap,
+} from "@/common/type";
+import type { CanvasExtension } from "../ZDragEditorCanvas/type";
+import ZArea from "../ZArea/ZArea.vue";
 const ZDragEditorCanvas = defineAsyncComponent(
   () => import("../ZDragEditorCanvas/ZDragEditorCanvas.vue")
 );
 const ZToolbar = defineAsyncComponent(() => import("../ZToolbar/ZToolbar.vue"));
-const ZMaterialList = defineAsyncComponent(
-  () => import("../ZMaterialList/ZMaterialList.vue")
-);
-const ZDesign = defineAsyncComponent(() => import("../ZDesign/ZDesign.vue"));
+
 const ZTextField = defineAsyncComponent(() => import("../ZTextField/ZTextField.vue"));
 const ContextMenu = defineAsyncComponent(
   () => import("../ZContextMenu/ZContextMenu.vue")
@@ -34,16 +54,7 @@ const ZBtn = defineAsyncComponent(() => import("@/components/ZBtn/ZBtn.vue"));
 const ZSvgIcon = defineAsyncComponent(() => import("@/components/ZSvgIcon/ZSvgIcon.vue"));
 const ZDrag = defineAsyncComponent(() => import("../ZDrag/ZDrag.vue"));
 const ZNode = defineAsyncComponent(() => import("../ZNode/ZNode.vue"));
-import { calculateMousedownPosition, serializer, getId } from "@/common/utils";
-import { createCanvas } from "@/common/create";
-import type {
-  ZDragNode,
-  ZDragNodes,
-  ZLayout,
-  ZCanvasList,
-  ZCanvas,
-  ZMap,
-} from "@/common/type";
+
 defineOptions({
   name: "ZDragEditor",
 });
@@ -59,10 +70,24 @@ const props = withDefaults(
     components: ZDragNodes;
     customizeMenu?: boolean;
     menus?: ZMenus;
+    canvasExtension?: CanvasExtension;
+    splitter?: {
+      leftHidden: boolean;
+      rightHidden: boolean;
+      leftMinWidth: number;
+      rightMinWidth: number;
+    };
   }>(),
   {
     customizeMenu: false,
     menus: () => [],
+    canvasExtension: () => ({}),
+    splitter: () => ({
+      leftHidden: false,
+      rightHidden: false,
+      leftMinWidth: 200,
+      rightMinWidth: 200,
+    }),
   }
 );
 const withMenus = computed(() => {
@@ -74,13 +99,13 @@ const withMenus = computed(() => {
         icon: "design",
         text: "设计",
         name: "design",
-        component: ZDesign,
+        component: "ZDesign",
       },
       {
         icon: "material",
         text: "素材",
         name: "material",
-        component: ZMaterialList,
+        component: "ZMaterialList",
       },
       ...props.menus,
     ];
@@ -109,10 +134,10 @@ const hijackNodeAxis = computed({
       const containerId = selectNode.value[relative];
 
       if (!containerId) throw new Error("relative container is not exist");
-      console.log(treeMap.has(containerId));
+      // console.log(treeMap.has(containerId));
       if (treeMap.has(containerId) && treeMap.get(containerId)!.type !== "canvas") {
         const container = treeMap.get(containerId)!;
-        console.log(container);
+        // console.log(container);
         const hijack = { ...selectNode.value.layout };
         hijack.x = container.layout.x + hijack.x;
         hijack.y = container.layout.y + hijack.y;
@@ -226,6 +251,7 @@ const addNode = (
 };
 const beforeMove = (event: MouseEvent) => {};
 const afterMove = (event: MouseEvent) => {
+  // console.log("afterMove", d);
   if (!selectNode.value) return;
   const node = selectNode.value;
   if (node.type === "page") return;
@@ -704,7 +730,7 @@ onUnmounted(() => {
           <span class="text">{{ item.text }}</span>
         </li>
       </ul>
-      <ZSplitter class="z-splitter">
+      <ZSplitter :right-min-width="230" class="z-splitter">
         <template #left>
           <div v-if="!$slots.left" class="z-left-content">
             <KeepAlive :max="5">
@@ -755,15 +781,16 @@ onUnmounted(() => {
             <ZDragEditorCanvas
               v-if="selectCanvas"
               v-model="selectCanvas.layout"
-              :nodes="selectCanvas.children"
               v-model:mode="selectCanvas.mode"
+              v-bind="canvasExtension"
               ref="editorCanvasRef"
               @dragover="canvasDragover"
               @drop="drop"
               @mousedown.stop="setSelectNode()"
             >
-              <template #default="{ canvas }">
+              <template #default="{ canvas, wrapper }">
                 <div style="position: absolute; top: 0; left: 0">
+                  <ZArea :wrapper="wrapper" :canvas="canvas"></ZArea>
                   <ZDrag
                     v-if="selectNode"
                     v-model="hijackNodeAxis"
@@ -792,48 +819,6 @@ onUnmounted(() => {
           <slot name="center"></slot>
         </template>
         <template #right>
-          <div v-if="!$slots.right" class="z-right-content">
-            <div v-if="selectNode">
-              <div class="row">
-                <ZTextField
-                  disabled
-                  :model-value="selectNode.layout.x"
-                  placeholder="x轴坐标"
-                >
-                  <template #prefix>X</template>
-                </ZTextField>
-                <ZTextField
-                  :model-value="selectNode.layout.y"
-                  label="Y"
-                  placeholder="Y轴坐标"
-                >
-                  <template #prefix>Y</template>
-                </ZTextField>
-                <ZTextField
-                  :model-value="selectNode.layout.rotate"
-                  label="°"
-                  placeholder="Y轴坐标"
-                  required
-                />
-              </div>
-              <div class="row">
-                <ZTextField
-                  class="col"
-                  :model-value="selectNode.layout.width"
-                  label="宽"
-                  placeholder="x轴坐标"
-                  required
-                />
-                <ZTextField
-                  class="col"
-                  :model-value="selectNode.layout.height"
-                  label="高"
-                  placeholder="Y轴坐标"
-                  required
-                />
-              </div>
-            </div>
-          </div>
           <slot
             :canvas="canvas"
             :treeMap="treeMap"
@@ -842,6 +827,7 @@ onUnmounted(() => {
             :components="components"
             name="right"
           ></slot>
+          <!-- <div class="z-right-content"></div> -->
         </template>
       </ZSplitter>
     </div>
@@ -951,11 +937,23 @@ onUnmounted(() => {
     height: 100%;
     overflow: hidden;
   }
-  .z-right-content {
-    // padding: 8px 16px;
-    height: 100%;
-    width: 100%;
-  }
+  // .z-right-content {
+  //   //
+  //   height: 100%;
+  //   width: 100%;
+  //   .text-field-row {
+  //     padding: 8px 16px;
+  //     display: grid;
+  //     grid-template-columns: repeat(3, 1fr);
+  //     gap: 4px;
+  //     flex-wrap: wrap;
+  //     .col {
+  //       min-width: 50px;
+  //       // width: 33.33%;
+  //       font-size: 12px;
+  //     }
+  //   }
+  // }
 }
 .z-canvas-context-menu {
   list-style: none;

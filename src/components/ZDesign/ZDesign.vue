@@ -8,8 +8,6 @@ import {
   watch,
   onUnmounted,
   nextTick,
-  h,
-  defineComponent,
 } from "vue";
 import ZBtn from "../ZBtn/ZBtn.vue";
 import ZSvgIcon from "../ZSvgIcon/ZSvgIcon.vue";
@@ -19,18 +17,33 @@ import ZTree from "../ZTree/ZTree.vue";
 import ZPageList from "../ZPageList/ZPageList.vue";
 // import ZCanvasList from "../ZCanvasList/ZCanvasList.vue";
 import type { ZCanvasList, ZCanvas, ZDragNode, ZMap } from "@/common/type";
+import ZTextField from "../ZTextField/ZTextField.vue";
+import type { ZTreeNode } from "../ZTree/type";
 defineOptions({
   name: "ZDesign",
+  directives: {
+    "auto-focus": {
+      updated(el) {
+        const child = el.querySelector("input");
+        child.focus();
+        // child.select();
+      },
+    },
+  },
 });
-const canvas = defineModel<ZCanvasList>("canvas", {
+interface CanvasItem extends ZCanvas {
+  editor: boolean;
+}
+type CanvasList = CanvasItem[];
+const canvas = defineModel<CanvasList>("canvas", {
   required: true,
 });
-const selectCanvas = defineModel<ZCanvas>("selectCanvas", {
+const selectCanvas = defineModel<CanvasItem>("selectCanvas", {
   required: true,
 });
 const selectNode = defineModel<ZDragNode>("selectNode");
 const treeMap = defineModel<ZMap>("treeMap");
-const select = (canvasItem: ZCanvas) => {
+const select = (canvasItem: CanvasItem) => {
   selectCanvas.value = canvasItem;
   selectNode.value = undefined;
 };
@@ -97,52 +110,7 @@ const removeCanvas = (id: string) => {
 const setSelect = (item: ZDragNode) => {
   selectNode.value = item;
 };
-const removePage = (item: ZDragNode, index: number) => {};
-// const NodeTree = defineComponent({
-//   name: "NodeTree",
-//   setup(props) {
-//     const { treeMap, selectNode, children } = defineProps<{
-//       treeMap: ZMap;
-//       selectNode: ZDragNode;
-//     }>();
-//     const recursive = (node: ZDragNode, nodeMap: ZMap) => {
-//       if (node.children && node.children.length) {
-//         return h(
-//           "ul",
-//           { class: "z-design-tree-group" },
-//           {
-//             default: () =>
-//               node.children!.forEach((child) => recursive(child, nodeMap)),
-//           }
-//         );
-//       } else {
-//         return h(
-//           "li",
-//           { class: "z-design-tree-item" },
-//           {
-//             default: () =>
-//               h(
-//                 "div",
-//                 { class: "z-design-tree-item-content" },
-//                 {
-//                   default: () => [
-//                     h("div", { class: "z-design-tree-item-content-left" }),
-//                     h(
-//                       "div",
-//                       { class: "z-design-tree-item-content-right" },
-//                       {
-//                         default: () => [],
-//                       }
-//                     ),
-//                   ],
-//                 }
-//               ),
-//           }
-//         );
-//       }
-//     };
-//   },
-// });
+const removePage = (item: ZDragNode | ZCanvas, index: number) => {};
 onUnmounted(() => {
   clearObserver();
 });
@@ -165,6 +133,15 @@ watch(
     }
   }
 );
+const editorLabel = (item: CanvasItem, label: string = "") => {
+  item.editor = false;
+  if (!label.trim()) return;
+  const node = treeMap.value?.get(item.id);
+  if (node) {
+    node.label = label;
+  }
+};
+
 onMounted(() => {
   createObserver(tabItemRefs.value[0]);
   tabSlider.value.width = tabItemRefs.value[0].offsetWidth;
@@ -193,10 +170,18 @@ onMounted(() => {
           :class="{
             active: selectCanvas?.id === item.id,
           }"
+          @dblclick="item.editor = true"
         >
-          <span>
+          <span v-show="!item.editor">
             {{ item.label }}
           </span>
+          <!---->
+          <ZTextField
+            v-show="item.editor"
+            v-auto-focus
+            :model-value="item.label"
+            @blur="editorLabel(item, $event.target.value)"
+          ></ZTextField>
           <ZBtn
             v-if="canvas.length !== 1"
             @click.stop="removeCanvas(item.id)"
@@ -237,7 +222,7 @@ onMounted(() => {
         <div class="z-design-page" v-show="selectTab === 'page'">
           <div class="z-design-page-form">
             <div class="textfield">
-              <input v-model.trim="filterPage" placeholder="页面名称" />
+              <ZTextField v-model.trim="filterPage" placeholder="页面名称" />
             </div>
             <div class="icons">
               <ZBtn :padding="false" color="text-default">
@@ -245,17 +230,20 @@ onMounted(() => {
               </ZBtn>
             </div>
           </div>
-          <ZPageList :list="pages" v-model:select="selectNode"></ZPageList>
+          <ZPageList
+            :list="pages as ZTreeNode[]"
+            v-model:select="selectNode as ZTreeNode"
+          ></ZPageList>
         </div>
         <div class="z-design-nodes" v-show="selectTab === 'nodes'">
-          <div class="z-design-nodes-form">
+          <!-- <div class="z-design-nodes-form">
             <div class="textfield">
               <input v-model.trim="filterPage" placeholder="名称" />
             </div>
-          </div>
+          </div> -->
           <ZTree
-            v-model:nodes="selectCanvas.children"
-            v-model:select="selectNode"
+            v-model:nodes="selectCanvas.children as ZTreeNode[]"
+            v-model:select="selectNode as ZTreeNode"
           ></ZTree>
         </div>
       </div>
@@ -306,6 +294,7 @@ onMounted(() => {
         // border: 1px solid rgb(var(--z-quiet));
         position: relative;
         background-color: rgba(var(--z-page), 1);
+        user-select: none;
         &::before {
           content: "";
           position: absolute;
@@ -397,18 +386,18 @@ onMounted(() => {
         gap: 8px;
         .textfield {
           flex: 1;
-          input {
-            width: 100%;
-            box-sizing: border-box;
-            outline: none;
-            border-radius: 4px;
-            border: 1px solid rgb(var(--z-quiet));
-            font-size: var(--z-font-sm);
-            padding: 4px 8px;
-            &:focus {
-              border: 1px solid rgb(var(--z-primary));
-            }
-          }
+          // input {
+          //   width: 100%;
+          //   box-sizing: border-box;
+          //   outline: none;
+          //   border-radius: 4px;
+          //   border: 1px solid rgb(var(--z-quiet));
+          //   font-size: var(--z-font-sm);
+          //   padding: 4px 8px;
+          //   &:focus {
+          //     border: 1px solid rgb(var(--z-primary));
+          //   }
+          // }
         }
         .icons {
           min-width: 30px;

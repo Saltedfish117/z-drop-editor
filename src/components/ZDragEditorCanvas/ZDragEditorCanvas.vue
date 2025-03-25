@@ -1,7 +1,12 @@
 <script setup lang="ts">
 import type { CSSProperties, ComponentPublicInstance } from "vue";
-import type { ZNodeMap, ZModeHandler, ZModeExtension } from "./type";
-import type { ZDragNodes, ZDragNode } from "@/common/type";
+import type {
+  ZCanvas,
+  ZModeHandler,
+  ZModeExtension,
+  KeyModeExtension,
+  ZDragEditorCanvasProps,
+} from "./type";
 import {
   ref,
   onMounted,
@@ -12,34 +17,28 @@ import {
   defineProps,
   onUnmounted,
   defineExpose,
+  defineEmits,
 } from "vue";
 import * as d3 from "d3";
 defineOptions({
   name: "ZDragEditorCanvas",
   directives: {},
 });
-const props = withDefaults(
-  defineProps<{
-    modeExtension?: ZModeExtension;
-  }>(),
-  {
-    modeExtension: () => [] as ZModeExtension,
-  }
-);
+const props = withDefaults(defineProps<ZDragEditorCanvasProps>(), {
+  modeExtension: () => [] as ZModeExtension,
+  keydownModeExtension: () => [] as KeyModeExtension,
+  keyupModeExtension: () => [] as KeyModeExtension,
+});
 // 画布容器引用
-const instance = getCurrentInstance()?.proxy as ComponentPublicInstance;
+const instance = getCurrentInstance()?.proxy as ComponentPublicInstance<
+  ZDragEditorCanvasProps,
+  {},
+  {}
+>;
 const wrapper = ref<HTMLElement | null>(null);
 const infiniteCanvas = ref<HTMLElement | null>(null);
 defineExpose({ wrapper, infiniteCanvas });
-const model = defineModel<{
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-  scale: number;
-  pointerEvents?: CSSProperties["pointerEvents"];
-  cursor?: CSSProperties["cursor"];
-}>({
+const model = defineModel<ZCanvas>({
   required: true,
 });
 const mode = defineModel<string>("mode", {
@@ -50,10 +49,10 @@ const modeLock = defineModel<boolean>("modeLock", {
 });
 const modeHandler: ZModeHandler = {
   select: {
-    mounted(instance, els, d3) {
+    mounted(_instance, _els, _d3) {
       console.log("select mounted");
     },
-    unmounted(instance, els, d3) {
+    unmounted(_instance, _els, _d3) {
       console.log("select unmounted");
     },
   },
@@ -98,6 +97,7 @@ const modeHandler: ZModeHandler = {
       els.wrapper.addEventListener("mousedown", down);
       wrapperD3.call(zoom);
       wrapperD3.on("dblclick.zoom", null);
+      wrapperD3.on("wheel.zoom", null);
       instance.$emit("update:modelValue", {
         ...instance.modelValue,
         pointerEvents: "none",
@@ -130,26 +130,24 @@ const modeHandler: ZModeHandler = {
     },
   },
   scale: {
-    mounted(instance, els, d3) {
+    mounted(instance, els, _d3) {
       const zoomOut = () => {
         if (instance.modelValue.scale - 0.1 < 0.1) return;
         instance.$emit("update:modelValue", {
           ...instance.modelValue,
-          scale: Number.parseFloat(
-            (instance.modelValue.scale - 0.1).toFixed(1)
-          ),
+          scale: Number.parseFloat((instance.modelValue.scale - 0.1).toFixed(1)),
         });
       };
       const zoomIn = () => {
         if (instance.modelValue.scale + 0.1 > 5) return;
         instance.$emit("update:modelValue", {
           ...instance.modelValue,
-          scale: Number.parseFloat(
-            (instance.modelValue.scale + 0.1).toFixed(1)
-          ),
+          scale: Number.parseFloat((instance.modelValue.scale + 0.1).toFixed(1)),
         });
       };
       const mousewheel = (e: WheelEvent) => {
+        e.stopPropagation();
+        e.preventDefault();
         // 判断是不是按下ctrl键
         if (e.ctrlKey) {
           // 取消浏览器默认的放大缩小网页行为
@@ -270,13 +268,23 @@ watch(
     );
   }
 );
+const scrollWheel = (event: WheelEvent) => {
+  if (mode.value === "scale") return;
+  model.value.y -= event.deltaY / 2;
+};
 onMounted(() => {
   document.addEventListener("keydown", keydown);
   document.addEventListener("keyup", keyup);
+  if (wrapper.value) {
+    wrapper.value.addEventListener("wheel", scrollWheel);
+  }
 });
 onUnmounted(() => {
   document.removeEventListener("keydown", keydown);
   document.removeEventListener("keyup", keyup);
+  if (wrapper.value) {
+    wrapper.value.removeEventListener("wheel", scrollWheel);
+  }
 });
 </script>
 <template>
@@ -294,7 +302,7 @@ onUnmounted(() => {
       class="infinite-canvas"
       ref="infiniteCanvas"
     >
-      <slot :canvas="infiniteCanvas"></slot>
+      <slot :wrapper="wrapper" :canvas="infiniteCanvas"></slot>
     </article>
   </div>
 </template>
@@ -307,32 +315,11 @@ onUnmounted(() => {
   width: 100%;
   height: 100%;
   max-height: 100%;
-  // 隐藏滚动条
-  &::-webkit-scrollbar {
-    // background: transparent;
-    width: 8px;
-    height: 8px;
-  }
-  &::-webkit-scrollbar-thumb {
-    background: #a7a7a7;
-    border-radius: 8px;
-  }
-  &.hidden-scrollbar {
-    scrollbar-width: none; /* Firefox */
-    -ms-overflow-style: none; /* IE/Edge */
-    &::-webkit-scrollbar {
-      display: none;
-      width: 0;
-      height: 0;
-      background: transparent;
-    }
-  }
   .infinite-canvas {
     position: relative;
     min-width: 100%;
     min-height: 100%;
     background-color: rgb(var(--canvas-bg-color));
-    // border: 1px solid;
   }
 }
 </style>

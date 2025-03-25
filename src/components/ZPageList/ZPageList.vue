@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { defineOptions, defineProps, defineModel } from "vue";
+import { defineOptions, defineEmits, defineModel } from "vue";
 import ZBtn from "../ZBtn/ZBtn.vue";
+import ZSvgIcon from "../ZSvgIcon/ZSvgIcon.vue";
 defineOptions({
   name: "ZPageList",
 });
@@ -8,6 +9,7 @@ interface Item {
   label: string;
   id: string;
 }
+const emits = defineEmits(["remove"]);
 const select = defineModel<Item>("select");
 const list = defineModel<Item[]>("list", {
   required: true,
@@ -15,11 +17,8 @@ const list = defineModel<Item[]>("list", {
 const setSelect = (item: Item) => {
   select.value = item;
 };
-const removePage = (_: Item, i: number) => {
-  list.splice(i, 1);
-  // if (select?.id === item.id) {
-  //   select.value = list[0];
-  // }
+const removePage = (item: Item, i: number) => {
+  emits("remove", item);
 };
 </script>
 <template>
@@ -39,8 +38,8 @@ const removePage = (_: Item, i: number) => {
         @click.stop="removePage(item, i)"
         color="text-danger"
         :padding="false"
-        >删除</ZBtn
-      >
+        ><ZSvgIcon size="sm" name="shanchu_1"></ZSvgIcon
+      ></ZBtn>
     </li>
   </ul>
 </template>
@@ -59,9 +58,15 @@ const removePage = (_: Item, i: number) => {
     border-radius: 4px;
     font-size: var(--z-font-sm);
     min-height: 20px;
-    box-shadow: 0 3px 6px rgba(var(--z-quiet), 0.6);
+    margin-bottom: 8px;
+    box-shadow: 0 1px 3px rgba(var(--z-quiet), 0.6);
+    cursor: pointer;
     &.active {
-      background: rgba(var(--z-quiet), 0.3);
+      background: rgba(var(--z-quiet), 0.2);
+      // background-color: rgb(var(--z-page));
+    }
+    &:hover {
+      // background: rgba(var(--z-quiet), 0.1);
     }
   }
 }
