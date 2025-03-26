@@ -9,11 +9,14 @@ export interface MoveStart extends Omit<ZLayout, "zIndex" | "lock"> {
   point: ZAxis;
 }
 export interface ZDragProps {
-  position: "absolute" | "fixed";
+  position?: "absolute" | "fixed";
   scale: number;
   active: boolean;
   rotate?: boolean;
   container: HTMLElement;
+  hasLock?: boolean;
+  hasRotate?: boolean;
+  lockRatio?: boolean;
 }
 export type Direction =
   | "n-resize"

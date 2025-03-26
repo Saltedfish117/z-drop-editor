@@ -24,8 +24,13 @@ import {
   onMounted,
   defineProps,
 } from "vue";
-import { quadtree } from "d3";
-import { calculateMousedownPosition, serializer, getId } from "@/common/utils";
+// import { quadtree } from "d3";
+import {
+  calculateMousedownPosition,
+  serializer,
+  getId,
+  whetherToMoveInAndOut,
+} from "@/common/utils";
 import { createCanvas } from "@/common/create";
 import type {
   ZDragNode,
@@ -68,7 +73,6 @@ type ZMenus = ZMenuItem[];
 const props = withDefaults(
   defineProps<{
     components: ZDragNodes;
-    customizeMenu?: boolean;
     menus?: ZMenus;
     canvasExtension?: CanvasExtension;
     splitter?: {
@@ -79,8 +83,6 @@ const props = withDefaults(
     };
   }>(),
   {
-    customizeMenu: false,
-    menus: () => [],
     canvasExtension: () => ({}),
     splitter: () => ({
       leftHidden: false,
@@ -88,13 +90,7 @@ const props = withDefaults(
       leftMinWidth: 200,
       rightMinWidth: 200,
     }),
-  }
-);
-const withMenus = computed(() => {
-  if (props.customizeMenu) {
-    return props.menus;
-  } else {
-    return [
+    menus: () => [
       {
         icon: "design",
         text: "设计",
@@ -107,11 +103,10 @@ const withMenus = computed(() => {
         name: "material",
         component: "ZMaterialList",
       },
-      ...props.menus,
-    ];
+    ],
   }
-});
-const selectMenu = ref(withMenus.value[0]);
+);
+const selectMenu = ref(props.menus[0]);
 const setSelectMenu = (menu: ZMenuItem) => {
   selectMenu.value = menu;
 };
@@ -132,12 +127,9 @@ const hijackNodeAxis = computed({
     if (selectNode.value && selectNode.value.relative) {
       const relative = selectNode.value.relative;
       const containerId = selectNode.value[relative];
-
       if (!containerId) throw new Error("relative container is not exist");
-      // console.log(treeMap.has(containerId));
       if (treeMap.has(containerId) && treeMap.get(containerId)!.type !== "canvas") {
         const container = treeMap.get(containerId)!;
-        // console.log(container);
         const hijack = { ...selectNode.value.layout };
         hijack.x = container.layout.x + hijack.x;
         hijack.y = container.layout.y + hijack.y;
@@ -213,7 +205,7 @@ const addNode = (
     selectCanvas.value.layout.scale
   );
   const container = treeMap.get(data.containerId);
-  console.log("drop", container);
+  // console.log("drop", container);
   if (!container) return;
   const node = { ...data.node };
   node.id = getId();
@@ -249,75 +241,12 @@ const addNode = (
   addMode[container.type as keyof typeof addMode]();
   treeMap.set(node.id, node);
 };
-const beforeMove = (event: MouseEvent) => {};
-const afterMove = (event: MouseEvent) => {
-  // console.log("afterMove", d);
+const beforeMove = (_: MouseEvent) => {};
+const afterMove = (_: MouseEvent) => {
   if (!selectNode.value) return;
-  const node = selectNode.value;
-  if (node.type === "page") return;
-  const { x, y, width, height } = node.layout;
-  const moveEndMode = {
-    pageId: () => {
-      if (!node.canvasId) throw new Error("canvasId is not exist");
-      const canvas = treeMap.get(node.canvasId)!;
-      if (!node.pageId) throw new Error("canvasId is not exist");
-      const page = treeMap.get(node.pageId)!;
-      if (
-        (x < 0 && Math.abs(x) >= width) ||
-        (y < 0 && Math.abs(y) >= height) ||
-        x > page.layout.width ||
-        y > page.layout.height
-      ) {
-        node.relative = "canvasId";
-        delete node.pageId;
-        node.parentId = canvas.id;
-        node.layout = {
-          ...node.layout,
-          x: x + page.layout.x,
-          y: y + page.layout.y,
-        };
-        let pageChildren = page.children ?? [];
-        pageChildren = pageChildren.filter((n) => n.id !== node.id);
-        page.children = pageChildren;
-        canvas.children?.push(node);
-      }
-    },
-    canvasId: () => {
-      if (!node.canvasId) throw new Error("canvasId is not exist");
-      const canvas = selectCanvas.value!;
-      const pages = canvas!.children!.filter((n) => n.type === "page");
-      if (!pages.length) return;
-      const tree = quadtree()
-        .x((p) => p.layout.x)
-        .y((p) => p.layout.y)
-        .addAll(pages);
-      const page = tree.find(x, y);
-      if (!page) return;
-      if (
-        x > page.layout.x &&
-        x + width < page.layout.x + page.layout.width &&
-        y > page.layout.y &&
-        y + height < page.layout.y + page.layout.height
-      ) {
-        console.log("move to page", page);
-        node.pageId = page.id;
-        node.relative = "pageId";
-        let canvasChildren = canvas.children ?? [];
-        canvasChildren = canvasChildren.filter((n) => n.id !== node.id);
-        canvas.children = canvasChildren;
-        node.layout = {
-          ...node.layout,
-          x: x - page.layout.x,
-          y: y - page.layout.y,
-        };
-        page.children.push(node);
-      }
-      // console.log(tree.find(x, y));
-    },
-  };
-  moveEndMode[node.relative as keyof typeof moveEndMode]();
+  whetherToMoveInAndOut(selectNode.value, treeMap, selectCanvas.value);
 };
-const moving = (event: MouseEvent) => {};
+const moving = (_: MouseEvent) => {};
 const canvasDragover = (event: DragEvent) => {
   event.preventDefault();
   event.stopPropagation();
@@ -718,7 +647,7 @@ onUnmounted(() => {
     <div v-if="!$slots.default" class="z-editor-content">
       <ul class="z-editor-menu">
         <li
-          v-for="item in withMenus"
+          v-for="item in menus"
           :key="item.name"
           class="z-editor-menu-item"
           :class="{
@@ -789,8 +718,24 @@ onUnmounted(() => {
               @mousedown.stop="setSelectNode()"
             >
               <template #default="{ canvas, wrapper }">
+                <ZNode
+                  v-for="(node, index) in selectCanvas.children"
+                  :key="node.id"
+                  v-model="selectCanvas.children[index]"
+                  @select="setSelectNode"
+                  @mousedown.stop="setSelectNode(selectCanvas.children[index])"
+                  @drop="drop"
+                ></ZNode>
                 <div style="position: absolute; top: 0; left: 0">
-                  <ZArea :wrapper="wrapper" :canvas="canvas"></ZArea>
+                  <ZArea
+                    :wrapper="wrapper"
+                    :canvas="canvas"
+                    :scale="selectCanvas.layout.scale"
+                    :nodes="selectCanvas.children"
+                    :treeMap="treeMap"
+                    :select-canvas="selectCanvas"
+                    :select-node="selectNode"
+                  ></ZArea>
                   <ZDrag
                     v-if="selectNode"
                     v-model="hijackNodeAxis"
@@ -801,18 +746,10 @@ onUnmounted(() => {
                     :container="(canvas as HTMLElement)"
                     :scale="selectCanvas.layout.scale"
                     :active="Boolean(selectNode)"
-                    :rotate="selectNode.rotate"
+                    :rotate="selectNode.hasRotate"
                   >
                   </ZDrag>
                 </div>
-                <ZNode
-                  v-for="(node, index) in selectCanvas.children"
-                  :key="node.id"
-                  v-model="selectCanvas.children[index]"
-                  @select="setSelectNode"
-                  @mousedown.stop="setSelectNode(selectCanvas.children[index])"
-                  @drop="drop"
-                ></ZNode>
               </template>
             </ZDragEditorCanvas>
           </div>
@@ -827,7 +764,6 @@ onUnmounted(() => {
             :components="components"
             name="right"
           ></slot>
-          <!-- <div class="z-right-content"></div> -->
         </template>
       </ZSplitter>
     </div>

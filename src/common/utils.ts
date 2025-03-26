@@ -1,5 +1,6 @@
 import type { App, Plugin } from "vue";
 import type { ZLayout, ZDragNode } from "@/common/type";
+import { quadtree } from "d3";
 export const getId = () => {
   return (
     "id-" +
@@ -71,27 +72,81 @@ export const calculateGroupLayout = (nodes: ZDragNode[]) => {
   const layouts = nodes.map((kid) => {
     return rotateLayout(kid.layout);
   });
-  const xs = layouts.map((kid) => kid.x);
-  const ys = layouts.map((kid) => kid.y);
-  const is = layouts.map((kid) => kid.zIndex);
-  const mw = layouts.reduce((prev, curr) => {
-    return prev.x + prev.width > curr.x + curr.width ? prev : curr;
-  });
-  const mh = layouts.reduce((prev, curr) => {
-    return prev.y + prev.height > curr.y + curr.height ? prev : curr;
-  });
-  const x = Math.min(...xs);
-  const y = Math.min(...ys);
-  const w = mw.x + mw.width - x;
-  const h = mh.y + mh.height - y;
-  const z = Math.max(...is);
+  const x = Math.min(...layouts.map((item) => item.x));
+  const y = Math.min(...layouts.map((item) => item.y));
+  const width = Math.max(...layouts.map((item) => item.x + item.width)) - x;
+  const height = Math.max(...layouts.map((item) => item.y + item.height)) - y;
+  const z = Math.max(...layouts.map((item) => item.zIndex));
   return {
     x: x,
     y: y,
-    width: w,
-    height: h,
+    width: width,
+    height: height,
     zIndex: z,
   };
+};
+export const whetherToMoveInAndOut = (
+  node: ZDragNode,
+  treeMap: ZMap,
+  canvas: ZCanvas
+) => {
+  if (node.type === "page") return;
+  const parentId = node.pageId as string;
+  if (!parentId) return;
+  const { x, y, width, height } = node.layout;
+  const relativeId = node![node!.relative] as string;
+  const container = treeMap.get(relativeId)!;
+  const mode = {
+    pageId: () => {
+      if (
+        (x < 0 && Math.abs(x) >= width) ||
+        (y < 0 && Math.abs(y) >= height) ||
+        x > container.layout.width ||
+        y > container.layout.height
+      ) {
+        node.relative = "canvasId";
+        delete node.pageId;
+        node.parentId = container.id;
+        node.layout = {
+          ...node.layout,
+          x: x + container.layout.x,
+          y: y + container.layout.y,
+        };
+        let pageChildren = container.children ?? [];
+        pageChildren = pageChildren.filter((n) => n.id !== node.id);
+        container.children = pageChildren;
+        canvas.children?.push(node);
+      }
+    },
+    canvasId: () => {
+      const pages = canvas!.children!.filter((n) => n.type === "page");
+      const tree = quadtree<ZDragNode>()
+        .x((p) => p.layout.x)
+        .y((p) => p.layout.y)
+        .addAll(pages);
+      const page = tree.find(x, y);
+      if (!page) return;
+      if (
+        x > page.layout.x &&
+        x + width < page.layout.x + page.layout.width &&
+        y > page.layout.y &&
+        y + height < page.layout.y + page.layout.height
+      ) {
+        node.pageId = page.id;
+        node.relative = "pageId";
+        let canvasChildren = canvas.children ?? [];
+        canvasChildren = canvasChildren.filter((n) => n.id !== node.id);
+        canvas.children = canvasChildren;
+        node.layout = {
+          ...node.layout,
+          x: x - page.layout.x,
+          y: y - page.layout.y,
+        };
+        page.children!.push(node);
+      }
+    },
+  };
+  mode[node!.relative as keyof typeof mode]();
 };
 export const calculateMousedownPosition = (
   axis: {
@@ -138,13 +193,13 @@ export const calculateRotateCoordinate = (
   return {
     x: Math.round(
       (realTimeCoordinates.x - centerCoordinate.x) * Math.cos(rotate) -
-      (realTimeCoordinates.y - centerCoordinate.y) * Math.sin(rotate) +
-      centerCoordinate.x
+        (realTimeCoordinates.y - centerCoordinate.y) * Math.sin(rotate) +
+        centerCoordinate.x
     ),
     y: Math.round(
       (realTimeCoordinates.x - centerCoordinate.x) * Math.sin(rotate) +
-      (realTimeCoordinates.y - centerCoordinate.y) * Math.cos(rotate) +
-      centerCoordinate.y
+        (realTimeCoordinates.y - centerCoordinate.y) * Math.cos(rotate) +
+        centerCoordinate.y
     ),
   };
 };

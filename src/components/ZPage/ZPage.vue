@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import { defineOptions, ref, watch, computed, defineEmits } from "vue";
+import { defineOptions, ref, defineEmits } from "vue";
 import ZNode from "../ZNode/ZNode.vue";
 import type { ZDragNode } from "@/common/type";
-import ZLines from "../ZLines/ZLines.vue";
-import type { ZNode as Node } from "../ZNode/types";
-import type { ZDragEditorModel, ZOption, ZNodeMap } from "../ZDragEditor/type";
-import ZDrag from "../ZDrag/ZDrag.vue";
+// import ZLines from "../ZLines/ZLines.vue";
+// import type { ZNode as Node } from "../ZNode/types";
+// import type { ZDragEditorModel, ZOption, ZNodeMap } from "../ZDragEditor/type";
+// import ZDrag from "../ZDrag/ZDrag.vue";
 defineOptions({
   name: "ZPage",
 });
@@ -21,7 +21,7 @@ const emits = defineEmits<{
     }
   ): void;
 }>();
-const page = defineModel<Node>({
+const page = defineModel<ZDragNode>({
   required: true,
 });
 

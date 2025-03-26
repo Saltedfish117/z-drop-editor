@@ -29,6 +29,8 @@ defineOptions({
 const props = withDefaults(defineProps<ZDragProps>(), {
   position: "absolute",
   rotate: true,
+  hasLock: true, // 是否有锁定按钮
+  hasRotate: true, // 是否有旋转按钮
 });
 const emits = defineEmits(["update:model", "before-move", "after-move", "moving"]);
 const scaleFactor = computed(() => 1 / props.scale);
@@ -143,7 +145,7 @@ const resize: Resize = {
     };
     if (height > 0) {
       layout.height = Math.round(height);
-      layout.y = Math.round(center.y - height / 2);
+      layout.y = Math.round(center.y - layout.height / 2);
       layout.x = Math.round(center.x - layout.width / 2);
     }
     return layout;
@@ -319,6 +321,7 @@ const model = defineModel<ZLayout>({
 const mousedown = (e: MouseEvent, direction: Direction | Moves) => {
   if (model.value.lock) return;
   if (!props.active) return;
+  // console.log("setSelectNode");
   e.preventDefault();
   e.stopPropagation();
   emits("before-move", e, direction);
@@ -405,7 +408,9 @@ const style = computed(
       position: props.position,
       left: 0,
       top: 0,
-      transform: `translate(${model.value.x}px, ${model.value.y}px) rotate(${model.value.rotate}deg) translate3d(0,0,0)`,
+      transform: `translate(${model.value.x}px, ${model.value.y}px) rotate(${
+        model.value.rotate ?? 0
+      }deg) translate3d(0,0,0)`,
       zIndex: model.value.zIndex + 1,
       width: model.value.width + "px",
       height: model.value.height + "px",
@@ -558,28 +563,32 @@ defineExpose({
       <template v-else>
         <slot name="resizes" :active="active" :layout="model"></slot>
       </template>
-      <template v-if="rotate">
-        <template v-if="!$slots.rotate">
-          <ZSvgIcon
-            @mousedown.stop="mousedown($event, 'rotate')"
-            class="rotate"
-            color="primary"
-            name="rotate"
-          ></ZSvgIcon> </template
-        ><template v-else>
-          <slot name="rotate" :active="active" :layout="model"></slot>
+      <template v-if="hasRotate">
+        <template v-if="rotate">
+          <template v-if="!$slots.rotate">
+            <ZSvgIcon
+              @mousedown.stop="mousedown($event, 'rotate')"
+              class="rotate"
+              color="primary"
+              name="rotate"
+            ></ZSvgIcon> </template
+          ><template v-else>
+            <slot name="rotate" :active="active" :layout="model"></slot>
+          </template>
         </template>
       </template>
     </template>
-    <template v-if="!$slots.lock">
-      <ZSvgIcon
-        @mousedown.stop="lockChange"
-        class="lock"
-        color="primary"
-        :name="model.lock ? 'lock-off' : 'lock-on'"
-      ></ZSvgIcon>
+    <template v-if="hasLock">
+      <template v-if="!$slots.lock">
+        <ZSvgIcon
+          @mousedown.stop="lockChange"
+          class="lock"
+          color="primary"
+          :name="model.lock ? 'lock-off' : 'lock-on'"
+        ></ZSvgIcon>
+      </template>
+      <slot v-else name="lock" :active="active" :layout="model"></slot>
     </template>
-    <slot v-else name="lock" :active="active" :layout="model"></slot>
     <slot name="default" :active="active" :style="style" :layout="model"></slot>
   </div>
 </template>

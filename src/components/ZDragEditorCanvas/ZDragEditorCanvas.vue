@@ -88,7 +88,9 @@ const modeHandler: ZModeHandler = {
         .translate(model.value.x, model.value.y) // 初始平移位置
         .scale(model.value.scale); // 初始缩放比例
       zoom.transform(wrapperD3, initialTransform);
-      const down = () => {
+      const down = (event: MouseEvent) => {
+        event.preventDefault();
+        event.stopPropagation();
         instance.$emit("update:modelValue", {
           ...instance.modelValue,
           cursor: "grabbing",

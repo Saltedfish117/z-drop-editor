@@ -141,7 +141,6 @@ const editorLabel = (item: CanvasItem, label: string = "") => {
     node.label = label;
   }
 };
-
 onMounted(() => {
   createObserver(tabItemRefs.value[0]);
   tabSlider.value.width = tabItemRefs.value[0].offsetWidth;

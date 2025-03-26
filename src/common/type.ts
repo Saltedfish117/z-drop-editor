@@ -34,7 +34,9 @@ export interface ZDragNodeBase {
   component: string;
   children?: ZDragNode[];
   parentId?: string;
-  rotate?: boolean;
+  // rotate?: boolean;
+  hasRotate?: boolean;
+  hasLock?: boolean;
 }
 export interface ZDragNodeRelative {
   pageId?: string;

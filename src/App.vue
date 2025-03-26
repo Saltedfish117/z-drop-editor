@@ -4,6 +4,7 @@ import { reactive, ref } from "vue";
 import type { ZDragNodes, ZCanvasList } from "@/common/type";
 import { getId } from "@/common/utils";
 import { createCanvas, createNode } from "@/common/create";
+// import {}
 import ZTextField from "./components/ZTextField/ZTextField.vue";
 import ZSvgIcon from "./components/ZSvgIcon/ZSvgIcon.vue";
 const initArr = Array.from({ length: 2 }, (_, c) => {
@@ -25,7 +26,7 @@ const initArr = Array.from({ length: 2 }, (_, c) => {
           height: 1123,
           x: pageX,
         },
-        rotate: false,
+        hasRotate: false,
         children: Array.from({ length: 3 }, (_, n) => {
           const nodeId = getId();
           const node = createNode({
@@ -49,6 +50,47 @@ const initArr = Array.from({ length: 2 }, (_, c) => {
     }),
   });
 }) as ZCanvasList;
+let nodeX = 0;
+// let rects = ;
+initArr[0].children[0].children?.push(
+  createNode({
+    id: getId(),
+    canvasId: initArr[0].id,
+    pageId: initArr[0].children[0].id,
+    parentId: initArr[0].children[0].id,
+    component: "group",
+    label: "group",
+    type: "group",
+    layout: {
+      x: 0,
+      y: 0,
+      width: 200,
+      height: 200,
+      rotate: 0,
+      zIndex: 1,
+      lock: false,
+    },
+    relative: "pageId",
+    children: Array.from({ length: 3 }, (_, n) => {
+      const nodeId = getId();
+      const node = createNode({
+        id: nodeId,
+        relative: "pageId",
+        component: "rectangle",
+        label: "node",
+        canvasId: initArr[0].id,
+        pageId: initArr[0].children[0].id,
+        type: "component",
+        layout: {
+          x: nodeX,
+          y: 220,
+        },
+      });
+      nodeX += 210;
+      return node;
+    }) as ZDragNodes,
+  })
+);
 const canvasList = ref(initArr);
 const components = [
   {
@@ -65,14 +107,14 @@ const components = [
       zIndex: 1,
       lock: false,
     },
-    rotate: true,
+    // hasRotate: true,
+    // hasLock: true,
     type: "component",
   },
 ] as ZDragNodes;
 </script>
 <template>
   <article>
-    <!--  -->
     <ZDragEditor :components="components" :canvas="canvasList" class="editor"
       ><template #right="{ selectNode }">
         <div class="z-right-content">
