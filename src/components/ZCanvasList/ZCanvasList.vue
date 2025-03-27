@@ -33,7 +33,7 @@ const removeCanvas = (id: string) => {
   <ul class="z-canvas-list">
     <li
       class="z-canvas-list-item"
-      v-for="(item, i) in list"
+      v-for="item in list"
       :key="item.id"
       @click="setSelect(item)"
       :class="{

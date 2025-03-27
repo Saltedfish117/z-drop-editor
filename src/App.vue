@@ -7,11 +7,11 @@ import { createCanvas, createNode } from "@/common/create";
 // import {}
 import ZTextField from "./components/ZTextField/ZTextField.vue";
 import ZSvgIcon from "./components/ZSvgIcon/ZSvgIcon.vue";
-const initArr = Array.from({ length: 2 }, (_, c) => {
+const initArr = Array.from({ length: 1 }, (_, c) => {
   const canvasId = getId();
   let pageX = 0;
   return createCanvas(canvasId, {
-    children: Array.from({ length: 2 }, (_, p) => {
+    children: Array.from({ length: 1 }, (_, p) => {
       const pageId = getId();
       let nodeX = 0;
       const page = createNode({
@@ -147,18 +147,10 @@ const components = [
                 prefix-icon="shuaxin"
               >
               </ZTextField>
-              <ZTextField
-                class="col"
-                :model-value="selectNode.layout.width"
-                placeholder="x轴坐标"
-              >
+              <ZTextField class="col" :model-value="selectNode.layout.width">
                 <template #prefix>W</template>
               </ZTextField>
-              <ZTextField
-                class="col"
-                :model-value="selectNode.layout.height"
-                placeholder="Y轴坐标"
-              >
+              <ZTextField class="col" :model-value="selectNode.layout.height">
                 <template #prefix>H</template>
               </ZTextField>
             </div>

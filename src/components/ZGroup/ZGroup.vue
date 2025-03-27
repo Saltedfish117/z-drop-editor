@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { defineOptions, watch, inject, onUnmounted } from "vue";
+import { defineOptions, inject, onUnmounted, ref } from "vue";
+import type { Ref } from "vue";
 import ZNode from "../ZNode/ZNode.vue";
-import type { ZDragNode, ZLayout } from "@/common/type";
+import type { ZCanvas, ZDragNode, ZLayout } from "@/common/type";
 import { calculateGroupLayout, calculateMousedownPosition } from "@/common/utils";
 defineOptions({
   name: "ZGroup",
@@ -9,15 +10,33 @@ defineOptions({
 const node = defineModel<ZDragNode>({
   required: true,
 });
+const groupRef = ref<HTMLDivElement | null>(null);
 node.value.layout = {
   ...node.value.layout,
   ...calculateGroupLayout(node.value.children!),
 };
+// watch(
+//   () => node.value.pageId,
+//   () => {
+//     console.log("group pageId change");
+//     node.value.children!.forEach((item) => (item.pageId = node.value.pageId));
+//   }
+// );
+// watch(
+//   () => node.value.canvasId,
+//   () => node.value.children!.forEach((item) => (item.canvasId = node.value.canvasId))
+// );
+// watch(
+//   () => node.value.relative,
+//   () => node.value.children!.forEach((item) => (item.relative = node.value.relative))
+// );
 const onDragMove = inject("onDragMove") as (fn: () => void) => void;
 const onDragEnd = inject("onDragEnd") as (fn: () => void) => void;
 const onDragStart = inject("onDragStart") as (fn: () => void) => void;
+const selectCanvas = inject("selectCanvas") as Ref<ZCanvas>;
 const emits = defineEmits<{
   (e: "select", node: ZDragNode): void;
+  (e: "dblclick", event: { clientX: number; clientY: number }, node: ZDragNode): void;
 }>();
 let nodesStartLayout: ZLayout[] = node.value.children!.map((item) => item.layout);
 let start: ZLayout = {
@@ -60,8 +79,10 @@ onDragStart(() => {
 onDragMove(() => {
   updateNodes(node.value.layout);
 });
-onDragEnd(resizeStart);
-const dblclick = (e) => {};
+onDragEnd(() => {
+  resizeStart();
+});
+onUnmounted(() => {});
 </script>
 <template>
   <ZNode
@@ -70,7 +91,7 @@ const dblclick = (e) => {};
     :key="kids.id"
     v-model="node.children[i]"
   ></ZNode>
-  <div @dblclick.stop="dblclick" v-bind="$attrs"></div>
+  <div ref="groupRef" v-bind="$attrs"></div>
 </template>
 <style scoped lang="scss">
 .z-group {

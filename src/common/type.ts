@@ -69,3 +69,11 @@ export interface ZCanvas {
 }
 export type ZCanvasList = ZCanvas[];
 export type ZMap = Map<string, ZDragNode | ZCanvas>;
+export type ZDragMap = Map<
+  string,
+  {
+    beforeMove?: (e: MouseEvent) => void;
+    afterMove?: (e: MouseEvent) => void;
+    moving?: (e: MouseEvent) => void;
+  }
+>;

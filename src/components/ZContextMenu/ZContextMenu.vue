@@ -1,12 +1,5 @@
 <script setup lang="ts">
-import {
-  ref,
-  onMounted,
-  onUnmounted,
-  computed,
-  defineProps,
-  withDefaults,
-} from "vue";
+import { ref, onMounted, onUnmounted, computed, defineProps, withDefaults } from "vue";
 const props = withDefaults(
   defineProps<{
     clickClose?: boolean;
@@ -81,7 +74,6 @@ onUnmounted(() => {
 });
 </script>
 <template>
-  <!--   @click.stop="closeMenu" -->
   <div
     v-show="visible"
     class="z-context-menu"

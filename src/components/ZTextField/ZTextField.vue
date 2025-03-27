@@ -82,6 +82,7 @@ const handleBlur = () => {
   }
   .z-text-field-icon {
     min-width: 12px;
+    font-size: inherit;
   }
   .z-text-field-input {
     flex: 1;

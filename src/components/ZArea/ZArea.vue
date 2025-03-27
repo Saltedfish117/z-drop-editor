@@ -5,7 +5,14 @@ import {
   whetherToMoveInAndOut,
   calculateGroupLayout,
 } from "@/common/utils";
-import type { ZDragNodes, ZDragNode, ZMap, ZLayout, ZCanvas } from "@/common/type";
+import type {
+  ZDragNodes,
+  ZDragNode,
+  ZMap,
+  ZLayout,
+  ZCanvas,
+  ZDragMap,
+} from "@/common/type";
 import ZDrag from "../ZDrag/ZDrag.vue";
 defineOptions({
   name: "ZArea",
@@ -25,6 +32,7 @@ const props = defineProps<{
   treeMap: ZMap;
   selectCanvas: ZCanvas;
   selectNode?: ZDragNode;
+  dragMap: ZDragMap;
 }>();
 const selectCanvas = defineModel<ZCanvas>("selectCanvas", {
   required: true,
@@ -65,9 +73,8 @@ const processAreaNodes = computed(() => {
   });
 });
 const flatNodes = computed(() => {
-  return props.nodes
-    .flatMap((item) => (item.children ? [item, ...item.children] : [item]))
-    .map((n) => {
+  const processNodes = (nodes: ZDragNodes) => {
+    return nodes.map((n) => {
       if (!n) return;
       const relativeId = n![n!.relative] as string;
       const container = props.treeMap.get(relativeId)!;
@@ -91,6 +98,18 @@ const flatNodes = computed(() => {
       };
       return mode[container.type as keyof typeof mode]();
     });
+  };
+  const nodes: ZDragNodes = [];
+  props.nodes.forEach((item) => {
+    nodes.push(item);
+    if (item.children) {
+      nodes.push(...item.children);
+    }
+  });
+  // const nodes = Array.from(props.treeMap.values()).filter((item) => {
+  //   return item.type !== "canvas";
+  // }) as ZDragNodes;
+  return processNodes(nodes);
 });
 const layout = ref({
   x: 0,
@@ -250,11 +269,28 @@ watch(
     props.wrapper.addEventListener("mousedown", mousedown);
   }
 );
-const moving = () => {
+const moving = (_: MouseEvent) => {
   updateNodes(layout.value);
+  areaNodes.value.forEach((item) => {
+    const drag = props.dragMap.get(item.id);
+    if (!drag) return;
+    if (drag.moving) drag.moving(_);
+  });
 };
-const afterMove = () => {
+const beforeMove = (_: MouseEvent) => {
+  areaNodes.value.forEach((item) => {
+    const drag = props.dragMap.get(item.id);
+    if (!drag) return;
+    if (drag.beforeMove) drag.beforeMove(_);
+  });
+};
+const afterMove = (_: MouseEvent) => {
   handlerStart();
+  areaNodes.value.forEach((item) => {
+    const drag = props.dragMap.get(item.id);
+    if (!drag) return;
+    if (drag.afterMove) drag.afterMove(_);
+  });
 };
 const updateNodes = (layout: ZDragNode["layout"]) => {
   if (!areaNodes.value.length) return;
@@ -289,16 +325,6 @@ const updateNodes = (layout: ZDragNode["layout"]) => {
           width: childWidthNew,
           height: childHeightNew,
         };
-        // const x = container.layout.x + n.layout.x;
-        // const y = container.layout.y + n.layout.y;
-        // return {
-        //   ...n,
-        //   layout: {
-        //     ...n.layout,
-        //     x,
-        //     y,
-        //   },
-        // };
       },
     };
     kids.layout = mode[container.type as keyof typeof mode]();
@@ -323,6 +349,7 @@ const withAreaStyle = computed(() => {
   <div>
     <div :style="withAreaStyle" class="z-area"></div>
     <ZDrag
+      @before-move="beforeMove"
       @after-move="afterMove"
       @moving="moving"
       v-if="canvas"

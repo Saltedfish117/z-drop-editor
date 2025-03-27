@@ -377,16 +377,9 @@ const getPointAxis = (direction: Direction, layout: ZLayout) => {
 const mousedown = (e: MouseEvent, direction: Direction | Moves) => {
   if (model.value.lock) return;
   if (!props.active) return;
-  // console.log("setSelectNode");
   e.preventDefault();
   e.stopPropagation();
   emits("before-move", e, direction);
-  /**
-  {
-    x: (e.clientX - canvasRect.left) * scaleFactor.value,
-    y: (e.clientY - canvasRect.top) * scaleFactor.value,
-  }
-   */
   const center = {
     x: model.value.x + model.value.width / 2,
     y: model.value.y + model.value.height / 2,
@@ -489,7 +482,7 @@ const points: Points = [
       left: 0,
       top: 0,
       width: "100%",
-      height: "3px",
+      height: "2px",
       // transform: "translate(-50%, -50%)",
     },
   },
@@ -703,9 +696,9 @@ defineExpose({
         <template v-if="rotate">
           <template v-if="!$slots.rotate">
             <ZSvgIcon
-              @mousedown.stop="mousedown($event, 'rotate')"
+              tabindex="-1"
               class="rotate"
-              color="primary"
+              @mousedown.stop="mousedown($event, 'rotate')"
               name="rotate"
             ></ZSvgIcon> </template
           ><template v-else>
@@ -754,27 +747,32 @@ $resizes: (ne-resize, se-resize, sw-resize, nw-resize);
     cursor: $res;
   }
 }
-
+.rotate {
+  position: absolute;
+  width: 24px;
+  height: 24px;
+  font-size: 24px;
+  top: -28px;
+  left: 50%;
+  transform: translateX(-50%);
+  cursor: grab;
+  display: none;
+  color: rgb(var(--z-primary));
+  // &:hover {
+  //   color: rgb(var(--z-primary));
+  // }
+  &:active {
+    // color: rgb(var(--z-primary));
+    cursor: grabbing;
+  }
+}
 .ZDrag {
   cursor: grab;
   box-sizing: border-box;
   &:active {
     cursor: grabbing;
   }
-  .rotate {
-    position: absolute;
-    width: 24px;
-    height: 24px;
-    font-size: 24px;
-    top: -28px;
-    left: 50%;
-    transform: translateX(-50%);
-    cursor: grab;
-    display: none;
-    &:active {
-      cursor: grabbing;
-    }
-  }
+
   .lock {
     position: absolute;
     width: 24px;

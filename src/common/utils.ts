@@ -111,6 +111,12 @@ export const whetherToMoveInAndOut = (
         node.relative = "canvasId";
         delete node.pageId;
         node.parentId = container.id;
+        if (node.children && node.type === "group") {
+          node.children.forEach((kid) => {
+            kid.relative = "canvasId";
+            delete kid.pageId;
+          });
+        }
         node.layout = {
           ...node.layout,
           x: x + container.layout.x,
@@ -139,6 +145,12 @@ export const whetherToMoveInAndOut = (
         node.pageId = page.id;
         node.parentId = page.id;
         node.relative = "pageId";
+        if (node.children && node.type === "group") {
+          node.children.forEach((kid) => {
+            kid.pageId = page.id;
+            kid.relative = "pageId";
+          });
+        }
         let canvasChildren = canvas.children ?? [];
         canvasChildren = canvasChildren.filter((n) => n.id !== node.id);
         canvas.children = canvasChildren;
@@ -147,7 +159,9 @@ export const whetherToMoveInAndOut = (
           x: x - page.layout.x,
           y: y - page.layout.y,
         };
-        page.children!.push(node);
+        const newChildren = page.children ?? [];
+        newChildren!.push(node);
+        page.children = newChildren;
       }
     },
   };

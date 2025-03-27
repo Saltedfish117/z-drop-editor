@@ -11,10 +11,11 @@ import {
 } from "vue";
 import ZBtn from "../ZBtn/ZBtn.vue";
 import ZSvgIcon from "../ZSvgIcon/ZSvgIcon.vue";
-import { createCanvas } from "@/common/create";
+import { createCanvas, createNode } from "@/common/create";
 import { getId } from "@/common/utils";
 import ZTree from "../ZTree/ZTree.vue";
 import ZPageList from "../ZPageList/ZPageList.vue";
+import ZPopup from "../ZPopup/ZPopup.vue";
 // import ZCanvasList from "../ZCanvasList/ZCanvasList.vue";
 import type { ZCanvasList, ZCanvas, ZDragNode, ZMap } from "@/common/type";
 import ZTextField from "../ZTextField/ZTextField.vue";
@@ -148,6 +149,37 @@ onMounted(() => {
   tabSlider.value.x = tabItemRefs.value[0].offsetLeft;
   tabSlider.value.y = tabItemRefs.value[0].offsetTop;
 });
+const pageRect = ref({
+  width: 0,
+  height: 0,
+});
+const submitCreatePage = (close: () => void) => {
+  if (pageRect.value.width === 0 || pageRect.value.height === 0) return;
+  const endPage = pages.value[pages.value.length - 1];
+  const page = createNode({
+    id: "page-" + getId(),
+    component: "page",
+    label: "页面 " + (pages.value.length + 1),
+    type: "page",
+    relative: "canvasId",
+    canvasId: selectCanvas.value.id,
+    layout: {
+      width: pageRect.value.width,
+      height: pageRect.value.height,
+      x: endPage.layout.x + endPage.layout?.width + 20,
+      y: endPage.layout.y,
+    },
+    children: [],
+    hasRotate: false,
+  });
+  selectCanvas.value.children?.push(page);
+  treeMap.value?.set(page.id, page);
+  pageRect.value = {
+    width: 0,
+    height: 0,
+  };
+  close();
+};
 </script>
 <template>
   <div class="z-design">
@@ -156,6 +188,7 @@ onMounted(() => {
         <h6 class="title">画布</h6>
         <div>
           <ZBtn :padding="false" color="text-default">
+            <!-- <ZPopup> 撒低级咖啡 </ZPopup> -->
             <ZSvgIcon size="sm" name="plus"></ZSvgIcon>
           </ZBtn>
         </div>
@@ -174,7 +207,6 @@ onMounted(() => {
           <span v-show="!item.editor">
             {{ item.label }}
           </span>
-          <!---->
           <ZTextField
             v-show="item.editor"
             v-auto-focus
@@ -225,6 +257,37 @@ onMounted(() => {
             </div>
             <div class="icons">
               <ZBtn :padding="false" color="text-default">
+                <ZPopup>
+                  <template #default="{ close }">
+                    <div class="row">
+                      <ZTextField
+                        class="textfield"
+                        v-model.number="pageRect.width"
+                        placeholder="宽度"
+                      >
+                        <template #prefix>W</template></ZTextField
+                      >
+                      <ZTextField
+                        class="textfield"
+                        v-model.number="pageRect.height"
+                        placeholder="高度"
+                      >
+                        <template #prefix>H</template></ZTextField
+                      >
+                    </div>
+                    <div
+                      style="
+                        margin-top: 4px;
+                        display: flex;
+                        justify-content: flex-end;
+                        gap: 4px;
+                      "
+                    >
+                      <ZBtn @click="close">取消</ZBtn>
+                      <ZBtn color="primary" @click="submitCreatePage(close)">确定</ZBtn>
+                    </div>
+                  </template>
+                </ZPopup>
                 <ZSvgIcon size="sm" name="plus"></ZSvgIcon>
               </ZBtn>
             </div>
@@ -235,11 +298,6 @@ onMounted(() => {
           ></ZPageList>
         </div>
         <div class="z-design-nodes" v-show="selectTab === 'nodes'">
-          <!-- <div class="z-design-nodes-form">
-            <div class="textfield">
-              <input v-model.trim="filterPage" placeholder="名称" />
-            </div>
-          </div> -->
           <ZTree
             v-model:nodes="selectCanvas.children as ZTreeNode[]"
             v-model:select="selectNode as ZTreeNode"
@@ -261,11 +319,13 @@ onMounted(() => {
     max-height: 50%;
     display: flex;
     flex-direction: column;
+
     .canvas-header {
       padding: 4px 8px;
       display: flex;
       align-items: center;
       justify-content: space-between;
+      height: 30px;
       .title {
         font-size: var(--z-font-sm);
         font-weight: 300;
@@ -280,6 +340,8 @@ onMounted(() => {
       margin: 0;
       background-color: rgba(var(--z-quiet), 0.1);
       flex: 1;
+      max-height: calc(100% - 30px);
+      overflow: auto;
       .z-canvas-list-item {
         padding: 4px 4px;
         // border-radius: 4px;
@@ -325,14 +387,17 @@ onMounted(() => {
     max-height: 80%;
     display: flex;
     flex-direction: column;
+
     .z-design-tabs {
+      position: sticky;
+      top: 0;
       display: flex;
       gap: 6px;
       padding: 4px 8px;
-      //   background-color: rgba(var(--z-quiet), 0.3);
-      position: relative;
+      z-index: 1;
+      background-color: rgba(var(--z-page), 1);
       box-shadow: 0px 3px 6px rgba(64, 87, 109, 0.1);
-      //   border-bottom: 1px solid rgb(var(--z-quiet));
+      max-height: 35px;
       .z-design-tabs-item {
         padding: 4px 8px;
         font-size: var(--z-font-sm);
@@ -373,7 +438,9 @@ onMounted(() => {
     }
     .z-design-tabs-content {
       flex: 1;
+      max-height: calc(100% - 35px);
       padding-top: 8px;
+      overflow: auto;
       background-color: rgba(var(--z-quiet), 0.1);
     }
     .z-design-nodes {
@@ -430,6 +497,15 @@ onMounted(() => {
         }
       }
     }
+  }
+}
+.row {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  .textfield {
+    width: 80px;
+    font-size: var(--z-font-xs);
   }
 }
 </style>

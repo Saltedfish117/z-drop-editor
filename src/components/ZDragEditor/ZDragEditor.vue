@@ -42,6 +42,7 @@ import type {
   ZCanvasList,
   ZCanvas,
   ZMap,
+  ZDragMap,
 } from "@/common/type";
 import type { CanvasExtension } from "../ZDragEditorCanvas/type";
 import ZArea from "../ZArea/ZArea.vue";
@@ -123,19 +124,10 @@ const editorCanvasRef = ref<InstanceType<typeof ZDragEditorCanvas> | null>(null)
 const selectCanvas = ref<ZCanvas>(canvas.value[0]);
 const selectNode = ref<ZDragNode | undefined>();
 const treeMap = reactive<ZMap>(new Map());
-const dragMap = reactive<
-  Map<
-    string,
-    {
-      beforeMove?: (e: MouseEvent) => void;
-      afterMove?: (e: MouseEvent) => void;
-      moving?: (e: MouseEvent) => void;
-    }
-  >
->(new Map());
+const dragMap = reactive<ZDragMap>(new Map());
 const onDragStart = (fn: () => void) => {
   const instance = getCurrentInstance();
-  console.log(instance);
+  // console.log(instance);
   if (!instance) throw new Error("instance is not exist");
   const nodeId = instance.attrs["__z-drag-editor-node-id"] as string;
   if (!nodeId) throw new Error("nodeId in instance attrs not found");
@@ -337,6 +329,87 @@ const drop = (
 };
 const setSelectNode = (node?: ZDragNode) => {
   selectNode.value = node;
+};
+const dblclick = (e: MouseEvent, canvas: HTMLElement) => {
+  if (!selectNode.value) return;
+  if (!selectNode.value.children || !selectNode.value.children.length) return;
+  const axis = calculateMousedownPosition(e, canvas, selectCanvas.value.layout.scale);
+  const childrenRects = selectNode.value.children.map((child) => {
+    return {
+      id: child.id,
+      rect: [
+        child.layout.x,
+        child.layout.y,
+        child.layout.x + child.layout.width,
+        child.layout.y + child.layout.height,
+      ],
+    };
+  });
+  const mode = {
+    canvasId: () => {
+      if (!selectNode.value) return;
+      const x = axis.x;
+      const y = axis.y;
+      console.log(x, y, "canvasId");
+      return childrenRects.find((child) => {
+        return (
+          child.rect[0] <= x &&
+          child.rect[1] <= y &&
+          child.rect[2] >= x &&
+          child.rect[3] >= y
+        );
+      });
+    },
+    pageId: () => {
+      if (!selectNode.value) return;
+      const page = treeMap.get(selectNode.value.pageId!)!;
+      const x = axis.x - page.layout.x;
+      const y = axis.y - page.layout.y;
+      console.log(x, y, "pageId");
+      return childrenRects.find((child) => {
+        return (
+          child.rect[0] <= x &&
+          child.rect[1] <= y &&
+          child.rect[2] >= x &&
+          child.rect[3] >= y
+        );
+      });
+    },
+  };
+  const select = mode[selectNode.value.relative as keyof typeof mode]();
+  // console.log(select);
+  if (select) {
+    const node = treeMap.get(select.id);
+    if (node) {
+      setSelectNode(node as ZDragNode);
+    }
+  }
+  // const x = axis.x - selectNode.value.layout.x;
+  // const y = axis.y - selectNode.value.layout.y;
+  // const children = selectNode.value.children.map((child) => {
+  //   return {
+  //     id: child.id,
+  //     rect: [
+  //       child.layout.x,
+  //       child.layout.y,
+  //       child.layout.x + child.layout.width,
+  //       child.layout.y + child.layout.height,
+  //     ],
+  //   };
+  // });
+  // console.log(x, y, children);
+  // const select = children.find((child) => {
+  //   return (
+  //     child.rect[0] <= x && child.rect[1] <= y && child.rect[2] >= x && child.rect[3] >= y
+  //   );
+  // });
+  // console.log(select);
+  // if (select) {
+  //   const node = treeMap.get(select.id);
+  //   if (node) {
+  //     setSelectNode(node as ZDragNode);
+  //   }
+  // }
 };
 const arrow = () => {
   selectCanvas.value.mode = "select";
@@ -799,14 +872,16 @@ onUnmounted(() => {
                     :treeMap="treeMap"
                     :select-canvas="selectCanvas"
                     :select-node="selectNode"
+                    :dragMap="dragMap"
                   ></ZArea>
                   <ZDrag
-                    v-if="selectNode"
+                    v-if="selectNode && canvas"
                     v-model="hijackNodeAxis"
                     position="absolute"
                     @before-move="beforeMove"
                     @after-move="afterMove"
                     @moving="moving"
+                    @dblclick="dblclick($event, canvas)"
                     :container="(canvas as HTMLElement)"
                     :scale="selectCanvas.layout.scale"
                     :active="Boolean(selectNode)"

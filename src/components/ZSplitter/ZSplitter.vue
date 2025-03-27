@@ -109,7 +109,6 @@ const handleMouseDown = (e: MouseEvent, direction: "left" | "right") => {
   .left-pane,
   .right-pane {
     background: rgb(var(--z-page));
-    // overflow: auto;
     height: 100%;
     width: 100%;
     .content {
