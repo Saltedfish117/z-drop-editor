@@ -31,10 +31,10 @@ const parentRect = computed(() => {
   if (!parent.value) return {} as DOMRect;
   return parent.value.getBoundingClientRect();
 });
-const popupContentRect = computed(() => {
-  if (!popupContentRef.value) return {} as DOMRect;
-  return popupContentRef.value.getBoundingClientRect();
-});
+// const popupContentRect = computed(() => {
+//   if (!popupContentRef.value) return {} as DOMRect;
+//   return popupContentRef.value.getBoundingClientRect();
+// });
 popupContentRef;
 const handleClickOutside = (e: MouseEvent) => {
   if (!popupContentRef.value) return;
