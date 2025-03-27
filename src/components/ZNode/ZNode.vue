@@ -23,10 +23,11 @@ const style = computed<CSSProperties>(() => ({
     v-bind="$attrs"
     :is="node.component"
     v-model="node"
+    :__z-drag-editor-node-id="node.id"
     class="z-node"
   ></component>
 </template>
-<style scoped lang="scss">
+<style lang="scss">
 .z-node {
   box-sizing: border-box;
   &::after {
@@ -40,7 +41,7 @@ const style = computed<CSSProperties>(() => ({
   }
   &:hover {
     &::after {
-      border: 1px solid rgb(var(--z-primary));
+      border: 3px solid rgb(var(--z-primary));
     }
   }
 }

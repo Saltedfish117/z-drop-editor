@@ -19,7 +19,11 @@ import type {
   Resize,
   Moves,
 } from "./types";
-import { getCenterCoordinate, calculateRotateCoordinate } from "@/common/utils";
+import {
+  getCenterCoordinate,
+  calculateRotateCoordinate,
+  calculateMousedownPosition,
+} from "@/common/utils";
 import type { ZLayout } from "@/common/types";
 import type { CSSProperties } from "vue";
 import ZSvgIcon from "../ZSvgIcon/ZSvgIcon.vue";
@@ -318,6 +322,58 @@ const model = defineModel<ZLayout>({
     };
   },
 });
+// const modelRect = computed(() => [
+//   model.value.x,
+//   model.value.y,
+//   model.value.x + model.value.width,
+//   model.value.y + model.value.height,
+// ]);
+const getPointAxis = (direction: Direction, layout: ZLayout) => {
+  switch (direction) {
+    case "n-resize":
+      return {
+        x: layout.x + layout.width / 2,
+        y: layout.y,
+      };
+    case "s-resize":
+      return {
+        x: layout.x + layout.width / 2,
+        y: layout.y + layout.height,
+      };
+    case "e-resize":
+      return {
+        x: layout.x + layout.width,
+        y: layout.y + layout.height / 2,
+      };
+    case "w-resize":
+      return {
+        x: layout.x,
+        y: layout.y + layout.height / 2,
+      };
+    case "ne-resize":
+      return {
+        x: layout.x + layout.width,
+        y: layout.y,
+      };
+    case "nw-resize":
+      return {
+        x: layout.x,
+        y: layout.y,
+      };
+    case "se-resize":
+      return {
+        x: layout.x + layout.width,
+        y: layout.y + layout.height,
+      };
+    case "sw-resize":
+      return {
+        x: layout.x,
+        y: layout.y + layout.height,
+      };
+    default:
+      return null;
+  }
+};
 const mousedown = (e: MouseEvent, direction: Direction | Moves) => {
   if (model.value.lock) return;
   if (!props.active) return;
@@ -325,15 +381,23 @@ const mousedown = (e: MouseEvent, direction: Direction | Moves) => {
   e.preventDefault();
   e.stopPropagation();
   emits("before-move", e, direction);
-  const canvasRect = props.container.getBoundingClientRect();
-  const point = {
+  /**
+  {
     x: (e.clientX - canvasRect.left) * scaleFactor.value,
     y: (e.clientY - canvasRect.top) * scaleFactor.value,
-  };
+  }
+   */
   const center = {
     x: model.value.x + model.value.width / 2,
     y: model.value.y + model.value.height / 2,
   };
+  const canvasRect = props.container.getBoundingClientRect();
+  const point =
+    (() => {
+      const point = getPointAxis(direction as Direction, model.value);
+      if (!point) return;
+      return calculateRotateCoordinate(point, center, -model.value.rotate);
+    })() ?? calculateMousedownPosition(e, props.container, props.scale);
   // 获取对称点坐标
   const symmetric = {
     x: 2 * center.x - point.x,
@@ -421,33 +485,39 @@ const points: Points = [
   {
     direction: "n-resize",
     style: {
-      left: "50%",
+      // left: "50%",
+      left: 0,
       top: 0,
-      transform: "translate(-50%, -50%)",
+      width: "100%",
+      height: "3px",
+      // transform: "translate(-50%, -50%)",
     },
   },
   {
     direction: "s-resize",
     style: {
-      left: "50%",
+      left: 0,
       bottom: 0,
-      transform: "translate(-50%, 50%)",
+      width: "100%",
+      height: "2px",
     },
   },
   {
     direction: "e-resize",
     style: {
       right: 0,
-      top: "50%",
-      transform: "translate(50%, -50%)",
+      top: 0,
+      height: "100%",
+      width: "2px",
     },
   },
   {
     direction: "w-resize",
     style: {
       left: 0,
-      top: "50%",
-      transform: "translate(-50%, -50%)",
+      top: 0,
+      height: "100%",
+      width: "2px",
     },
   },
   {
@@ -483,6 +553,72 @@ const points: Points = [
     },
   },
 ];
+// const points: Points = [
+//   {
+//     direction: "n-resize",
+//     style: {
+//       left: "50%",
+//       top: 0,
+//       transform: "translate(-50%, -50%)",
+//     },
+//   },
+//   {
+//     direction: "s-resize",
+//     style: {
+//       left: "50%",
+//       bottom: 0,
+//       transform: "translate(-50%, 50%)",
+//     },
+//   },
+//   {
+//     direction: "e-resize",
+//     style: {
+//       right: 0,
+//       top: "50%",
+//       transform: "translate(50%, -50%)",
+//     },
+//   },
+//   {
+//     direction: "w-resize",
+//     style: {
+//       left: 0,
+//       top: "50%",
+//       transform: "translate(-50%, -50%)",
+//     },
+//   },
+//   {
+//     direction: "ne-resize",
+//     style: {
+//       right: 0,
+//       top: 0,
+//       transform: "translate(50%, -50%)",
+//     },
+//   },
+//   {
+//     direction: "nw-resize",
+//     style: {
+//       left: 0,
+//       top: 0,
+//       transform: "translate(-50%, -50%)",
+//     },
+//   },
+//   {
+//     direction: "se-resize",
+//     style: {
+//       right: 0,
+//       bottom: 0,
+//       transform: "translate(50%, 50%)",
+//     },
+//   },
+//   {
+//     direction: "sw-resize",
+//     style: {
+//       left: 0,
+//       bottom: 0,
+//       transform: "translate(-50%, 50%)",
+//     },
+//   },
+// ];
 const createPoints = () => {
   const angleToCursor: AngleToCursor = [
     // 每个范围的角度对应的光标
@@ -593,30 +729,32 @@ defineExpose({
   </div>
 </template>
 <style scoped lang="scss">
-// // 定义resizes
-$resizes: (
-  n-resize,
+/**
+ n-resize,
   s-resize,
   e-resize,
   w-resize,
-  ne-resize,
-  se-resize,
-  sw-resize,
-  nw-resize
-);
+*/
+.resize-point {
+  display: none;
+  background: rgba(var(--z-primary), 1);
+  position: absolute;
+}
+// // 定义resizes
+$resizes: (ne-resize, se-resize, sw-resize, nw-resize);
 // // 遍历resizes
 @each $res in $resizes {
   .#{$res} {
-    position: absolute;
     width: 8px;
     height: 8px;
-    background: rgba(var(--z-primary), 1);
+    background: rgba(var(--z-page), 1);
     border: 1px solid rgba(var(--z-primary), 1);
-    border-radius: 50%;
+    border-radius: 2px;
     z-index: 1;
     cursor: $res;
   }
 }
+
 .ZDrag {
   cursor: grab;
   box-sizing: border-box;
@@ -647,9 +785,7 @@ $resizes: (
     cursor: pointer;
     display: none;
   }
-  .resize-point {
-    display: none;
-  }
+
   &.active {
     border: 1px solid rgba(var(--z-primary), 1);
     .resize-point {

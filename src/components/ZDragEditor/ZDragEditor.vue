@@ -23,6 +23,8 @@ import {
   computed,
   onMounted,
   defineProps,
+  provide,
+  getCurrentInstance,
 } from "vue";
 // import { quadtree } from "d3";
 import {
@@ -30,6 +32,7 @@ import {
   serializer,
   getId,
   whetherToMoveInAndOut,
+  calculateGroupLayout,
 } from "@/common/utils";
 import { createCanvas } from "@/common/create";
 import type {
@@ -120,6 +123,67 @@ const editorCanvasRef = ref<InstanceType<typeof ZDragEditorCanvas> | null>(null)
 const selectCanvas = ref<ZCanvas>(canvas.value[0]);
 const selectNode = ref<ZDragNode | undefined>();
 const treeMap = reactive<ZMap>(new Map());
+const dragMap = reactive<
+  Map<
+    string,
+    {
+      beforeMove?: (e: MouseEvent) => void;
+      afterMove?: (e: MouseEvent) => void;
+      moving?: (e: MouseEvent) => void;
+    }
+  >
+>(new Map());
+const onDragStart = (fn: () => void) => {
+  const instance = getCurrentInstance();
+  console.log(instance);
+  if (!instance) throw new Error("instance is not exist");
+  const nodeId = instance.attrs["__z-drag-editor-node-id"] as string;
+  if (!nodeId) throw new Error("nodeId in instance attrs not found");
+  dragMap.set(nodeId, { beforeMove: fn });
+};
+const onDragMove = (fn: () => void) => {
+  const instance = getCurrentInstance();
+  if (!instance) throw new Error("instance is not exist");
+  const nodeId = instance.attrs["__z-drag-editor-node-id"] as string;
+  if (!nodeId) throw new Error("nodeId in instance attrs not found");
+  const drag = dragMap.get(nodeId);
+  if (drag) drag.moving = fn;
+  else dragMap.set(nodeId, { moving: fn });
+};
+const onDragEnd = (fn: () => void) => {
+  const instance = getCurrentInstance();
+  if (!instance) throw new Error("instance is not exist");
+  const nodeId = instance.attrs["__z-drag-editor-node-id"] as string;
+  if (!nodeId) throw new Error("nodeId in instance attrs not found");
+  const drag = dragMap.get(nodeId);
+  if (drag) drag.afterMove = fn;
+  else dragMap.set(nodeId, { afterMove: fn });
+};
+const beforeMove = (_: MouseEvent) => {
+  const drag = dragMap.get(selectNode.value!.id);
+  if (!drag) return;
+  if (drag.beforeMove) drag.beforeMove(_);
+};
+const afterMove = (_: MouseEvent) => {
+  const parentId = selectNode.value!.parentId as string;
+  if (!parentId) return;
+  const parent = treeMap.get(parentId)!;
+  if (parent.type === "group") {
+    parent.layout = {
+      ...parent.layout,
+      ...calculateGroupLayout(parent.children!),
+    };
+  }
+  const drag = dragMap.get(selectNode.value!.id);
+  if (!drag) return;
+  if (drag.afterMove) drag.afterMove(_);
+};
+const moving = (_: MouseEvent) => {
+  whetherToMoveInAndOut(selectNode.value!, treeMap, selectCanvas.value);
+  const drag = dragMap.get(selectNode.value!.id);
+  if (!drag) return;
+  if (drag.moving) drag.moving(_);
+};
 const hijackNodeAxis = computed({
   get() {
     if (!selectNode.value) return;
@@ -171,6 +235,12 @@ const initTreeMap = (val: ZDragNodes | ZCanvasList, nodeMap: ZMap) => {
 };
 initTreeMap(selectCanvas.value.children, treeMap);
 treeMap.set(selectCanvas.value.id, selectCanvas.value);
+provide("treeMap", treeMap);
+provide("selectCanvas", selectCanvas);
+provide("selectNode", selectNode);
+provide("onDragStart", onDragStart);
+provide("onDragMove", onDragMove);
+provide("onDragEnd", onDragEnd);
 watch(
   () => selectCanvas.value,
   (val) => {
@@ -241,12 +311,7 @@ const addNode = (
   addMode[container.type as keyof typeof addMode]();
   treeMap.set(node.id, node);
 };
-const beforeMove = (_: MouseEvent) => {};
-const afterMove = (_: MouseEvent) => {
-  if (!selectNode.value) return;
-  whetherToMoveInAndOut(selectNode.value, treeMap, selectCanvas.value);
-};
-const moving = (_: MouseEvent) => {};
+
 const canvasDragover = (event: DragEvent) => {
   event.preventDefault();
   event.stopPropagation();
@@ -259,7 +324,6 @@ const drop = (
   }
 ) => {
   if (!event || !event.dataTransfer) return;
-
   event.preventDefault();
   event.stopPropagation();
   const dt = event.dataTransfer;
@@ -268,7 +332,6 @@ const drop = (
     containerId: selectCanvas.value.id,
     container: editorCanvasRef.value?.infiniteCanvas as HTMLElement,
   };
-
   const data = { ...newValue, node };
   addNode(event, data);
 };
@@ -284,6 +347,7 @@ const drag = () => {
 onMounted(() => {});
 onUnmounted(() => {
   treeMap.clear();
+  dragMap.clear();
 });
 // const store = defineModel<ZDragEditorModel>({
 //   required: true,

@@ -1,5 +1,5 @@
 import type { App, Plugin } from "vue";
-import type { ZLayout, ZDragNode } from "@/common/type";
+import type { ZLayout, ZDragNode, ZMap, ZCanvas } from "@/common/type";
 import { quadtree } from "d3";
 export const getId = () => {
   return (
@@ -91,11 +91,15 @@ export const whetherToMoveInAndOut = (
   canvas: ZCanvas
 ) => {
   if (node.type === "page") return;
-  const parentId = node.pageId as string;
+  const parentId = node.parentId as string;
   if (!parentId) return;
+  const parent = treeMap.get(parentId)!;
+  if (parent.type === "group") return;
+  // console.log(parent);
   const { x, y, width, height } = node.layout;
   const relativeId = node![node!.relative] as string;
   const container = treeMap.get(relativeId)!;
+
   const mode = {
     pageId: () => {
       if (
@@ -133,6 +137,7 @@ export const whetherToMoveInAndOut = (
         y + height < page.layout.y + page.layout.height
       ) {
         node.pageId = page.id;
+        node.parentId = page.id;
         node.relative = "pageId";
         let canvasChildren = canvas.children ?? [];
         canvasChildren = canvasChildren.filter((n) => n.id !== node.id);

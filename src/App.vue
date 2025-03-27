@@ -18,6 +18,7 @@ const initArr = Array.from({ length: 2 }, (_, c) => {
         id: pageId,
         relative: "canvasId",
         canvasId,
+        parentId: canvasId,
         component: "page",
         label: "page",
         type: "page",
@@ -33,6 +34,7 @@ const initArr = Array.from({ length: 2 }, (_, c) => {
             id: nodeId,
             relative: "pageId",
             component: "rectangle",
+            parentId: pageId,
             label: "node",
             canvasId,
             pageId,
@@ -51,10 +53,11 @@ const initArr = Array.from({ length: 2 }, (_, c) => {
   });
 }) as ZCanvasList;
 let nodeX = 0;
+let groupId = getId();
 // let rects = ;
 initArr[0].children[0].children?.push(
   createNode({
-    id: getId(),
+    id: groupId,
     canvasId: initArr[0].id,
     pageId: initArr[0].children[0].id,
     parentId: initArr[0].children[0].id,
@@ -70,6 +73,7 @@ initArr[0].children[0].children?.push(
       zIndex: 1,
       lock: false,
     },
+    hasRotate: false,
     relative: "pageId",
     children: Array.from({ length: 3 }, (_, n) => {
       const nodeId = getId();
@@ -80,6 +84,7 @@ initArr[0].children[0].children?.push(
         label: "node",
         canvasId: initArr[0].id,
         pageId: initArr[0].children[0].id,
+        parentId: groupId,
         type: "component",
         layout: {
           x: nodeX,

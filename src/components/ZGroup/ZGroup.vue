@@ -1,9 +1,8 @@
 <script setup lang="ts">
-import { defineOptions, watch, nextTick, onUnmounted } from "vue";
-import type { WatchHandle } from "vue";
+import { defineOptions, watch, inject, onUnmounted } from "vue";
 import ZNode from "../ZNode/ZNode.vue";
 import type { ZDragNode, ZLayout } from "@/common/type";
-import { calculateGroupLayout } from "@/common/utils";
+import { calculateGroupLayout, calculateMousedownPosition } from "@/common/utils";
 defineOptions({
   name: "ZGroup",
 });
@@ -14,12 +13,25 @@ node.value.layout = {
   ...node.value.layout,
   ...calculateGroupLayout(node.value.children!),
 };
+const onDragMove = inject("onDragMove") as (fn: () => void) => void;
+const onDragEnd = inject("onDragEnd") as (fn: () => void) => void;
+const onDragStart = inject("onDragStart") as (fn: () => void) => void;
 const emits = defineEmits<{
   (e: "select", node: ZDragNode): void;
 }>();
 let nodesStartLayout: ZLayout[] = node.value.children!.map((item) => item.layout);
 let start: ZLayout = {
   ...node.value.layout,
+};
+const resizeStart = () => {
+  nodesStartLayout = node.value.children!.map((item) => item!.layout);
+  start = {
+    ...node.value.layout,
+    ...calculateGroupLayout(node.value.children!),
+  };
+  node.value.layout = {
+    ...start,
+  };
 };
 const updateNodes = (layout: ZDragNode["layout"]) => {
   node.value.children!.forEach((kids, i) => {
@@ -42,7 +54,14 @@ const updateNodes = (layout: ZDragNode["layout"]) => {
     };
   });
 };
-watch(() => node.value.layout, updateNodes);
+onDragStart(() => {
+  resizeStart();
+});
+onDragMove(() => {
+  updateNodes(node.value.layout);
+});
+onDragEnd(resizeStart);
+const dblclick = (e) => {};
 </script>
 <template>
   <ZNode
@@ -51,13 +70,7 @@ watch(() => node.value.layout, updateNodes);
     :key="kids.id"
     v-model="node.children[i]"
   ></ZNode>
-  <!--    class="z-group"
-    :style="{
-      width: `${node.layout.width}px`,
-      height: `${node.layout.height}px`,
-      transform: `translate(${node.layout.x}px,${node.layout.y}px) rotate(${node.layout.rotate}deg)`,
-    }" -->
-  <div v-bind="$attrs"></div>
+  <div @dblclick.stop="dblclick" v-bind="$attrs"></div>
 </template>
 <style scoped lang="scss">
 .z-group {
@@ -65,8 +78,8 @@ watch(() => node.value.layout, updateNodes);
   // top: 0;
   // left: 0;
   // box-sizing: border-box;
-  // &:hover {
-  //   border: 3px solid rgb(var(--z-primary));
-  // }
+  &:hover {
+    border: 3px solid rgb(var(--z-primary));
+  }
 }
 </style>
