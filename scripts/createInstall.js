@@ -4,7 +4,7 @@ function main() {
   const dirPath = path.resolve(import.meta.dirname, "../src/components");
   const initDir = fs.readdirSync(dirPath);
   const dirs = initDir.filter((dir) => dir !== "Icons");
-  console.log(dirs);
+  //   console.log(dirs);
   dirs.forEach((dir) => {
     const filePath = path.resolve(dirPath, dir, "index.ts");
     fs.writeFileSync(
@@ -18,7 +18,8 @@ export declare const ${dir}: DefineComponent<{}, {}, any>;
 import { withInstall } from '@/common/utils';
 import ${dir} from "./${dir}.vue";
 export * from './type.ts';
-export default withInstall(${dir},${dir})
+export { ${dir} }
+export default withInstall(${dir},'${dir}')
     `;
     fs.writeFileSync(filePath, fileContent);
   });

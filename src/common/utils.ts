@@ -1,4 +1,4 @@
-import type { App, Plugin } from "vue";
+import type { App, Plugin, Component, DefineComponent } from "vue";
 import type { ZLayout, ZDragNode, ZMap, ZCanvas } from "@/common/type";
 import { quadtree } from "d3";
 export const getId = () => {
@@ -19,31 +19,17 @@ type SFCWithInstall<T> = T & Plugin;
  * @param comp 需要全局注册的组件
  * @returns 带 install 方法的组件
  */
-export function withInstall<T extends { name: string }>(
+export function withInstall<T extends Component | DefineComponent>(
   comp: T,
-  name?: string
+  name: string
 ): SFCWithInstall<T> {
   (comp as SFCWithInstall<T>).install = (app: App) => {
-    app.component(name ?? comp.name, comp);
+    app.component(name, comp);
   };
 
   return comp as SFCWithInstall<T>;
 }
 
-/**
- * 多个组件批量注册的版本
- * @param components 组件数组
- * @returns 包含 install 方法的插件对象
- */
-export function withInstallAll(components: { name: string }[]): Plugin {
-  return {
-    install(app: App) {
-      components.forEach((comp) => {
-        app.component(comp.name, comp);
-      });
-    },
-  };
-}
 export function sin(rotate: number) {
   return Math.abs(Math.sin(angleToRadian(rotate)));
 }

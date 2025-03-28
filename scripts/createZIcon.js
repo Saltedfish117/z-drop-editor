@@ -10,7 +10,7 @@ function main() {
   });
   let scriptStr = `
 <script lang="ts">
-import { defineAsyncComponent,h,mergeProps,computed } from "vue";
+import { defineAsyncComponent } from "vue";
 ${exportStr}
 export default {
   name:'ZIcon',
@@ -20,7 +20,7 @@ export default {
 }
 </script>
 <script setup lang="ts">
-import { defineProps } from "vue";
+import { defineProps,computed } from "vue";
 import { Size } from "@/common/type.ts";
 import type { ZSvgIconProps } from "./type.ts";
 const props = defineProps<ZSvgIconProps>();

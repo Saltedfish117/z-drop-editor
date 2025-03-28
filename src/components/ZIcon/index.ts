@@ -2,5 +2,6 @@
 import { withInstall } from '@/common/utils';
 import ZIcon from "./ZIcon.vue";
 export * from './type.ts';
-export default withInstall(ZIcon,ZIcon)
+export { ZIcon }
+export default withInstall(ZIcon,'ZIcon')
     

@@ -1,6 +1,6 @@
 
 <script lang="ts">
-import { defineAsyncComponent,h,mergeProps,computed } from "vue";
+import { defineAsyncComponent } from "vue";
 const a_gengduo2 = defineAsyncComponent(() => import('@/components/Icons/a_gengduo2/a_gengduo2.vue'));
 const a_tubiaobeifen2 = defineAsyncComponent(() => import('@/components/Icons/a_tubiaobeifen2/a_tubiaobeifen2.vue'));
 const a_tubiaobeifen6 = defineAsyncComponent(() => import('@/components/Icons/a_tubiaobeifen6/a_tubiaobeifen6.vue'));
@@ -369,7 +369,7 @@ export default {
 }
 </script>
 <script setup lang="ts">
-import { defineProps } from "vue";
+import { defineProps,computed } from "vue";
 import { Size } from "@/common/type.ts";
 import type { ZSvgIconProps } from "./type.ts";
 const props = defineProps<ZSvgIconProps>();

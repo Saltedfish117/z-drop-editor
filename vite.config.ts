@@ -14,7 +14,7 @@ export default defineConfig({
       entry: path.resolve(__dirname, "src/index.ts"), // 入口文件
       name: "ZDropEditor", // 库的全局变量名
       fileName: (format) => `z-drop-editor.${format}.js`, // 输出文件名
-      formats: ["es", "umd"],
+      formats: ["es"],
     },
     rollupOptions: {
       // 确保外部化处理那些你不想打包进库的依赖
@@ -22,6 +22,12 @@ export default defineConfig({
       output: {
         globals: {
           vue: "Vue",
+        },
+        inlineDynamicImports: false,
+        manualChunks: (id) => {
+          if (id.includes("/Icons/")) {
+            return "icons";
+          }
         },
       },
     },

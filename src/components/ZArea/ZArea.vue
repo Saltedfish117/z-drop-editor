@@ -4,18 +4,11 @@ export default {
   components: {
     ZDrag,
   },
+  name: "ZArea",
 };
 </script>
 <script setup lang="ts">
-import {
-  defineOptions,
-  ref,
-  watch,
-  onUnmounted,
-  computed,
-  defineModel,
-  onMounted,
-} from "vue";
+import { ref, watch, onUnmounted, computed, defineModel, onMounted } from "vue";
 import {
   calculateMousedownPosition,
   whetherToMoveInAndOut,
@@ -23,9 +16,6 @@ import {
 } from "@/common/utils";
 import type { ZDragNodes, ZDragNode, ZLayout, ZCanvas } from "@/common/type";
 import type { ZAreaProps } from "./type";
-defineOptions({
-  name: "ZArea",
-});
 const style = ref({
   width: 0,
   height: 0,

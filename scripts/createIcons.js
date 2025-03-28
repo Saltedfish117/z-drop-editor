@@ -4,18 +4,18 @@ function main() {
   const iconsPath = path.resolve(import.meta.dirname, "../src/assets/icon/svg");
   const icons = fs.readdirSync(iconsPath);
   const names = icons.map((icon) => icon.split(".")[0].replace(/-/g, "_"));
-  let template = "";
-  names.forEach((name) => {
-    template += `export { default as  ${name} } from '@/components/Icons/${name}/${name}.vue';\n`;
-  });
+  // let template = "";
+  // names.forEach((name) => {
+  //   template += `export { default as  ${name} } from '@/components/Icons/${name}/${name}.vue';\n`;
+  // });
   fs.writeFileSync(
     path.resolve(import.meta.dirname, "../src/components/Icons/type.ts"),
-    `export type Icons = ${names.join(" | ")}`
+    `export type Icons = ${names.map((i) => `'${i}'`).join(" | ")}`
   );
-  fs.writeFileSync(
-    path.resolve(import.meta.dirname, "../src/components/Icons/index.ts"),
-    template
-  );
+  // fs.writeFileSync(
+  //   path.resolve(import.meta.dirname, "../src/components/Icons/index.ts"),
+  //   template
+  // );
   icons.forEach((icon) => {
     fs.readFile(path.resolve(iconsPath, icon), "utf8", (err, data) => {
       if (err) {
@@ -66,6 +66,18 @@ ${data2}
   export declare const ${name}: DefineComponent<{}, {}, any>;
           `
           );
+//           fs.writeFileSync(
+//             path.resolve(
+//               import.meta.dirname,
+//               `../src/components/Icons/${name}/index.ts`
+//             ),
+//             `
+// import { withInstall } from '@/common/utils';
+// import ${name} from "./${name}.vue";
+// export { ${name} }
+// export default withInstall(${name},'${name}')
+//           `
+//           );
         }
       );
     });

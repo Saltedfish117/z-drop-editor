@@ -1,6 +1,17 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, computed, defineProps, withDefaults } from "vue";
+import {
+  ref,
+  onMounted,
+  onUnmounted,
+  computed,
+  defineProps,
+  withDefaults,
+  defineOptions,
+} from "vue";
 import type { ZContextMenuProps } from "./type";
+defineOptions({
+  name: "ZContextMenu",
+});
 withDefaults(defineProps<ZContextMenuProps>(), {
   clickClose: true,
 });
