@@ -1,0 +1,9 @@
+<script lang="ts">
+import { defineComponent } from "vue";
+export default defineComponent({
+name: "xiaofang",
+})
+</script>
+<template>
+<svg width="100%" height="100%" fill="currentColor" v-bind="$attrs" class="icon"   viewBox="0 0 1088 1024" version="1.1" xmlns="http://www.w3.org/2000/svg"><path  d="M769.216 368v480H313.216v-480h456z m-276.032 96h-48v312h48V464z m144 0h-48v312h48V464zM457.216 176h168A144 144 0 0 1 769.216 320H313.216a144 144 0 0 1 144-144z"  /><path  d="M247.232 865.984h588.032v64H247.232z"  /><path  d="M469.184 224h144V128h-144zM217.216 656V488h48v168zM865.216 656V488h-48v168z"  /></svg>
+</template>

@@ -20,9 +20,9 @@ const parent = computed(() => {
 const close = () => {
   visible.value = false;
 };
-const open = () => {
-  visible.value = true;
-};
+// const open = () => {
+//   visible.value = true;
+// };
 const visibleChange = () => (visible.value = !visible.value);
 const event = computed(() => {
   return props.contextMenu ? "contextmenu" : "click";

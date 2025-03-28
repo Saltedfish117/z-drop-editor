@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { defineOptions, defineEmits, defineModel } from "vue";
 import ZBtn from "../ZBtn/ZBtn.vue";
-import ZSvgIcon from "../ZSvgIcon/ZSvgIcon.vue";
+import ZIcon from "../ZIcon/ZIcon.vue";
+import ZPopup from "../ZPopup/ZPopup.vue";
 defineOptions({
   name: "ZPageList",
 });
@@ -17,8 +18,9 @@ const list = defineModel<Item[]>("list", {
 const setSelect = (item: Item) => {
   select.value = item;
 };
-const removePage = (item: Item, i: number) => {
+const submitRemove = (close: () => void, item: Item) => {
   emits("remove", item);
+  close();
 };
 </script>
 <template>
@@ -28,17 +30,22 @@ const removePage = (item: Item, i: number) => {
       :class="{
         active: select?.id === item.id,
       }"
-      v-for="(item, i) in list"
+      v-for="item in list"
       :key="item.id"
       @click="setSelect(item)"
     >
       <span>{{ item.label }}</span>
-      <ZBtn
-        v-if="list.length !== 1"
-        @click.stop="removePage(item, i)"
-        color="text-danger"
-        :padding="false"
-        ><ZSvgIcon size="sm" name="shanchu_1"></ZSvgIcon
+      <ZBtn v-if="list.length !== 1" color="text-danger" :padding="false">
+        <ZPopup>
+          <template #default="{ close }">
+            <div
+              style="margin-top: 4px; display: flex; justify-content: flex-end; gap: 4px"
+            >
+              <ZBtn @click="close">取消</ZBtn>
+              <ZBtn color="primary" @click="submitRemove(close, item)">确定</ZBtn>
+            </div>
+          </template> </ZPopup
+        ><ZIcon size="sm" name="shanchu_1"></ZIcon
       ></ZBtn>
     </li>
   </ul>

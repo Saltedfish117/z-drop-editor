@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { defineOptions, defineModel } from "vue";
 import ZBtn from "../ZBtn/ZBtn.vue";
-import ZSvgIcon from "../ZSvgIcon/ZSvgIcon.vue";
+import ZIcon from "../ZIcon/ZIcon.vue";
 defineOptions({
   name: "ZScaleController",
 });
@@ -24,11 +24,11 @@ const adjustScale = (delta: number) => {
 <template>
   <div class="ZScaleController">
     <ZBtn color="text-default" :padding="false" @click="adjustScale(0.1)">
-      <ZSvgIcon name="tianjia"></ZSvgIcon>
+      <ZIcon name="tianjia"></ZIcon>
     </ZBtn>
     <input class="ZScaleController-value" @change="changeScale" :value="scale * 100" />
     <ZBtn color="text-default" :padding="false" @click="adjustScale(-0.1)">
-      <ZSvgIcon name="jianshao"></ZSvgIcon
+      <ZIcon name="jianshao"></ZIcon
     ></ZBtn>
   </div>
 </template>

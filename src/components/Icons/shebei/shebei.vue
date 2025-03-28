@@ -1,0 +1,9 @@
+<script lang="ts">
+import { defineComponent } from "vue";
+export default defineComponent({
+name: "shebei",
+})
+</script>
+<template>
+<svg width="100%" height="100%" fill="currentColor" v-bind="$attrs" class="icon"   viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg"><path  d="M830.644706 167.333647v240.941177H188.114824v-240.941177H830.644706z m-80.353882 80.353882h-240.941177v80.293647h240.941177V247.687529zM830.644706 488.628706v321.234823H188.114824V488.628706H830.644706zM549.526588 568.922353H469.232941v160.647529h80.293647V568.922353z m160.64753 0h-80.353883v160.647529h80.353883V568.922353z m-401.588706 0h80.293647v160.647529H308.585412z"  /></svg>
+</template>

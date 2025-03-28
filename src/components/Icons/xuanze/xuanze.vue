@@ -1,0 +1,9 @@
+<script lang="ts">
+import { defineComponent } from "vue";
+export default defineComponent({
+name: "xuanze",
+})
+</script>
+<template>
+<svg width="100%" height="100%" fill="currentColor" v-bind="$attrs" class="icon"   viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg"><path  d="M700.114824 297.863529v542.117647h-542.117648v-542.117647h542.117648z m-60.235295 60.235295h-421.647058v421.647058h421.647058v-421.647058z"  /><path  d="M860.762353 177.392941v542.117647h-167.815529v-60.235294h107.580235v-421.647059h-421.647059v73.125647h-60.235294V177.392941z"  /><path  d="M535.311059 474.413176l28.431059 28.370824-140.589177 140.589176-14.155294 14.155295-14.215529-14.155295-80.293647-80.353882 28.370823-28.370823 66.078118 66.078117z"  /></svg>
+</template>

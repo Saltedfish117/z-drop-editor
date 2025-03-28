@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { defineEmits, ref } from "vue";
-import ZSvgIcon from "../ZSvgIcon/ZSvgIcon.vue";
+import ZIcon from "../ZIcon/ZIcon.vue";
 import type { ZTextFieldProps } from "./type";
 defineOptions({ name: "ZTextField" });
 const props = withDefaults(defineProps<ZTextFieldProps>(), {
@@ -45,7 +45,7 @@ const handleBlur = () => {
   >
     <div v-if="$slots.prefix || prefixIcon" class="z-text-field-icon">
       <template v-if="!$slots.prefix">
-        <ZSvgIcon v-if="prefixIcon" :name="prefixIcon" size="sm"></ZSvgIcon>
+        <ZIcon v-if="prefixIcon" :name="prefixIcon" size="sm"></ZIcon>
       </template>
       <slot name="prefix"></slot>
     </div>

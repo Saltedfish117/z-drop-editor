@@ -20,10 +20,11 @@ type SFCWithInstall<T> = T & Plugin;
  * @returns 带 install 方法的组件
  */
 export function withInstall<T extends { name: string }>(
-  comp: T
+  comp: T,
+  name?: string
 ): SFCWithInstall<T> {
   (comp as SFCWithInstall<T>).install = (app: App) => {
-    app.component(comp.name, comp);
+    app.component(name ?? comp.name, comp);
   };
 
   return comp as SFCWithInstall<T>;
@@ -94,12 +95,10 @@ export const whetherToMoveInAndOut = (
   const parentId = node.parentId as string;
   if (!parentId) return;
   const parent = treeMap.get(parentId)!;
-  if (parent.type === "group") return;
-  // console.log(parent);
+  if (parent.type === "group") return; // 如果是组，则不处理
   const { x, y, width, height } = node.layout;
   const relativeId = node![node!.relative] as string;
   const container = treeMap.get(relativeId)!;
-
   const mode = {
     pageId: () => {
       if (

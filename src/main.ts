@@ -2,7 +2,7 @@ import { createApp } from "vue";
 import "./var.css";
 import App from "./App.vue";
 import Group from "./components/ZGroup/ZGroup.vue";
-import Rectangle from "./components/components/Rectangle.vue";
+import Rectangle from "./Rectangle.vue";
 import ZPage from "./components/ZPage/ZPage.vue";
 const app = createApp(App);
 app.component("rectangle", Rectangle);

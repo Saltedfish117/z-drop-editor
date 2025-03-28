@@ -1,41 +1,22 @@
-import type { ZDragNode, ZDragNodes, ZCanvas } from "@/common/type";
-
-export interface ZDragEditorProps {
-  nodes: ZDragNodes;
-}
-
-export interface ZDragEditorModel {
-  nodes: ZDragNodes;
-  canvas: {
-    width: number;
-    height: number;
-    scale: number;
-    drag: boolean;
-    scroll: {
-      top: number;
-      left: number;
-    };
-  };
-  moving: boolean;
-  active: ZDragNode | undefined;
-  components: ZDragNodes;
-}
-
-export interface ZCanvasContextMenuItem {
-  label: string;
-  action: (active: ZDragNode | undefined, closeMenu: () => void) => void;
-  disabled: false;
+import type { ZDragNodes, ZCanvasList } from "@/common/type";
+import type { CanvasExtension } from "../ZDragEditorCanvas/type";
+export interface ZMenuItem {
   icon: string;
+  text: string;
+  name: string;
+  component: any;
 }
-export interface ZLinesConfig {
-  color: string;
-  diff: number;
-  interval: number;
-}
-export interface ZOption {
-  lines?: Partial<ZLinesConfig>;
-  canvasContextMenu?: {
-    items: ZCanvasContextMenuItem[];
-    clickClose: boolean;
+export type ZMenus = ZMenuItem[];
+export interface ZDragEditorProps {
+  components: ZDragNodes;
+  menus?: ZMenus;
+  canvasExtension?: CanvasExtension;
+  splitter?: {
+    leftHidden: boolean;
+    rightHidden: boolean;
+    leftMinWidth: number;
+    rightMinWidth: number;
   };
+  canvases: ZCanvasList;
+  renderNode?: string;
 }

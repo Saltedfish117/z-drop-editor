@@ -10,16 +10,16 @@ import {
   nextTick,
 } from "vue";
 import ZBtn from "../ZBtn/ZBtn.vue";
-import ZSvgIcon from "../ZSvgIcon/ZSvgIcon.vue";
+import ZIcon from "../ZIcon/ZIcon.vue";
 import { createCanvas, createNode } from "@/common/create";
 import { getId } from "@/common/utils";
 import ZTree from "../ZTree/ZTree.vue";
 import ZPageList from "../ZPageList/ZPageList.vue";
 import ZPopup from "../ZPopup/ZPopup.vue";
-// import ZCanvasList from "../ZCanvasList/ZCanvasList.vue";
-import type { ZCanvasList, ZCanvas, ZDragNode, ZMap } from "@/common/type";
 import ZTextField from "../ZTextField/ZTextField.vue";
 import type { ZTreeNode } from "../ZTree/type";
+import type { ZDragNode, ZMap } from "@/common/type";
+import type { CanvasList, CanvasItem } from "./type";
 defineOptions({
   name: "ZDesign",
   directives: {
@@ -32,11 +32,11 @@ defineOptions({
     },
   },
 });
-interface CanvasItem extends ZCanvas {
-  editor: boolean;
-}
-type CanvasList = CanvasItem[];
-const canvas = defineModel<CanvasList>("canvas", {
+// interface CanvasItem extends ZCanvas {
+//   editor?: boolean;
+// }
+// type CanvasList = CanvasItem[];
+const canvases = defineModel<CanvasList>("canvases", {
   required: true,
 });
 const selectCanvas = defineModel<CanvasItem>("selectCanvas", {
@@ -95,23 +95,32 @@ const clearObserver = () => {
   observe.value.disconnect();
   observe.value = null;
 };
-const addCanvas = () => {
-  canvas.value.push(createCanvas("canvas-" + getId()));
-};
-const removeCanvas = (id: string) => {
-  if (canvas.value.length === 1) return;
-  let newCanvasList = canvas.value.filter((i) => i.id !== id);
-  canvas.value = newCanvasList;
+// const addCanvas = () => {
+//   canvases.value.push(createCanvas("canvas-" + getId()));
+// };
+const removeCanvas = (close: () => void, id: string) => {
+  if (canvases.value.length === 1) return;
+  let newCanvasList = canvases.value.filter((i) => i.id !== id);
+  canvases.value = newCanvasList;
   nextTick(() => {
     if (id === selectCanvas.value.id) {
-      selectCanvas.value = canvas.value[0];
+      selectCanvas.value = canvases.value[0];
     }
   });
+  close();
 };
-const setSelect = (item: ZDragNode) => {
-  selectNode.value = item;
+const removePage = (item: ZDragNode) => {
+  console.log(item);
+  selectCanvas.value.children = selectCanvas.value.children?.filter(
+    (i) => i.id !== item.id
+  );
+  console.log(canvases.value);
+  treeMap.value?.delete(item.id);
+  if (selectNode.value?.id === item.id) selectNode.value = undefined;
 };
-const removePage = (item: ZDragNode | ZCanvas, index: number) => {};
+// const setSelect = (item: ZDragNode) => {
+//   selectNode.value = item;
+// };
 onUnmounted(() => {
   clearObserver();
 });
@@ -180,6 +189,12 @@ const submitCreatePage = (close: () => void) => {
   };
   close();
 };
+const submitCreateCanvas = (close: () => void) => {
+  const canvas = createCanvas("canvas-" + getId());
+  canvases.value.push(canvas);
+  selectCanvas.value = canvas;
+  close();
+};
 </script>
 <template>
   <div class="z-design">
@@ -188,15 +203,29 @@ const submitCreatePage = (close: () => void) => {
         <h6 class="title">画布</h6>
         <div>
           <ZBtn :padding="false" color="text-default">
-            <!-- <ZPopup> 撒低级咖啡 </ZPopup> -->
-            <ZSvgIcon size="sm" name="plus"></ZSvgIcon>
+            <ZPopup>
+              <template #default="{ close }">
+                <div
+                  style="
+                    margin-top: 4px;
+                    display: flex;
+                    justify-content: flex-end;
+                    gap: 4px;
+                  "
+                >
+                  <ZBtn @click="close">取消</ZBtn>
+                  <ZBtn color="primary" @click="submitCreateCanvas(close)">确定</ZBtn>
+                </div>
+              </template>
+            </ZPopup>
+            <ZIcon size="sm" name="plus"></ZIcon>
           </ZBtn>
         </div>
       </div>
       <ul class="canvas-list">
         <li
           class="z-canvas-list-item"
-          v-for="item in canvas"
+          v-for="item in canvases"
           :key="item.id"
           @click="select(item)"
           :class="{
@@ -213,13 +242,23 @@ const submitCreatePage = (close: () => void) => {
             :model-value="item.label"
             @blur="editorLabel(item, $event.target.value)"
           ></ZTextField>
-          <ZBtn
-            v-if="canvas.length !== 1"
-            @click.stop="removeCanvas(item.id)"
-            color="text-danger"
-            :padding="false"
-          >
-            <ZSvgIcon name="shanchu_1" size="sm"></ZSvgIcon>
+          <ZBtn v-if="canvases.length !== 1" color="text-danger" :padding="false">
+            <ZPopup>
+              <template #default="{ close }">
+                <div
+                  style="
+                    margin-top: 4px;
+                    display: flex;
+                    justify-content: flex-end;
+                    gap: 4px;
+                  "
+                >
+                  <ZBtn @click="close">取消</ZBtn>
+                  <ZBtn color="primary" @click="removeCanvas(close, item.id)">确定</ZBtn>
+                </div>
+              </template>
+            </ZPopup>
+            <ZIcon name="shanchu_1" size="sm"></ZIcon>
           </ZBtn>
         </li>
       </ul>
@@ -265,15 +304,15 @@ const submitCreatePage = (close: () => void) => {
                         v-model.number="pageRect.width"
                         placeholder="宽度"
                       >
-                        <template #prefix>W</template></ZTextField
-                      >
+                        <template #prefix>W</template>
+                      </ZTextField>
                       <ZTextField
                         class="textfield"
                         v-model.number="pageRect.height"
                         placeholder="高度"
                       >
-                        <template #prefix>H</template></ZTextField
-                      >
+                        <template #prefix>H</template>
+                      </ZTextField>
                     </div>
                     <div
                       style="
@@ -288,15 +327,17 @@ const submitCreatePage = (close: () => void) => {
                     </div>
                   </template>
                 </ZPopup>
-                <ZSvgIcon size="sm" name="plus"></ZSvgIcon>
+                <ZIcon size="sm" name="plus"></ZIcon>
               </ZBtn>
             </div>
           </div>
           <ZPageList
             :list="pages as ZTreeNode[]"
             v-model:select="selectNode as ZTreeNode"
+            @remove="removePage"
           ></ZPageList>
         </div>
+
         <div class="z-design-nodes" v-show="selectTab === 'nodes'">
           <ZTree
             v-model:nodes="selectCanvas.children as ZTreeNode[]"
@@ -319,20 +360,19 @@ const submitCreatePage = (close: () => void) => {
     max-height: 50%;
     display: flex;
     flex-direction: column;
-
     .canvas-header {
       padding: 4px 8px;
       display: flex;
       align-items: center;
       justify-content: space-between;
       height: 30px;
+      box-shadow: 0px 3px 6px rgba(64, 87, 109, 0.1);
       .title {
         font-size: var(--z-font-sm);
         font-weight: 300;
         padding: 0;
         margin: 0;
       }
-      box-shadow: 0px 3px 6px rgba(64, 87, 109, 0.1);
     }
     .canvas-list {
       list-style: none;
@@ -344,7 +384,6 @@ const submitCreatePage = (close: () => void) => {
       overflow: auto;
       .z-canvas-list-item {
         padding: 4px 4px;
-        // border-radius: 4px;
         height: 25px;
         display: flex;
         align-items: center;
@@ -352,10 +391,10 @@ const submitCreatePage = (close: () => void) => {
         font-size: var(--z-font-sm);
         margin-bottom: 4px;
         box-shadow: 0px 3px 6px rgba(64, 87, 109, 0.1);
-        // border: 1px solid rgb(var(--z-quiet));
         position: relative;
         background-color: rgba(var(--z-page), 1);
         user-select: none;
+        cursor: pointer;
         &::before {
           content: "";
           position: absolute;
@@ -387,7 +426,6 @@ const submitCreatePage = (close: () => void) => {
     max-height: 80%;
     display: flex;
     flex-direction: column;
-
     .z-design-tabs {
       position: sticky;
       top: 0;
@@ -452,18 +490,6 @@ const submitCreatePage = (close: () => void) => {
         gap: 8px;
         .textfield {
           flex: 1;
-          // input {
-          //   width: 100%;
-          //   box-sizing: border-box;
-          //   outline: none;
-          //   border-radius: 4px;
-          //   border: 1px solid rgb(var(--z-quiet));
-          //   font-size: var(--z-font-sm);
-          //   padding: 4px 8px;
-          //   &:focus {
-          //     border: 1px solid rgb(var(--z-primary));
-          //   }
-          // }
         }
         .icons {
           min-width: 30px;

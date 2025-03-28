@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { defineOptions, computed } from "vue";
-import type { ZDragNode } from "@/common/types";
+import type { ZDragNode } from "@/common/type";
 import type { CSSProperties } from "vue";
 defineOptions({
   name: "ZNode",
@@ -18,14 +18,25 @@ const style = computed<CSSProperties>(() => ({
 }));
 </script>
 <template>
-  <component
+  <template v-if="!$slots.default">
+    <component
+      :style="style"
+      v-bind="$attrs"
+      :is="node.component"
+      v-model="node"
+      :__z-drag-editor-node-id="node.id"
+      class="z-node"
+    ></component>
+  </template>
+  <slot
     :style="style"
     v-bind="$attrs"
     :is="node.component"
-    v-model="node"
+    :modeValue="node"
+    @update:modelValue="node = $event"
     :__z-drag-editor-node-id="node.id"
     class="z-node"
-  ></component>
+  ></slot>
 </template>
 <style lang="scss">
 .z-node {

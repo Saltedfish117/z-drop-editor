@@ -1,0 +1,9 @@
+<script lang="ts">
+import { defineComponent } from "vue";
+export default defineComponent({
+name: "yonghuxinxi",
+})
+</script>
+<template>
+<svg width="100%" height="100%" fill="currentColor" v-bind="$attrs" class="icon"   viewBox="0 0 1088 1024" version="1.1" xmlns="http://www.w3.org/2000/svg"><path  d="M509.184 609.024c136.576 0 265.6 31.168 381.632 86.528a61.44 61.44 0 0 1 34.368 55.808v145.664a32 32 0 0 1-32 32h-768a32 32 0 0 1-32-32V751.36a61.44 61.44 0 0 1 34.368-55.808 882.24 882.24 0 0 1 381.632-86.528z m0 64c-125.824 0-244.8 28.48-352 79.36v112.64h704v-112.64a818.24 818.24 0 0 0-352-79.36z m0-576a224 224 0 1 1 0 448 224 224 0 0 1 0-448z m502.912 356.864v64h-140.8v-64h140.8zM509.184 161.024a160 160 0 1 0 0 320 160 160 0 0 0 0-320z m502.912 114.816v64h-227.008v-64h227.008z m0-178.112v64h-281.6v-64h281.6z" /></svg>
+</template>

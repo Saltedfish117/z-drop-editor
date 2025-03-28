@@ -1,0 +1,9 @@
+<script lang="ts">
+import { defineComponent } from "vue";
+export default defineComponent({
+name: "zhalan",
+})
+</script>
+<template>
+<svg width="100%" height="100%" fill="currentColor" v-bind="$attrs" class="icon"   viewBox="0 0 1088 1024" version="1.1" xmlns="http://www.w3.org/2000/svg"><path  d="M365.184 160v93.888H482.56V160h117.312v93.888h117.312V160h117.376v704h-117.376v-70.4H599.872v70.4H482.56v-70.4H365.184v70.4H247.872v-704h117.312z m58.688 187.712H376.96v328.576h46.912V347.712z m140.8 0H517.76v328.576h46.912V347.712z m140.8 0h-46.912v328.576h46.912V347.712z"  /><path  d="M177.472 253.888h117.312v70.4H177.472zM177.472 699.712h117.312v70.4H177.472zM811.072 253.888h93.888v70.4h-93.888zM811.072 699.712h93.888v70.4h-93.888z"  /></svg>
+</template>

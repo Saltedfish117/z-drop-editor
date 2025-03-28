@@ -2,7 +2,7 @@
 import { defineComponent, computed, h, getCurrentInstance } from "vue";
 import type { PropType } from "vue";
 import type { ZTreeNode } from "./type";
-import ZSvgIcon from "../ZSvgIcon/ZSvgIcon.vue";
+import ZIcon from "../ZIcon/ZIcon.vue";
 export default defineComponent({
   name: "ZTree",
   props: {
@@ -48,8 +48,8 @@ export default defineComponent({
                   {
                     default: () => {
                       return [
-                        h(ZSvgIcon, {
-                          name: node.isExpanded ? "xiangxia-xian" : "xiangyou-xian",
+                        h(ZIcon, {
+                          name: node.isExpanded ? "xiangxia_xian" : "xiangyou_xian",
                           size: "sm",
                           onClick: () => {
                             node.isExpanded = !node.isExpanded;
@@ -113,7 +113,7 @@ export default defineComponent({
           {
             default: () => {
               return [
-                // h(ZSvgIcon, {
+                // h(ZIcon, {
                 //   name: node.isExpanded ? "xiangxia-xian" : "xiangyou-xian",
                 //   size: "sm",
                 //   onClick: () => {

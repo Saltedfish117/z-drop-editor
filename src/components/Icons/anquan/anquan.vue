@@ -1,0 +1,9 @@
+<script lang="ts">
+import { defineComponent } from "vue";
+export default defineComponent({
+name: "anquan",
+})
+</script>
+<template>
+<svg width="100%" height="100%" fill="currentColor" v-bind="$attrs" class="icon"   viewBox="0 0 1088 1024" version="1.1" xmlns="http://www.w3.org/2000/svg"><path  d="M541.184 128l325.824 93.12-23.232 512L541.184 896 238.72 733.12l-23.296-512L541.184 128z m0 122.24l-8.96 0.32a98.944 98.944 0 0 0-89.92 98.56l-0.064 64H372.48v256h337.472v-256H640v-64c0-54.656-44.224-98.944-98.88-98.944z m122.24 209.408v162.88H418.944V459.648h244.352z m-98.944 40.704h-46.528V570.24h46.528V500.48z m-23.296-203.648l3.2 0.128c27.456 1.856 49.216 27.136 49.216 58.048v58.24H488.832v-58.24c0-32.128 23.424-58.176 52.352-58.176z"  /></svg>
+</template>

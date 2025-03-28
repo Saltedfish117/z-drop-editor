@@ -18,15 +18,15 @@ import type {
   Option,
   Resize,
   Moves,
-} from "./types";
+} from "./type";
 import {
   getCenterCoordinate,
   calculateRotateCoordinate,
   calculateMousedownPosition,
 } from "@/common/utils";
-import type { ZLayout } from "@/common/types";
+import type { ZLayout } from "@/common/type";
 import type { CSSProperties } from "vue";
-import ZSvgIcon from "../ZSvgIcon/ZSvgIcon.vue";
+import ZIcon from "../ZIcon/ZIcon.vue";
 defineOptions({
   name: "ZDrag",
 });
@@ -36,7 +36,13 @@ const props = withDefaults(defineProps<ZDragProps>(), {
   hasLock: true, // 是否有锁定按钮
   hasRotate: true, // 是否有旋转按钮
 });
-const emits = defineEmits(["update:model", "before-move", "after-move", "moving"]);
+const emits = defineEmits<{
+  (e: "update:model", layout: ZLayout): void;
+  (e: "before-move", event: MouseEvent, direction: Direction | Moves): void;
+  (e: "after-move", event: MouseEvent, direction: Direction | Moves): void;
+  (e: "moving", event: MouseEvent, direction: Direction | Moves): void;
+}>();
+// ["update:model", "before-move", "after-move", "moving"]
 const scaleFactor = computed(() => 1 / props.scale);
 const moves = {
   move: (offset: Offset, _layout: ZLayout, start: MoveStart): ZLayout => {
@@ -322,12 +328,6 @@ const model = defineModel<ZLayout>({
     };
   },
 });
-// const modelRect = computed(() => [
-//   model.value.x,
-//   model.value.y,
-//   model.value.x + model.value.width,
-//   model.value.y + model.value.height,
-// ]);
 const getPointAxis = (direction: Direction, layout: ZLayout) => {
   switch (direction) {
     case "n-resize":
@@ -695,12 +695,12 @@ defineExpose({
       <template v-if="hasRotate">
         <template v-if="rotate">
           <template v-if="!$slots.rotate">
-            <ZSvgIcon
+            <ZIcon
               tabindex="-1"
               class="rotate"
               @mousedown.stop="mousedown($event, 'rotate')"
               name="rotate"
-            ></ZSvgIcon> </template
+            ></ZIcon> </template
           ><template v-else>
             <slot name="rotate" :active="active" :layout="model"></slot>
           </template>
@@ -709,12 +709,12 @@ defineExpose({
     </template>
     <template v-if="hasLock">
       <template v-if="!$slots.lock">
-        <ZSvgIcon
+        <ZIcon
           @mousedown.stop="lockChange"
           class="lock"
           color="primary"
-          :name="model.lock ? 'lock-off' : 'lock-on'"
-        ></ZSvgIcon>
+          :name="model.lock ? 'lock_off' : 'lock_on'"
+        ></ZIcon>
       </template>
       <slot v-else name="lock" :active="active" :layout="model"></slot>
     </template>
@@ -782,6 +782,7 @@ $resizes: (ne-resize, se-resize, sw-resize, nw-resize);
     right: 0;
     cursor: pointer;
     display: none;
+    color: rgb(var(--z-primary));
   }
 
   &.active {

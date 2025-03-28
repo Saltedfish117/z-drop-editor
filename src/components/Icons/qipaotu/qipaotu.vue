@@ -1,0 +1,9 @@
+<script lang="ts">
+import { defineComponent } from "vue";
+export default defineComponent({
+name: "qipaotu",
+})
+</script>
+<template>
+<svg width="100%" height="100%" fill="currentColor" v-bind="$attrs" class="icon"   viewBox="0 0 1088 1024" version="1.1" xmlns="http://www.w3.org/2000/svg"><path  d="M162.432 96v772.544h772.544v59.456h-793.6a38.4 38.4 0 0 1-38.4-38.4V96h59.456z m598.848 503.744a102.4 102.4 0 1 1 0 204.8 102.4 102.4 0 0 1 0-204.8zM337.024 468.096a102.4 102.4 0 1 1 0 204.8 102.4 102.4 0 0 1 0-204.8z m322.432-284.672a153.6 153.6 0 1 1 0 307.2 153.6 153.6 0 0 1 0-307.2z"  /></svg>
+</template>

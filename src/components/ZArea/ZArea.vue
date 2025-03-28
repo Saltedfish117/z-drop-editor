@@ -1,19 +1,28 @@
+<script lang="ts">
+import ZDrag from "../ZDrag/ZDrag.vue";
+export default {
+  components: {
+    ZDrag,
+  },
+};
+</script>
 <script setup lang="ts">
-import { defineOptions, ref, watch, onUnmounted, computed, defineModel } from "vue";
+import {
+  defineOptions,
+  ref,
+  watch,
+  onUnmounted,
+  computed,
+  defineModel,
+  onMounted,
+} from "vue";
 import {
   calculateMousedownPosition,
   whetherToMoveInAndOut,
   calculateGroupLayout,
 } from "@/common/utils";
-import type {
-  ZDragNodes,
-  ZDragNode,
-  ZMap,
-  ZLayout,
-  ZCanvas,
-  ZDragMap,
-} from "@/common/type";
-import ZDrag from "../ZDrag/ZDrag.vue";
+import type { ZDragNodes, ZDragNode, ZLayout, ZCanvas } from "@/common/type";
+import type { ZAreaProps } from "./type";
 defineOptions({
   name: "ZArea",
 });
@@ -24,16 +33,7 @@ const style = ref({
   y: 0,
   show: false,
 });
-const props = defineProps<{
-  wrapper: HTMLElement | null;
-  canvas: HTMLElement | null;
-  scale: number;
-  nodes: ZDragNodes;
-  treeMap: ZMap;
-  selectCanvas: ZCanvas;
-  selectNode?: ZDragNode;
-  dragMap: ZDragMap;
-}>();
+const props = defineProps<ZAreaProps>();
 const selectCanvas = defineModel<ZCanvas>("selectCanvas", {
   required: true,
 });
@@ -106,9 +106,7 @@ const flatNodes = computed(() => {
       nodes.push(...item.children);
     }
   });
-  // const nodes = Array.from(props.treeMap.values()).filter((item) => {
-  //   return item.type !== "canvas";
-  // }) as ZDragNodes;
+
   return processNodes(nodes);
 });
 const layout = ref({
@@ -134,6 +132,7 @@ watch(
     drag.value = false;
   }
 );
+
 const drag = ref(false);
 let nodesStartLayout: ZLayout[] = [];
 let start: ZLayout = {
@@ -203,23 +202,6 @@ const settlement = ({
       zIndex: 1,
     };
   }
-  // const r = quadtreeNodes.value.visit((node, x1, y1, x2, y2) => {
-  //   console.log(node, x1, y1, x2, y2);
-  //   console.log(x1 > rect[0] && y1 > rect[1] && x2 < rect[2] && y2 < rect[3]);
-  //   // if (!node.length) {
-  //   //   do {
-  //   //     let d = node.data;
-  //   //     if (d[0] >= rect[0] && d[0] < rect[2] && d[1] >= rect[1] && d[1] < rect[3]) {
-  //   //       results.push(d);
-  //   //     }
-  //   //   } while ((node = node.next));
-  //   // }
-  //   // return rect[1] >
-  //   return x1 > rect[0] && y1 > rect[1] && x2 < rect[2] && y2 < rect[3];
-  //   // return x1 >= rect[2] || y1 >= rect[3] || x2 < rect[0] || y2 < rect[1];
-  // });
-  // console.log(r);
-  // console.log(results);
 };
 const mousedown = (event: MouseEvent) => {
   if (!props.wrapper || !props.canvas || selectCanvas.value.mode !== "select") return;
@@ -331,6 +313,10 @@ const updateNodes = (layout: ZDragNode["layout"]) => {
     whetherToMoveInAndOut(kids, props.treeMap, props.selectCanvas);
   });
 };
+onMounted(() => {
+  if (!props.wrapper) return;
+  props.wrapper.addEventListener("mousedown", mousedown);
+});
 onUnmounted(() => {
   if (!props.wrapper) return;
   props.wrapper.removeEventListener("mousedown", mousedown);

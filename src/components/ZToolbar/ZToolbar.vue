@@ -25,7 +25,6 @@ defineOptions({
   background-color: rgba(var(--z-page), 1);
   box-shadow: 1px 1px 5px rgba(var(--z-quiet), 1);
   border-bottom: 1px solid rgba(var(--z-quiet), 1);
-  // box-shadow: 1px 1px 5px rgba(var(--z-quiet), 1);
   display: flex;
   align-items: center;
   justify-content: space-between;
