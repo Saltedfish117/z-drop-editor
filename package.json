@@ -23,6 +23,7 @@
     "sass": "^1.85.0",
     "typescript": "~5.7.2",
     "vite": "^6.1.0",
+    "vite-plugin-libcss": "^1.1.1",
     "vue-tsc": "^2.2.0"
   }
 }

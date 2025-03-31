@@ -23,10 +23,13 @@ export function withInstall<T extends Component | DefineComponent>(
   comp: T,
   name: string
 ): SFCWithInstall<T> {
+  // (comp as SFCWithInstall<T>).install = (app: App) => {
+  //   app.component(name, comp);
+  // };
   (comp as SFCWithInstall<T>).install = (app: App) => {
     app.component(name, comp);
+    return app;
   };
-
   return comp as SFCWithInstall<T>;
 }
 

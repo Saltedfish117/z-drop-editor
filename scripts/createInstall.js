@@ -14,11 +14,12 @@ import { DefineComponent } from 'vue';
 export declare const ${dir}: DefineComponent<{}, {}, any>;
     `
     );
+    // export { ${dir} }
     const fileContent = `
 import { withInstall } from '@/common/utils';
 import ${dir} from "./${dir}.vue";
 export * from './type.ts';
-export { ${dir} }
+
 export default withInstall(${dir},'${dir}')
     `;
     fs.writeFileSync(filePath, fileContent);
