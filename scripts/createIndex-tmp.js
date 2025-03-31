@@ -1,11 +1,12 @@
 import fs from "fs";
 import path from "path";
+//  "build": "vue-tsc -b && vite build",
 function main() {
   const dirs = fs.readdirSync(
     path.resolve(import.meta.dirname, "../src/components")
   );
   const exportTemplate = (name) =>
-    `export { default as ${name} } from './components/${name}/index.ts';`;
+    `export { default as ${name} } from '@/components/${name}/index.ts';`;
   let exportStr = dirs
     .filter((dir) => dir !== "Icons")
     .map((dir) => exportTemplate(dir));

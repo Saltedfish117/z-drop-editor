@@ -7,19 +7,22 @@ function main() {
   //   console.log(dirs);
   dirs.forEach((dir) => {
     const filePath = path.resolve(dirPath, dir, "index.ts");
-    fs.writeFileSync(
-      path.resolve(dirPath, dir, `${dir}.vue.d.ts`),
-      `
-import { DefineComponent } from 'vue';
-export declare const ${dir}: DefineComponent<{}, {}, any>;
-    `
-    );
+    //     fs.writeFileSync(
+    //       path.resolve(dirPath, dir, `${dir}.vue.d.ts`),
+    //       `
+    // import { DefineComponent } from 'vue';
+    // export declare const ${dir}: DefineComponent<{}, {}, any>;
+    //     `
+    //     );
     // export { ${dir} }
+    
+    // import { defineAsyncComponent } from 'vue';
+    // const ${dir}  = defineAsyncComponent(()=>import("./${dir}.vue"));
     const fileContent = `
-import { withInstall } from '@/common/utils';
-import ${dir} from "./${dir}.vue";
-export * from './type.ts';
 
+import { withInstall } from '@/common/utils';
+import ${dir} from './${dir}.vue';
+export * from './type.ts';
 export default withInstall(${dir},'${dir}')
     `;
     fs.writeFileSync(filePath, fileContent);

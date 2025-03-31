@@ -1,4 +1,5 @@
 <script lang="ts">
+import { defineAsyncComponent } from "vue";
 const ZDesign = defineAsyncComponent(() => import("../ZDesign/ZDesign.vue"));
 const ZMaterialList = defineAsyncComponent(
   () => import("../ZMaterialList/ZMaterialList.vue")
@@ -44,7 +45,6 @@ import {
   watch,
   reactive,
   onUnmounted,
-  defineAsyncComponent,
   ref,
   withDefaults,
   computed,
@@ -73,6 +73,7 @@ import type {
   ZDragMap,
 } from "@/common/type";
 import type { ZMenuItem, ZDragEditorProps } from "./type";
+// import ZDragEditorCanvas from "../ZDragEditorCanvas/ZDragEditorCanvas.vue";
 defineOptions({
   name: "ZDragEditor",
 });
@@ -505,7 +506,7 @@ defineExpose({
             <KeepAlive :max="5">
               <component
                 v-model:canvases="canvases"
-                v-model:treeMap="treeMap"
+                :treeMap="treeMap"
                 v-model:selectCanvas="selectCanvas"
                 v-model:selectNode="selectNode"
                 :components="components"
