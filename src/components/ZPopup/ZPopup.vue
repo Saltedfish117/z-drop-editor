@@ -84,5 +84,6 @@ onBeforeUnmount(() => {
   padding: 4px 8px;
   border-radius: 4px;
   box-shadow: 0px 3px 6px rgba(64, 87, 109, 0.1);
+  z-index: 9999;
 }
 </style>
