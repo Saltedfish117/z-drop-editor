@@ -1,18 +1,24 @@
 {
   "name": "z-drop-editor",
   "private": false,
-  "version": "0.0.2",
+  "version": "0.0.10",
   "type": "module",
+  "style": "dist/index.css",
   "scripts": {
     "dev": "vite",
     "build": "vite build && vue-tsc --declaration --emitDeclarationOnly",
     "preview": "vite preview",
     "type-check": "vue-tsc"
   },
+  "license": "MIT",
+  "files": [
+    "dist",
+    "LICENSE",
+    "README.md"
+  ],
   "exports": {
-    ".": {
-      "import": "./dist/z-drop-editor.es.js"
-    }
+    "types": "./dist/z-drop-editor.d.ts",
+    "import": "./dist/z-drop-editor.js"
   },
   "dependencies": {
     "@types/node": "^22.13.9",

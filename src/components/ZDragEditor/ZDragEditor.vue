@@ -20,9 +20,10 @@ const ZBtn = defineAsyncComponent(() => import("@/components/ZBtn/ZBtn.vue"));
 const ZIcon = defineAsyncComponent(() => import("@/components/ZIcon/ZIcon.vue"));
 const ZDrag = defineAsyncComponent(() => import("../ZDrag/ZDrag.vue"));
 const ZNode = defineAsyncComponent(() => import("../ZNode/ZNode.vue"));
-
+const ZPage = defineAsyncComponent(() => import("../ZPage/ZPage.vue"));
 export default {
   components: {
+    ZPage,
     ZDesign,
     ZMaterialList,
     ZArea,
@@ -444,19 +445,33 @@ defineExpose({
   hijackNodeAxis,
   removeNode,
 });
+// defineSlots({
+//   default: true,
+//   toolbar: true,
+//   "toolbar-left": true,
+//   "toolbar-center": true,
+//   "toolbar-right": true,
+//   left: true,
+//   center: true,
+//   right: true,
+// });
 </script>
 <template>
   <article tabindex="0" class="ZDragEditor">
     <template v-if="!$slots.toolbar">
       <ZToolbar class="toolbar">
         <template #left="scope">
-          <slot v-if="$slots['toolbar-left']" name="left" v-bind="scope"></slot>
+          <slot v-if="$slots['toolbar-left']" name="toolbar-left" v-bind="scope"></slot>
           <template v-else>
             <h1 class="z-logo">ZDragEditor</h1>
           </template>
         </template>
         <template #center="scope">
-          <slot v-if="$slots['toolbar-center']" name="center" v-bind="scope"></slot>
+          <slot
+            v-if="$slots['toolbar-center']"
+            name="toolbar-center"
+            v-bind="scope"
+          ></slot>
           <template v-else>
             <div class="z-toolbar-center-btns">
               <ZBtn
@@ -477,7 +492,7 @@ defineExpose({
           </template>
         </template>
         <template #right="scope">
-          <slot v-if="$slots['toolbar-right']" name="right" v-bind="scope"></slot>
+          <slot v-if="$slots['toolbar-right']" name="toolbar-right" v-bind="scope"></slot>
           <template v-else>
             <ZScaleController v-model="selectCanvas.layout.scale"></ZScaleController>
           </template>
@@ -609,6 +624,9 @@ defineExpose({
     <slot name="default"></slot>
   </article>
 </template>
+<style>
+@import url("../../var.css");
+</style>
 <style scoped lang="scss">
 .ZDragEditor {
   overflow: hidden;

@@ -26,7 +26,6 @@ const page = defineModel<ZDragNode>({
 });
 
 const mousedown = (node: ZDragNode) => {
-  // console.log("page set", node);
   emits("select", node);
 };
 const dragover = (e: DragEvent) => {

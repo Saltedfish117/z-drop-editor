@@ -18,6 +18,7 @@ import ZTextField from "@/components/ZTextField/index.ts";
 import ZToolbar from "@/components/ZToolbar/index.ts";
 import ZTree from "@/components/ZTree/index.ts";
 import ZDragEditor from "@/components/ZDragEditor/ZDragEditor.vue";
+export * from "./type";
 const components = [
   ZArea,
   ZBtn,
@@ -38,10 +39,10 @@ const components = [
   ZToolbar,
   ZTree,
 ];
-const install = (app: App) => {
+ZDragEditor.install = (app: App) => {
+  app.component("ZDragEditor", ZDragEditor);
   components.forEach((component) => {
-    app.component("ZDragEditor", ZDragEditor);
     app.use(component);
   });
 };
-export default { install };
+export default ZDragEditor;

@@ -1,15 +1,13 @@
 <script setup lang="ts">
 import { defineOptions, defineEmits, defineModel } from "vue";
+import type { Item } from "./type";
 import ZBtn from "../ZBtn/ZBtn.vue";
 import ZIcon from "../ZIcon/ZIcon.vue";
 import ZPopup from "../ZPopup/ZPopup.vue";
 defineOptions({
   name: "ZPageList",
 });
-interface Item {
-  label: string;
-  id: string;
-}
+
 const emits = defineEmits(["remove"]);
 const select = defineModel<Item>("select");
 const list = defineModel<Item[]>("list", {
