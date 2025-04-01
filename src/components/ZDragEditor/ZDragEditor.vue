@@ -21,6 +21,8 @@ const ZIcon = defineAsyncComponent(() => import("@/components/ZIcon/ZIcon.vue"))
 const ZDrag = defineAsyncComponent(() => import("../ZDrag/ZDrag.vue"));
 const ZNode = defineAsyncComponent(() => import("../ZNode/ZNode.vue"));
 const ZPage = defineAsyncComponent(() => import("../ZPage/ZPage.vue"));
+const ZLines = defineAsyncComponent(() => import("../ZLines/ZLines.vue"));
+
 export default {
   components: {
     ZPage,
@@ -36,6 +38,7 @@ export default {
     ZIcon,
     ZDrag,
     ZNode,
+    ZLines,
   },
 };
 </script>
@@ -74,7 +77,6 @@ import type {
   ZDragMap,
 } from "@/common/type";
 import type { ZMenuItem, ZDragEditorProps } from "./type";
-// import ZDragEditorCanvas from "../ZDragEditorCanvas/ZDragEditorCanvas.vue";
 defineOptions({
   name: "ZDragEditor",
 });
@@ -445,16 +447,6 @@ defineExpose({
   hijackNodeAxis,
   removeNode,
 });
-// defineSlots({
-//   default: true,
-//   toolbar: true,
-//   "toolbar-left": true,
-//   "toolbar-center": true,
-//   "toolbar-right": true,
-//   left: true,
-//   center: true,
-//   right: true,
-// });
 </script>
 <template>
   <article tabindex="0" class="ZDragEditor">
@@ -603,6 +595,13 @@ defineExpose({
                     :rotate="selectNode.hasRotate"
                   >
                   </ZDrag>
+                  <ZLines
+                    v-if="selectNode && canvas && wrapper"
+                    v-model="hijackNodeAxis"
+                    :treeMap="treeMap"
+                    :selectNode="selectNode"
+                    :wrapper="wrapper"
+                  ></ZLines>
                 </div>
               </template>
             </ZDragEditorCanvas>

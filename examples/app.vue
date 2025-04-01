@@ -1,101 +1,100 @@
 <script setup lang="ts">
-// import ZDragEditor from "./components/ZDragEditor/ZDragEditor.vue";
 import { ref } from "vue";
-import ZDragEditor from "@/components/ZDragEditor/ZDragEditor.vue";
-// import type { ZDragNodes, ZCanvasList } from "@/common/type";
-// import { getId } from "@/common/utils";
-// import { createCanvas, createNode } from "@/common/create";
-// import ZTextField from "./components/ZTextField/ZTextField.vue";
 
-// const initArr = Array.from({ length: 1 }, (_, _c) => {
-//   const canvasId = getId();
-//   let pageX = 0;
-//   return createCanvas(canvasId, {
-//     children: Array.from({ length: 1 }, (_, _p) => {
-//       const pageId = getId();
-//       let nodeX = 0;
-//       const page = createNode({
-//         id: pageId,
-//         relative: "canvasId",
-//         canvasId,
-//         parentId: canvasId,
-//         component: "page",
-//         label: "page",
-//         type: "page",
-//         layout: {
-//           width: 794,
-//           height: 1123,
-//           x: pageX,
-//         },
-//         hasRotate: false,
-//         children: Array.from({ length: 3 }, (_, _n) => {
-//           const nodeId = getId();
-//           const node = createNode({
-//             id: nodeId,
-//             relative: "pageId",
-//             component: "rectangle",
-//             parentId: pageId,
-//             label: "node",
-//             canvasId,
-//             pageId,
-//             type: "component",
-//             layout: {
-//               x: nodeX,
-//             },
-//           });
-//           nodeX += 210;
-//           return node;
-//         }) as ZDragNodes,
-//       });
-//       pageX += page.layout.width + 50;
-//       return page;
-//     }),
-//   });
-// }) as ZCanvasList;
-// let nodeX = 0;
-// let groupId = getId();
-// initArr[0].children[0].children?.push(
-//   createNode({
-//     id: groupId,
-//     canvasId: initArr[0].id,
-//     pageId: initArr[0].children[0].id,
-//     parentId: initArr[0].children[0].id,
-//     component: "group",
-//     label: "group",
-//     type: "group",
-//     layout: {
-//       x: 0,
-//       y: 0,
-//       width: 200,
-//       height: 200,
-//       rotate: 0,
-//       zIndex: 1,
-//       lock: false,
-//     },
-//     hasRotate: false,
-//     relative: "pageId",
-//     children: Array.from({ length: 3 }, (_, __) => {
-//       const nodeId = getId();
-//       const node = createNode({
-//         id: nodeId,
-//         relative: "pageId",
-//         component: "rectangle",
-//         label: "node",
-//         canvasId: initArr[0].id,
-//         pageId: initArr[0].children[0].id,
-//         parentId: groupId,
-//         type: "component",
-//         layout: {
-//           x: nodeX,
-//           y: 220,
-//         },
-//       });
-//       nodeX += 210;
-//       return node;
-//     }) as ZDragNodes,
-//   })
-// );
-// const canvasList = ref(initArr);
+import type { ZDragNodes, ZCanvasList } from "@/common/type";
+import { getId } from "@/common/utils";
+import { createCanvas, createNode } from "@/common/create";
+import ZTextField from "@/components/ZTextField/ZTextField.vue";
+
+const initArr = Array.from({ length: 1 }, (_, _c) => {
+  const canvasId = getId();
+  let pageX = 0;
+  return createCanvas(canvasId, {
+    children: Array.from({ length: 1 }, (_, _p) => {
+      const pageId = getId();
+      let nodeX = 0;
+      const page = createNode({
+        id: pageId,
+        relative: "canvasId",
+        canvasId,
+        parentId: canvasId,
+        component: "ZPage",
+        label: "page",
+        type: "page",
+        layout: {
+          width: 794,
+          height: 1123,
+          x: pageX,
+        },
+        hasRotate: false,
+        children: Array.from({ length: 3 }, (_, _n) => {
+          const nodeId = getId();
+          const node = createNode({
+            id: nodeId,
+            relative: "pageId",
+            component: "Rectangle",
+            parentId: pageId,
+            label: "node",
+            canvasId,
+            pageId,
+            type: "component",
+            layout: {
+              x: nodeX,
+            },
+          });
+          nodeX += 210;
+          return node;
+        }) as ZDragNodes,
+      });
+      pageX += page.layout.width + 50;
+      return page;
+    }),
+  });
+}) as ZCanvasList;
+let nodeX = 0;
+let groupId = getId();
+initArr[0].children[0].children?.push(
+  createNode({
+    id: groupId,
+    canvasId: initArr[0].id,
+    pageId: initArr[0].children[0].id,
+    parentId: initArr[0].children[0].id,
+    component: "ZGroup",
+    label: "group",
+    type: "group",
+    layout: {
+      x: 0,
+      y: 0,
+      width: 200,
+      height: 200,
+      rotate: 0,
+      zIndex: 1,
+      lock: false,
+    },
+    hasRotate: false,
+    relative: "pageId",
+    children: Array.from({ length: 3 }, (_, __) => {
+      const nodeId = getId();
+      const node = createNode({
+        id: nodeId,
+        relative: "pageId",
+        component: "Rectangle",
+        label: "node",
+        canvasId: initArr[0].id,
+        pageId: initArr[0].children[0].id,
+        parentId: groupId,
+        type: "component",
+        layout: {
+          x: nodeX,
+          y: 220,
+        },
+      });
+      nodeX += 210;
+      return node;
+    }) as ZDragNodes,
+  })
+);
+const canvases = ref(initArr);
 const components = [
   {
     id: `-kids`,
@@ -114,7 +113,7 @@ const components = [
     type: "component",
   },
 ];
-const canvases = ref([]);
+// const canvases = ref([]);
 </script>
 <template>
   <article>
@@ -158,6 +157,12 @@ const canvases = ref([]);
         </div>
       </template> -->
     <ZDragEditor :components="components" :canvases="canvases" class="editor">
+      <template #right="{ selectCanvas }">
+        <pre>
+        {{ selectCanvas.layout }}
+      </pre
+        >
+      </template>
     </ZDragEditor>
   </article>
 </template>
