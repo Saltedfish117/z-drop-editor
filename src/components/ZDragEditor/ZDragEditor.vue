@@ -12,12 +12,16 @@ const ZToolbar = defineAsyncComponent(() => import("../ZToolbar/ZToolbar.vue"));
 const ContextMenu = defineAsyncComponent(
   () => import("../ZContextMenu/ZContextMenu.vue")
 );
-const ZSplitter = defineAsyncComponent(() => import("../ZSplitter/ZSplitter.vue"));
+const ZSplitter = defineAsyncComponent(
+  () => import("../ZSplitter/ZSplitter.vue")
+);
 const ZScaleController = defineAsyncComponent(
   () => import("@/components/ZScaleController/ZScaleController.vue")
 );
 const ZBtn = defineAsyncComponent(() => import("@/components/ZBtn/ZBtn.vue"));
-const ZIcon = defineAsyncComponent(() => import("@/components/ZIcon/ZIcon.vue"));
+const ZIcon = defineAsyncComponent(
+  () => import("@/components/ZIcon/ZIcon.vue")
+);
 const ZDrag = defineAsyncComponent(() => import("../ZDrag/ZDrag.vue"));
 const ZNode = defineAsyncComponent(() => import("../ZNode/ZNode.vue"));
 const ZPage = defineAsyncComponent(() => import("../ZPage/ZPage.vue"));
@@ -114,7 +118,9 @@ const canvases = defineModel<ZDragEditorProps["canvases"]>("canvases", {
 if (canvases.value.length === 0) {
   canvases.value.push(createCanvas("1-canvas"));
 }
-const editorCanvasRef = ref<InstanceType<typeof ZDragEditorCanvas> | null>(null);
+const editorCanvasRef = ref<InstanceType<typeof ZDragEditorCanvas> | null>(
+  null
+);
 const selectCanvas = ref<ZCanvas>(canvases.value[0]);
 const selectNode = ref<ZDragNode | undefined>();
 const treeMap = reactive<ZMap>(new Map());
@@ -170,16 +176,28 @@ const moving = (_: MouseEvent) => {
   if (!drag) return;
   if (drag.moving) drag.moving(_);
 };
-const hijackNodeAxis = computed({
-  get() {
-    if (!selectNode.value) return;
+const hijackNodeAxis = computed<ZLayout>({
+  get(): ZLayout {
+    const defaultValue: ZLayout = {
+      x: 0,
+      y: 0,
+      width: 0,
+      height: 0,
+      rotate: 0,
+      zIndex: 0,
+      lock: false,
+    };
+    if (!selectNode.value) return defaultValue;
     if (selectNode.value && selectNode.value.relative) {
       const relative = selectNode.value.relative;
       const containerId = selectNode.value[relative];
-      if (!containerId) throw new Error("relative container is not exist");
-      if (treeMap.has(containerId) && treeMap.get(containerId)!.type !== "canvas") {
+      if (!containerId) return defaultValue;
+      if (
+        treeMap.has(containerId) &&
+        treeMap.get(containerId)!.type !== "canvas"
+      ) {
         const container = treeMap.get(containerId)!;
-        const hijack = { ...selectNode.value.layout };
+        const hijack = { ...selectNode.value.layout } as ZLayout;
         hijack.x = container.layout.x + hijack.x;
         hijack.y = container.layout.y + hijack.y;
         return hijack;
@@ -194,7 +212,10 @@ const hijackNodeAxis = computed({
       const relative = selectNode.value.relative;
       const containerId = selectNode.value[relative];
       if (!containerId) throw new Error("relative container is not exist");
-      if (treeMap.has(containerId) && treeMap.get(containerId)?.type !== "canvas") {
+      if (
+        treeMap.has(containerId) &&
+        treeMap.get(containerId)?.type !== "canvas"
+      ) {
         const container = treeMap.get(containerId)!;
         selectNode.value.layout = {
           ...value,
@@ -374,7 +395,11 @@ const setSelectNode = (node?: ZDragNode) => {
 const dblclick = (e: MouseEvent, canvas: HTMLElement) => {
   if (!selectNode.value) return;
   if (!selectNode.value.children || !selectNode.value.children.length) return;
-  const axis = calculateMousedownPosition(e, canvas, selectCanvas.value.layout.scale);
+  const axis = calculateMousedownPosition(
+    e,
+    canvas,
+    selectCanvas.value.layout.scale
+  );
   const childrenRects = selectNode.value.children.map((child) => {
     const mode = {
       canvasId: () => {
@@ -401,7 +426,10 @@ const dblclick = (e: MouseEvent, canvas: HTMLElement) => {
   const y = axis.y;
   const select = childrenRects.find((child) => {
     return (
-      child.rect[0] <= x && child.rect[1] <= y && child.rect[2] >= x && child.rect[3] >= y
+      child.rect[0] <= x &&
+      child.rect[1] <= y &&
+      child.rect[2] >= x &&
+      child.rect[3] >= y
     );
   });
   if (select) {
@@ -453,7 +481,11 @@ defineExpose({
     <template v-if="!$slots.toolbar">
       <ZToolbar class="toolbar">
         <template #left="scope">
-          <slot v-if="$slots['toolbar-left']" name="toolbar-left" v-bind="scope"></slot>
+          <slot
+            v-if="$slots['toolbar-left']"
+            name="toolbar-left"
+            v-bind="scope"
+          ></slot>
           <template v-else>
             <h1 class="z-logo">ZDragEditor</h1>
           </template>
@@ -468,14 +500,20 @@ defineExpose({
             <div class="z-toolbar-center-btns">
               <ZBtn
                 @click="arrow"
-                :color="selectCanvas.mode === 'select' ? 'text-primary' : 'text-default'"
+                :color="
+                  selectCanvas.mode === 'select'
+                    ? 'text-primary'
+                    : 'text-default'
+                "
                 :padding="false"
               >
                 <ZIcon size="md" name="cursor"></ZIcon>
               </ZBtn>
               <ZBtn
                 @click="drag"
-                :color="selectCanvas.mode === 'drag' ? 'text-primary' : 'text-default'"
+                :color="
+                  selectCanvas.mode === 'drag' ? 'text-primary' : 'text-default'
+                "
                 :padding="false"
               >
                 <ZIcon size="sm" name="grab"></ZIcon>
@@ -484,9 +522,15 @@ defineExpose({
           </template>
         </template>
         <template #right="scope">
-          <slot v-if="$slots['toolbar-right']" name="toolbar-right" v-bind="scope"></slot>
+          <slot
+            v-if="$slots['toolbar-right']"
+            name="toolbar-right"
+            v-bind="scope"
+          ></slot>
           <template v-else>
-            <ZScaleController v-model="selectCanvas.layout.scale"></ZScaleController>
+            <ZScaleController
+              v-model="selectCanvas.layout.scale"
+            ></ZScaleController>
           </template>
         </template>
       </ZToolbar>
@@ -555,7 +599,9 @@ defineExpose({
                     :key="node.id"
                     v-model="selectCanvas.children[index]"
                     @select="setSelectNode"
-                    @mousedown.stop="setSelectNode(selectCanvas.children[index])"
+                    @mousedown.stop="
+                      setSelectNode(selectCanvas.children[index])
+                    "
                     @drop="drop"
                   >
                   </ZNode>

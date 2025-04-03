@@ -24,11 +24,11 @@ const adjustScale = (delta: number) => {
 <template>
   <div class="ZScaleController">
     <ZBtn color="text-default" :padding="false" @click="adjustScale(0.1)">
-      <ZIcon name="tianjia"></ZIcon>
+      <ZIcon size="sm" name="tianjia"></ZIcon>
     </ZBtn>
     <input class="ZScaleController-value" @change="changeScale" :value="scale * 100" />
     <ZBtn color="text-default" :padding="false" @click="adjustScale(-0.1)">
-      <ZIcon name="jianshao"></ZIcon
+      <ZIcon size="sm" name="jianshao"></ZIcon
     ></ZBtn>
   </div>
 </template>

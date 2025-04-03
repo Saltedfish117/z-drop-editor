@@ -15,26 +15,14 @@ const handleInput = (event: Event) => {
   event.preventDefault();
   if (props.disabled) return;
   const val = (event.target as HTMLInputElement).value;
-  // value.value = val;
   emits("update:modelValue", val);
 };
 const handleFocus = () => {
   focus.value = true;
-  // if (textFieldRef.value) textFieldRef.value.focus();
 };
 const handleBlur = () => {
   focus.value = false;
-  // if (textFieldRef.value) textFieldRef.value.blur();
 };
-// const textFieldFocus = () => {
-//   // focus.value = true;
-//   console.log(111);
-//   if (textFieldRef.value) textFieldRef.value.focus();
-// };
-// const textFieldBlur = () => {
-//   // focus.value = false;
-//   if (textFieldRef.value) textFieldRef.value.blur();
-// };
 </script>
 <template>
   <div
@@ -78,6 +66,16 @@ const handleBlur = () => {
     border: 1px solid rgb(var(--z-primary));
     .z-text-field-icon {
       color: rgb(var(--z-primary));
+    }
+  }
+  &:not(disabled) {
+    &:not(.focus) {
+      &:hover {
+        border: 1px solid rgba(var(--z-primary), 0.3);
+        // .z-text-field-icon {
+        //   color: rgb(var(--z-primary), 0.3);
+        // }
+      }
     }
   }
   .z-text-field-icon {

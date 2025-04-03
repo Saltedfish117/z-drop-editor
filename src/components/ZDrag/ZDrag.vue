@@ -645,13 +645,6 @@ const createPoints = () => {
       : angleToCursor.some(({ start, end, cursor }) =>
           angle >= start && angle < end ? (point.style.cursor = cursor) : false
         );
-    // if (angle < 23 || angle >= 338) {
-    //   point.style.cursor = "nw-resize";
-    //   return;
-    // }
-    // angleToCursor.some(({ start, end, cursor }) =>
-    //   angle >= start && angle < end ? (point.style.cursor = cursor) : false
-    // );
   });
   return points;
 };

@@ -192,7 +192,7 @@ const submitCreatePage = (close: () => void) => {
   }
   const page = createNode({
     id: "page-" + getId(),
-    component: "page",
+    component: "ZPage",
     label: "页面 " + (pages.value.length + 1),
     type: "page",
     relative: "canvasId",
@@ -232,12 +232,11 @@ const submitCreateCanvas = (close: () => void) => {
                     display: flex;
                     justify-content: flex-end;
                     gap: 4px;
+                    font-size: 12px;
                   "
                 >
                   <ZBtn @click="close">取消</ZBtn>
-                  <ZBtn color="primary" @click="submitCreateCanvas(close)"
-                    >确定</ZBtn
-                  >
+                  <ZBtn color="primary" @click="submitCreateCanvas(close)">确定</ZBtn>
                 </div>
               </template>
             </ZPopup>
@@ -265,11 +264,7 @@ const submitCreateCanvas = (close: () => void) => {
             :model-value="item.label"
             @blur="editorLabel(item, $event.target.value)"
           ></ZTextField>
-          <ZBtn
-            v-if="canvases.length !== 1"
-            color="text-danger"
-            :padding="false"
-          >
+          <ZBtn v-if="canvases.length !== 1" color="text-danger" :padding="false">
             <ZPopup>
               <template #default="{ close }">
                 <div
@@ -281,9 +276,7 @@ const submitCreateCanvas = (close: () => void) => {
                   "
                 >
                   <ZBtn @click="close">取消</ZBtn>
-                  <ZBtn color="primary" @click="removeCanvas(close, item.id)"
-                    >确定</ZBtn
-                  >
+                  <ZBtn color="primary" @click="removeCanvas(close, item.id)">确定</ZBtn>
                 </div>
               </template>
             </ZPopup>
@@ -352,9 +345,7 @@ const submitCreateCanvas = (close: () => void) => {
                       "
                     >
                       <ZBtn @click="close">取消</ZBtn>
-                      <ZBtn color="primary" @click="submitCreatePage(close)"
-                        >确定</ZBtn
-                      >
+                      <ZBtn color="primary" @click="submitCreatePage(close)">确定</ZBtn>
                     </div>
                   </template>
                 </ZPopup>
