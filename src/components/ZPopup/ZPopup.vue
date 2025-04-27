@@ -20,9 +20,6 @@ const parent = computed(() => {
 const close = () => {
   visible.value = false;
 };
-// const open = () => {
-//   visible.value = true;
-// };
 const visibleChange = () => (visible.value = !visible.value);
 const event = computed(() => {
   return props.contextMenu ? "contextmenu" : "click";
@@ -31,10 +28,6 @@ const parentRect = computed(() => {
   if (!parent.value) return {} as DOMRect;
   return parent.value.getBoundingClientRect();
 });
-// const popupContentRect = computed(() => {
-//   if (!popupContentRef.value) return {} as DOMRect;
-//   return popupContentRef.value.getBoundingClientRect();
-// });
 popupContentRef;
 const handleClickOutside = (e: MouseEvent) => {
   if (!popupContentRef.value) return;

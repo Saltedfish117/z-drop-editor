@@ -1,11 +1,8 @@
 <script setup lang="ts">
 import { ref } from "vue";
-
 import type { ZDragNodes, ZCanvasList } from "@/common/type";
 import { getId, calculateGroupLayout } from "@/common/utils";
 import { createCanvas, createNode } from "@/common/create";
-import ZTextField from "@/components/ZTextField/ZTextField.vue";
-
 const initArr = Array.from({ length: 1 }, (_, _c) => {
   const canvasId = getId();
   let pageX = 0;
@@ -115,55 +112,18 @@ const components = [
     type: "component",
   },
 ];
-// const canvases = ref([]);
 </script>
 <template>
   <article>
-    <!--       <!-- <template #contextMenu>
-        <div class="context-menu">context-menu</div>
-      </template>
-      <template #right="{ selectNode }">
-        <div class="z-right-content">
-          <div v-if="selectNode">
-            <div class="text-field-row">
-              <ZTextField
-                class="col"
-                :model-value="selectNode.layout.x"
-                placeholder="x轴坐标"
-              >
-                <template #prefix>X</template>
-              </ZTextField>
-              <ZTextField
-                class="col"
-                :model-value="selectNode.layout.y"
-                label="Y"
-                placeholder="Y轴坐标"
-              >
-                <template #prefix>Y</template>
-              </ZTextField>
-              <ZTextField
-                class="col"
-                :model-value="selectNode.layout.rotate"
-                placeholder="旋转角度"
-                prefix-icon="shuaxin"
-              >
-              </ZTextField>
-              <ZTextField class="col" :model-value="selectNode.layout.width">
-                <template #prefix>W</template>
-              </ZTextField>
-              <ZTextField class="col" :model-value="selectNode.layout.height">
-                <template #prefix>H</template>
-              </ZTextField>
-            </div>
-          </div>
-        </div>
-      </template> -->
     <ZDragEditor :components="components" :canvases="canvases" class="editor">
-      <template #right="{ selectCanvas }">
+      <template #right="{ selectCanvas, selectNode }">
         <pre>
         {{ selectCanvas.layout }}
       </pre
         >
+        <pre>
+        {{ selectNode }}
+        </pre>
       </template>
     </ZDragEditor>
   </article>
@@ -173,27 +133,4 @@ const components = [
   width: 100vw;
   height: 100vh;
 }
-// .context-menu {
-//   background-color: rgb(255, 255, 255);
-//   border: 1px solid #ccc;
-//   padding: 8px;
-//   border-radius: 4px;
-//   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-// }
-// .z-right-content {
-//   height: 100%;
-//   width: 100%;
-//   .text-field-row {
-//     padding: 8px 16px;
-//     display: grid;
-//     grid-template-columns: repeat(3, 1fr);
-//     gap: 4px;
-//     flex-wrap: wrap;
-//     .col {
-//       min-width: 50px;
-//       // width: 33.33%;
-//       font-size: 12px;
-//     }
-//   }
-// }
 </style>

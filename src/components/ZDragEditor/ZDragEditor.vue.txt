@@ -1,3 +1,47 @@
+<script lang="ts">
+import { defineAsyncComponent } from "vue";
+const ZDesign = defineAsyncComponent(() => import("../ZDesign/ZDesign.vue"));
+const ZMaterialList = defineAsyncComponent(
+  () => import("../ZMaterialList/ZMaterialList.vue")
+);
+const ZArea = defineAsyncComponent(() => import("../ZArea/ZArea.vue"));
+const ZDragEditorCanvas = defineAsyncComponent(
+  () => import("../ZDragEditorCanvas/ZDragEditorCanvas.vue")
+);
+const ZToolbar = defineAsyncComponent(() => import("../ZToolbar/ZToolbar.vue"));
+const ContextMenu = defineAsyncComponent(
+  () => import("../ZContextMenu/ZContextMenu.vue")
+);
+const ZSplitter = defineAsyncComponent(() => import("../ZSplitter/ZSplitter.vue"));
+const ZScaleController = defineAsyncComponent(
+  () => import("@/components/ZScaleController/ZScaleController.vue")
+);
+const ZBtn = defineAsyncComponent(() => import("@/components/ZBtn/ZBtn.vue"));
+const ZIcon = defineAsyncComponent(() => import("@/components/ZIcon/ZIcon.vue"));
+const ZDrag = defineAsyncComponent(() => import("../ZDrag/ZDrag.vue"));
+const ZNode = defineAsyncComponent(() => import("../ZNode/ZNode.vue"));
+const ZPage = defineAsyncComponent(() => import("../ZPage/ZPage.vue"));
+const ZLines = defineAsyncComponent(() => import("../ZLines/ZLines.vue"));
+
+export default {
+  components: {
+    ZPage,
+    ZDesign,
+    ZMaterialList,
+    ZArea,
+    ZDragEditorCanvas,
+    ZToolbar,
+    ContextMenu,
+    ZSplitter,
+    ZScaleController,
+    ZBtn,
+    ZIcon,
+    ZDrag,
+    ZNode,
+    ZLines,
+  },
+};
+</script>
 <script setup lang="ts">
 import {
   defineOptions,
@@ -11,6 +55,7 @@ import {
   onMounted,
   defineProps,
   provide,
+  getCurrentInstance,
   defineExpose,
   nextTick,
 } from "vue";
@@ -32,7 +77,6 @@ import type {
   ZDragMap,
 } from "@/common/type";
 import type { ZMenuItem, ZDragEditorProps } from "./type";
-import type ZDragEditorCanvas from "../ZDragEditorCanvas";
 defineOptions({
   name: "ZDragEditor",
 });
@@ -75,20 +119,27 @@ const selectCanvas = ref<ZCanvas>(canvases.value[0]);
 const selectNode = ref<ZDragNode | undefined>();
 const treeMap = reactive<ZMap>(new Map());
 const dragMap = reactive<ZDragMap>(new Map());
-const onDragStart = (fn: () => void, id: string) => {
-  const nodeId = id;
+const onDragStart = (fn: () => void) => {
+  const instance = getCurrentInstance();
+  // console.log(instance);
+  if (!instance) throw new Error("instance is not exist");
+  const nodeId = instance.attrs["__z-drag-editor-node-id"] as string;
   if (!nodeId) throw new Error("nodeId in instance attrs not found");
   dragMap.set(nodeId, { beforeMove: fn });
 };
-const onDragMove = (fn: () => void, id: string) => {
-  const nodeId = id;
+const onDragMove = (fn: () => void) => {
+  const instance = getCurrentInstance();
+  if (!instance) throw new Error("instance is not exist");
+  const nodeId = instance.attrs["__z-drag-editor-node-id"] as string;
   if (!nodeId) throw new Error("nodeId in instance attrs not found");
   const drag = dragMap.get(nodeId);
   if (drag) drag.moving = fn;
   else dragMap.set(nodeId, { moving: fn });
 };
-const onDragEnd = (fn: () => void, id: string) => {
-  const nodeId = id;
+const onDragEnd = (fn: () => void) => {
+  const instance = getCurrentInstance();
+  if (!instance) throw new Error("instance is not exist");
+  const nodeId = instance.attrs["__z-drag-editor-node-id"] as string;
   if (!nodeId) throw new Error("nodeId in instance attrs not found");
   const drag = dragMap.get(nodeId);
   if (drag) drag.afterMove = fn;
@@ -483,7 +534,7 @@ defineExpose({
         </template>
         <template #center>
           <div v-if="!$slots.center" class="z-main-content">
-            <ZContextMenu>
+            <ContextMenu>
               <template #default="{ closeMenu }">
                 <slot
                   :canvases="canvases"
@@ -495,7 +546,7 @@ defineExpose({
                   name="contextMenu"
                 ></slot>
               </template>
-            </ZContextMenu>
+            </ContextMenu>
             <ZDragEditorCanvas
               v-if="selectCanvas"
               v-model="selectCanvas.layout"

@@ -24,19 +24,9 @@ const style = computed<CSSProperties>(() => ({
       v-bind="$attrs"
       :is="node.component"
       v-model="node"
-      :__z-drag-editor-node-id="node.id"
       class="z-node"
     ></component>
   </template>
-  <slot
-    :style="style"
-    v-bind="$attrs"
-    :is="node.component"
-    :modeValue="node"
-    @update:modelValue="node = $event"
-    :__z-drag-editor-node-id="node.id"
-    class="z-node"
-  ></slot>
 </template>
 <style lang="scss">
 .z-node {

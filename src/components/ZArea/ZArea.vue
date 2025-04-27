@@ -163,15 +163,17 @@ const settlement = ({
   const rect = [x, y, x + width, y + height];
   let start = 0;
   let end = flatNodes.value.length - 1;
-  while (start < end) {
+  const judge = (item: { rect: number[] }) => {
+    if (!item) return;
+    const [x1, y1, x2, y2] = item.rect;
+    if (x1 >= rect[0] && y1 >= rect[1] && x2 <= rect[2] && y2 <= rect[3]) {
+      results.push(item as Node);
+    }
+  };
+  while (start <= end) {
     const arr = [flatNodes.value[start++], flatNodes.value[end--]];
-    arr.forEach((item) => {
-      if (!item) return;
-      const [x1, y1, x2, y2] = item.rect;
-      if (x1 > rect[0] && y1 > rect[1] && x2 < rect[2] && y2 < rect[3]) {
-        results.push(item as Node);
-      }
-    });
+    if (arr[0] === arr[1]) judge(arr[0]!);
+    else arr.forEach((item) => judge(item!));
   }
   if (results.length) {
     areaNodes.value = [];

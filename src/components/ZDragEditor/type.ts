@@ -17,6 +17,7 @@ export interface ZDragEditorProps {
     leftMinWidth: number;
     rightMinWidth: number;
   };
+ 
   canvases: ZCanvasList;
-  renderNode?: string;
+  renderNode?: string; // 渲染节点的组件
 }

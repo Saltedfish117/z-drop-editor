@@ -14,9 +14,9 @@ node.value.layout = {
   ...node.value.layout,
   ...calculateGroupLayout(node.value.children!),
 };
-const onDragMove = inject("onDragMove") as (fn: () => void) => void;
-const onDragEnd = inject("onDragEnd") as (fn: () => void) => void;
-const onDragStart = inject("onDragStart") as (fn: () => void) => void;
+const onDragMove = inject("onDragMove") as (fn: () => void,id:string) => void;
+const onDragEnd = inject("onDragEnd") as (fn: () => void,id:string) => void;
+const onDragStart = inject("onDragStart") as (fn: () => void,id:string) => void;
 // const selectCanvas = inject("selectCanvas") as Ref<ZCanvas>;
 // const emits = defineEmits<{
 //   (e: "select", node: ZDragNode): void;
@@ -59,13 +59,13 @@ const updateNodes = (layout: ZDragNode["layout"]) => {
 };
 onDragStart(() => {
   resizeStart();
-});
+},node.value.id);
 onDragMove(() => {
   updateNodes(node.value.layout);
-});
+},node.value.id);
 onDragEnd(() => {
   resizeStart();
-});
+},node.value.id);
 onUnmounted(() => {});
 </script>
 <template>
