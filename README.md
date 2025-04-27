@@ -299,8 +299,6 @@ interface ZCanvas {
       :menus="menus"
       :canvasExtension="canvasExtension"
       :splitter="splitter"
-      @dragover="handleDragover"
-      @drop="handleDrop"
     >
       <template #toolbar-right>
         <div class="custom-toolbar">
@@ -366,8 +364,6 @@ const splitter = ref({
   leftMinWidth: 200,
   rightMinWidth: 200
 });
-const handleDragover = (event) => {};
-const handleDrop = (event) => {};
 const addNewCanvas = () => {
   const newCanvas = createCanvas(`canvas-${Date.now()}`);
   canvases.value.push(newCanvas);
