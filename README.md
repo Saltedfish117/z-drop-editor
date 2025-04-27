@@ -19,6 +19,7 @@
 - [主要组件](#主要组件)
   - [ZDragEditor](#zdrageditor)
   - [ZDrag](#zdrag)
+- [自定义渲染组件](#自定义你的渲染组件(示例))
 - [工具函数](#工具函数)
 - [类型定义](#类型定义)
 - [完整示例](#完整示例)
@@ -140,7 +141,6 @@ const components = ref([
 | `removeNode`     | 移除节点             |
 
 ---
-
 ### ZDrag
 
 > 拖拽单个元素的基础组件。
@@ -166,7 +166,63 @@ const components = ref([
 | `dblclick`     | 双击事件             |
 
 ---
+# 自定义你的渲染组件(示例)
+```
+<script setup lang="ts">
+import { computed } from "vue";
+import type { ZDragNode } from "z-drop-editor";
+import type { CSSProperties } from "vue";
+const node = defineModel<ZDragNode>({ required: true });
+const style = computed<CSSProperties>(() => ({
+  position: "absolute",
+  top: 0,
+  left: 0,
+  width: `${node.value.layout.width}px`,
+  height: `${node.value.layout.height}px`,
+  transform: `translate(${node.value.layout.x}px,${node.value.layout.y}px) rotate(${node.value.layout.rotate}deg)`,
+}));
+</script>
+<template>
+  <component
+    :style="style"
+    v-bind="$attrs"
+    :is="node.component"
+    v-model="node"
+    class="custom-node"
+  ></component>
+</template>
+<style scoped>
+.custom-node {
+  box-sizing: border-box;
+  &::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    right: 0;
+    z-index: -1;
+  }
+  &:hover {
+    &::after {
+      border: 2px dashed #409EFF;
+    }
+  }
+}
+</style>
 
+<style>
+.editor-container {
+  width: 100%;
+  height: 100vh;
+}
+.custom-toolbar {
+  display: flex;
+  gap: 10px;
+}
+</style>
+```
+---
 ## 🛠️ 工具函数
 
 > 提供常用的节点、画布创建与操作工具函数。
@@ -288,7 +344,7 @@ interface ZCanvas {
 
 ## 🎯 完整示例
 
-> 结合所有功能的完整用例。
+> 结合所有功能的完整用例，并演示如何自定义渲染节点组件（CustomNode）。
 
 ```vue
 <template>
@@ -299,6 +355,7 @@ interface ZCanvas {
       :menus="menus"
       :canvasExtension="canvasExtension"
       :splitter="splitter"
+      :renderNode="'CustomNode'"
     >
       <template #toolbar-right>
         <div class="custom-toolbar">
@@ -377,6 +434,50 @@ onMounted(() => {
 });
 </script>
 
+<!-- CustomNode.vue -->
+<script setup lang="ts">
+import { computed } from "vue";
+import type { ZDragNode } from "z-drop-editor";
+import type { CSSProperties } from "vue";
+const node = defineModel<ZDragNode>({ required: true });
+const style = computed<CSSProperties>(() => ({
+  position: "absolute",
+  top: 0,
+  left: 0,
+  width: `${node.value.layout.width}px`,
+  height: `${node.value.layout.height}px`,
+  transform: `translate(${node.value.layout.x}px,${node.value.layout.y}px) rotate(${node.value.layout.rotate}deg)`,
+}));
+</script>
+<template>
+  <component
+    :style="style"
+    v-bind="$attrs"
+    :is="node.component"
+    v-model="node"
+    class="custom-node"
+  ></component>
+</template>
+<style scoped>
+.custom-node {
+  box-sizing: border-box;
+  &::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    right: 0;
+    z-index: -1;
+  }
+  &:hover {
+    &::after {
+      border: 2px dashed #409EFF;
+    }
+  }
+}
+</style>
+
 <style>
 .editor-container {
   width: 100%;
@@ -388,6 +489,13 @@ onMounted(() => {
 }
 </style>
 ```
+
+---
+
+**说明：**
+- 通过 `:renderNode="'CustomNode'"` 属性，ZDragEditor 会使用你自定义的 `CustomNode` 组件渲染每个节点。
+- CustomNode 的实现方式与 ZNode 完全一致，必须用 `<component :is="node.component" ... />` 动态渲染业务组件。
+- 你可以在 `.custom-node` 上自定义样式，或扩展插槽等。
 
 ---
 

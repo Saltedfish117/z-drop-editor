@@ -18,15 +18,13 @@ const style = computed<CSSProperties>(() => ({
 }));
 </script>
 <template>
-  <template v-if="!$slots.default">
-    <component
-      :style="style"
-      v-bind="$attrs"
-      :is="node.component"
-      v-model="node"
-      class="z-node"
-    ></component>
-  </template>
+  <component
+    :style="style"
+    v-bind="$attrs"
+    :is="node.component"
+    v-model="node"
+    class="z-node"
+  ></component>
 </template>
 <style lang="scss">
 .z-node {
