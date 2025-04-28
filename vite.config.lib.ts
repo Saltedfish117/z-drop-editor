@@ -19,13 +19,12 @@ export default defineConfig({
   },
 
   build: {
-    outDir: "lib",
+    outDir: "lib", 
     lib: {
       entry: path.resolve(__dirname, "src/index.ts"), // 入口文件
       name: "ZDropEditor", // 库的全局变量名
-      fileName: `z-drop-editor`,
-      // fileName: (format) => `z-drop-editor.${format}.js`, // 输出文件名
-      formats: ["es", "cjs"],
+      fileName: (format) => `z-drop-editor.${format === 'es' ? 'es' : 'umd'}.js`, // 输出文件名
+      formats: ["es", "umd"],
     },
     rollupOptions: {
       // 确保外部化处理那些你不想打包进库的依赖
@@ -34,12 +33,8 @@ export default defineConfig({
         globals: {
           vue: "Vue",
         },
-        inlineDynamicImports: false,
-        manualChunks: (id) => {
-          if (id.includes("/Icons/")) {
-            return "icons";
-          }
-        },
+        // 禁用代码分割，因为 UMD 格式不支持
+        inlineDynamicImports: true,
       },
       input: {
         main: path.resolve(__dirname, "src/index.ts"), // 入口文件

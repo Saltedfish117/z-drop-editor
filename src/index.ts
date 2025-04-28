@@ -18,10 +18,33 @@ import ZTextField from "@/components/ZTextField/index.ts";
 import ZToolbar from "@/components/ZToolbar/index.ts";
 import ZTree from "@/components/ZTree/index.ts";
 import ZDrag from "@/components/ZDrag/index";
-export * from "@/components/ZDrag/index";
 import ZLines from "./components/ZLines/index";
 import ZDragEditor from "@/components/ZDragEditor/index";
-export * from "@/components/ZDragEditor/index";
+
+// 导出所有组件
+export {
+  ZArea,
+  ZBtn,
+  ZContextMenu,
+  ZDesign,
+  ZDrag,
+  ZDragEditorCanvas,
+  ZGroup,
+  ZIcon,
+  ZMaterialList,
+  ZNode,
+  ZPage,
+  ZPageList,
+  ZPopup,
+  ZScaleController,
+  ZSplitter,
+  ZTextField,
+  ZToolbar,
+  ZTree,
+  ZDragEditor,
+  ZLines,
+};
+
 const components = [
   ZArea,
   ZBtn,

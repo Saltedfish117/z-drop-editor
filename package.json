@@ -1,8 +1,10 @@
 {
   "name": "z-drop-editor",
   "private": false,
-  "version": "1.0.0",
+  "version": "0.0.12",
   "type": "module",
+  "main": "./lib/z-drop-editor.umd.js",
+  "module": "./lib/z-drop-editor.es.js",
   "style": "lib/main.css",
   "scripts": {
     "dev:lib": "vite --config vite.config.lib.ts",
@@ -19,8 +21,12 @@
     "README.md"
   ],
   "exports": {
-    "types": "./lib/z-drop-editor.d.ts",
-    "import": "./lib/z-drop-editor.js"
+    ".": {
+      "types": "./lib/z-drop-editor.d.ts",
+      "import": "./lib/z-drop-editor.es.js",
+      "require": "./lib/z-drop-editor.umd.js"
+    },
+    "./style": "./lib/main.css"
   },
   "dependencies": {
     "@types/node": "^22.13.9",

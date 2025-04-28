@@ -2,36 +2,25 @@ import { defineConfig } from "vite";
 import vue from "@vitejs/plugin-vue";
 import path from "path";
 import libCss from "vite-plugin-libcss";
-import dts from "vite-plugin-dts";
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [
-    vue(),
-    libCss(),
-    dts({
-      rollupTypes: true, // 合并类型
-      tsconfigPath: "./tsconfig.app.json",
-    }),
-  ],
+  plugins: [vue(), libCss()],
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "src"),
     },
   },
+
   build: {
     outDir: "dist",
     rollupOptions: {
       output: {
-        inlineDynamicImports: false, // 禁用动态导入
         manualChunks: (id) => {
           if (id.includes("/Icons/")) {
             return "icons";
           }
         },
       },
-      input:{
-        main: path.resolve(__dirname, "examples/main.ts"),
-      }
     },
   },
 });
