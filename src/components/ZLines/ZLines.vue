@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, watch } from "vue";
-// import type {  } from "@/common/type";
+import { rotateLayout } from "@/common/utils";
 import type { ZDragNode, ZMap, ZLayout, ZCanvas } from "@/common/type";
 import type { CSSProperties } from "vue";
 
@@ -26,7 +26,7 @@ const referenceLines = ref<{
 
 // 计算当前选中元素的边界
 const selectedBounds = computed(() => {
-  const { x, y, width, height } = props.modelValue;
+  const { x, y, width, height } = rotateLayout(props.modelValue);
   return {
     left: x,
     right: x + width,
@@ -60,7 +60,7 @@ const otherElementsBounds = computed(() => {
   container.children.forEach((node) => {
     if (node.id === props.selectNode.id) return;
     if (node.type === "canvas") return;
-    const { x, y, width, height } = node.layout;
+    const { x, y, width, height } = rotateLayout(node.layout);
     if (node.relative === "canvasId") {
       bounds.push({
         id: node.id,

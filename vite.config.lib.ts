@@ -3,7 +3,6 @@ import vue from "@vitejs/plugin-vue";
 import path from "path";
 import libCss from "vite-plugin-libcss";
 import dts from "vite-plugin-dts";
-// https://vite.dev/config/
 export default defineConfig({
   plugins: [
     vue(),
@@ -18,20 +17,34 @@ export default defineConfig({
       "@": path.resolve(__dirname, "src"),
     },
   },
+
   build: {
-    outDir: "dist",
+    outDir: "lib",
+    lib: {
+      entry: path.resolve(__dirname, "src/index.ts"), // 入口文件
+      name: "ZDropEditor", // 库的全局变量名
+      fileName: `z-drop-editor`,
+      // fileName: (format) => `z-drop-editor.${format}.js`, // 输出文件名
+      formats: ["es", "cjs"],
+    },
     rollupOptions: {
+      // 确保外部化处理那些你不想打包进库的依赖
+      external: ["vue"],
       output: {
-        inlineDynamicImports: false, // 禁用动态导入
+        globals: {
+          vue: "Vue",
+        },
+        inlineDynamicImports: false,
         manualChunks: (id) => {
           if (id.includes("/Icons/")) {
             return "icons";
           }
         },
       },
-      input:{
-        main: path.resolve(__dirname, "examples/main.ts"),
-      }
+      input: {
+        main: path.resolve(__dirname, "src/index.ts"), // 入口文件
+      },
     },
+    cssCodeSplit: true,
   },
 });

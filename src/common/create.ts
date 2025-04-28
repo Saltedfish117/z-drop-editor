@@ -5,7 +5,12 @@ import type {
   CreateNode,
 } from "./type";
 import { deepMerge, calculateGroupLayout } from "./utils";
-// 导出一个名为 createCanvas 的函数，用于创建画布对象
+/**
+ * 创建画布对象
+ * @param id - 画布的唯一标识符
+ * @param value - 画布的属性
+ * @returns ZCanvas
+ */
 export const createCanvas = (id: string, value: Partial<ZCanvas> = {}) => {
   // 定义默认的画布属性
   const defaultValue = {
@@ -41,7 +46,11 @@ export const createCanvas = (id: string, value: Partial<ZCanvas> = {}) => {
   return canvasModel;
 };
 
-// 导出一个名为 createNode 的函数，该函数接收一个参数 value，该参数必须包含一个名为 "label" 的属性
+/**
+ * 创建节点对象
+ * @param value 节点属性
+ * @returns ZDragNode
+ */
 export const createNode = (
   value: WithRequiredProperty<CreateNode, "label">
 ): ZDragNode => {
@@ -63,7 +72,11 @@ export const createNode = (
   // 将 node 对象强制转换为 ZDragNode 类型并返回
   return node as ZDragNode;
 };
-// 导出一个名为 createGroup 的常量，它是一个函数
+/**
+ * 创建分组对象
+ * @param value 节点属性
+ * @returns ZDragNode
+ */
 export const createGroup = (
   // 函数接受一个参数 value，该参数的类型是 CreateNode 类型，并且必须包含 "label" 和 "children" 属性
   value: WithRequiredProperty<CreateNode, "label" | "children">

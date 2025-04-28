@@ -1,5 +1,5 @@
 <script lang="ts">
-import { defineAsyncComponent, defineComponent } from "vue";
+import { defineAsyncComponent } from "vue";
 const a_gengduo2 = defineAsyncComponent(
   () => import("@/components/Icons/a_gengduo2/a_gengduo2.vue")
 );

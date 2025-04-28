@@ -18,8 +18,10 @@ import ZTextField from "@/components/ZTextField/index.ts";
 import ZToolbar from "@/components/ZToolbar/index.ts";
 import ZTree from "@/components/ZTree/index.ts";
 import ZDrag from "@/components/ZDrag/index";
+export * from "@/components/ZDrag/index";
 import ZLines from "./components/ZLines/index";
 import ZDragEditor from "@/components/ZDragEditor/index";
+export * from "@/components/ZDragEditor/index";
 const components = [
   ZArea,
   ZBtn,

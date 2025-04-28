@@ -43,6 +43,11 @@ export function cos(rotate: number) {
 function angleToRadian(angle: number) {
   return (angle * Math.PI) / 180;
 }
+/**
+ * 计算旋转后的布局信息
+ * @param _layout - 节点布局信息
+ * @returns 
+ */
 export const rotateLayout = (_layout: ZLayout) => {
   const layout = { ..._layout };
   if (typeof layout.rotate === "number" && layout.rotate !== 0) {
@@ -75,6 +80,13 @@ export const calculateGroupLayout = (nodes: ZDragNode[]) => {
     zIndex: z,
   };
 };
+/**
+ * 处理节点的移动进/出父容器的逻辑
+ * @param node - 需要处理的节点对象
+ * @param treeMap - 树结构数据映射
+ * @param canvas - 画布对象
+ * @returns 
+ */
 export const whetherToMoveInAndOut = (
   node: ZDragNode,
   treeMap: ZMap,
@@ -155,6 +167,13 @@ export const whetherToMoveInAndOut = (
   };
   mode[node!.relative as keyof typeof mode]();
 };
+/**
+ * 计算容器缩放后的鼠标点击位置的坐标信息
+ * @param axis - 鼠标点击位置的坐标信息
+ * @param dom - 画布的 DOM 元素
+ * @param scale - 画布的缩放级别
+ * @returns 
+ */
 export const calculateMousedownPosition = (
   axis: {
     clientX: number;
@@ -210,7 +229,12 @@ export const calculateRotateCoordinate = (
     ),
   };
 };
-// 求两点之间的中点坐标
+/**
+ * 求两点之间的中点坐标
+ * @param realTimeCoordinates - 需要旋转的原始坐标对象，包含x/y分量（单位应与中心点一致）
+ * @param symmetric - 对称点
+ * @returns 
+ */
 export const getCenterCoordinate = (
   realTimeCoordinates: { x: number; y: number },
   symmetric: {
@@ -256,6 +280,11 @@ export const throttle = <T extends (...args: any[]) => any>(
     }
   };
 };
+/**
+ * 一次执行的函数
+ * @param func - 回调函数
+ * @returns 
+ */
 export const once = <T extends (...args: any[]) => any>(
   func: T
 ): ((...args: Parameters<T>) => void) => {
@@ -267,6 +296,11 @@ export const once = <T extends (...args: any[]) => any>(
     }
   };
 };
+/**
+ * 判断是否是对象
+ * @param value - 待判断的值
+ * @returns 
+ */
 const isObject = (value: any) => {
   return Object.prototype.toString.call(value) === "[object Object]";
 };
@@ -364,7 +398,15 @@ export function deepClone(obj: any, hash = new WeakMap()) {
 
   return objCopy;
 }
+/**
+ * 序列化与反序列化函数
+ */
 export const serializer = {
+  /**
+   * 反序列化函数
+   * @param str - 待反序列化的字符串
+   * @returns 反序列化后的对象
+   */
   deserialize: <T>(str: string): T => {
     let data = JSON.parse(str, (_, value) => {
       if (typeof value === "string" && value.includes("-FUNCTION")) {
@@ -375,6 +417,11 @@ export const serializer = {
     });
     return data;
   },
+  /**
+   * 序列化函数 支持函数序列化
+   * @param data - 待序列化的对象
+   * @returns 
+   */
   serialize: <T>(data: T): string => {
     const stateStr = JSON.stringify(data, (_, value) => {
       if (typeof value === "function") {

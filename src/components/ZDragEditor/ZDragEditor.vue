@@ -130,11 +130,15 @@ const hijackNodeAxis = computed<ZLayout>({
       zIndex: 0,
       lock: false,
     };
+
     if (!selectNode.value) return defaultValue;
-    if (selectNode.value && selectNode.value.relative) {
+
+    if (selectNode.value.relative) {
       const relative = selectNode.value.relative;
       const containerId = selectNode.value[relative];
+
       if (!containerId) return defaultValue;
+
       if (treeMap.has(containerId) && treeMap.get(containerId)!.type !== "canvas") {
         const container = treeMap.get(containerId)!;
         const hijack = { ...selectNode.value.layout } as ZLayout;
@@ -145,6 +149,8 @@ const hijackNodeAxis = computed<ZLayout>({
         return selectNode.value.layout;
       }
     }
+
+    return defaultValue;
   },
   set(value: ZLayout) {
     if (!selectNode.value) return;
