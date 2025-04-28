@@ -28,6 +28,10 @@
     },
     "./style": "./lib/main.css"
   },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Saltedfish117/z-drop-editor.git"
+  },
   "dependencies": {
     "@types/node": "^22.13.9",
     "d3": "^7.9.0",
