@@ -11,6 +11,16 @@
 一个基于 Vue 3 的拖拽编辑器组件库，提供丰富的拖拽编辑功能和组件。
 
 </div>
+
+<div align="center">
+  <a href="https://gitee.com/salted-fish-333/z-drop-editor" target="_blank">
+    <img src="https://gitee.com/salted-fish-333/z-drop-editor/badge/star.svg?theme=dark" alt="Gitee star" />
+  </a>
+  <a href="https://github.com/Saltedfish117/z-drop-editor" target="_blank">
+    <img src="https://img.shields.io/github/stars/Saltedfish117/z-drop-editor?style=social" alt="GitHub star" />
+  </a>
+</div>
+
 <img src="./doc/img/Snipaste_2025-04-27_16-30-58.png" />
 ---
 
